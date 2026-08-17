@@ -62,8 +62,9 @@ class EstadoAlerta{
 class NivelRiesgo{
     <<enumeration>>
     NORMAL
-    ADVERTENCIA
-    CRITICO
+    PRECAUCIÓN
+    ALERTA
+    EMERGENCIA
 }
 
 %%========================
