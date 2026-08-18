@@ -1,0 +1,27 @@
+<h1>Sensores</h1>
+
+@if (cargando()) {
+  <p class="aviso">Cargando sensores…</p>
+} @else if (error()) {
+  <p class="aviso error">{{ error() }}</p>
+} @else if (sensores().length === 0) {
+  <p class="aviso">No hay sensores registrados todavía.</p>
+} @else {
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th><th>Nombre</th><th>Valor actual</th><th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (s of sensores(); track s.sensorId) {
+        <tr>
+          <td>{{ s.sensorId }}</td>
+          <td>{{ s.nombre }}</td>
+          <td>{{ s.valorActual }}</td>
+          <td>{{ s.activo ? 'Activo' : 'Inactivo' }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
