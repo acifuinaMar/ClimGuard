@@ -45,6 +45,7 @@ El sistema utiliza las siguientes tablas catálogo.
 | NivelRiesgo | Clasifica el nivel de gravedad de una alerta. |
 | EstadoAlerta | Representa el estado actual de una alerta. |
 | TipoAlerta | Clasifica el fenómeno climático detectado. |
+| TipoComparacion | Define si el umbral debe evaluarse cuando el valor supera o es inferior al límite configurado. |
 
 ---
 
@@ -80,6 +81,10 @@ TIPO_SENSOR ||--o{ SENSOR : clasifica
 ESTADO_SENSOR ||--o{ SENSOR : estado
 
 SENSOR ||--|| UMBRAL : configura
+
+TIPO_COMPARACION ||--o{ UMBRAL : compara
+
+TIPO_ALERTA ||--o{ UMBRAL : genera
 
 SENSOR ||--o{ LECTURA : registra
 
@@ -178,8 +183,11 @@ USUARIO ||--o{ BITACORA : realiza
 |--------|------|:--:|:--:|:----:|
 | idUmbral | INT | Sí |-| No |
 | idSensor | INT |-| Sí | No |
-| valorAdvertencia | DECIMAL(10,2) |-|-| No |
-| valorCritico | DECIMAL(10,2) |-|-| No |
+| valorPrecaucion | DECIMAL(10,2) |-|-| No |
+| valorAlerta | DECIMAL(10,2) |-|-| No |
+| valorEmergencia | DECIMAL(10,2) |-|-| No |
+| idTipoComparacion | INT |-|Sí| No |
+| idTipoAlerta | INT |-|Sí| No |
 
 ---
 
@@ -219,6 +227,15 @@ USUARIO ||--o{ BITACORA : realiza
 | idTipoAlerta | INT | Sí |-| No |
 | nombre | VARCHAR(100) |-|-| No |
 | descripcion | VARCHAR(250) |-|-| Sí |
+
+---
+
+## TipoComparacion
+
+| Campo | Tipo | PK | FK | Nulo |
+|--------|------|:--:|:--:|:----:|
+| idTipoComparacion | INT | Sí |-| No |
+| nombre | VARCHAR(20) |-| - | No |
 
 ---
 
@@ -282,3 +299,18 @@ USUARIO ||--o{ BITACORA : realiza
 - Una notificación siempre corresponde a una alerta y a un usuario.
 - Un evento registra la ocurrencia de una alerta.
 - Los registros de los catálogos deberán existir previamente antes de ser utilizados como claves foráneas.
+
+# Observaciones
+- Los registros inicial del catálogo NivelRiesgo serán:
+    1. NORMAL (VERDE)
+    2. PRECAUCIÓN (AMARILLO)
+    3. ALERTA (NARANJA)
+    4. EMERGENCIA (ROJO)
+
+# Índices recomendados
+- IX_Lectura_Sensor_Fecha (idSensor, fechaHora)
+
+# Consideraciones de Implementación
+
+- Las enumeraciones del modelo de dominio (DOC-09) serán implementadas como tablas catálogo en SQL Server.
+- Los niveles de riesgo se calcularán automáticamente comparando el valor 

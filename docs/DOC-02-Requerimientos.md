@@ -48,7 +48,7 @@
 | **Nombre** | Recuperar contraseña |
 | **Módulo** | Autenticación |
 | **Actor** | Administrador, Operador, Usuario de Monitoreo |
-| **Prioridad** | Alta |
+| **Prioridad** | Baja |
 | **Descripción** | El sistema deberá permitir al usuario solicitar el proceso de recuperación de su contraseña. |
 
 ---
@@ -61,7 +61,7 @@
 | **Nombre** | Restablecer contraseña |
 | **Módulo** | Autenticación |
 | **Actor** | Administrador, Operador, Usuario de Monitoreo |
-| **Prioridad** | Alta |
+| **Prioridad** | Baja |
 | **Descripción** | El sistema deberá permitir al usuario establecer una nueva contraseña una vez validado el proceso de recuperación. |
 
 ---
@@ -131,7 +131,7 @@
 | **Módulo** | Gestión de Alertas |
 | **Actor** | Operador |
 | **Prioridad** | Alta |
-| **Descripción** | El sistema deberá clasificar las alertas generadas según el nivel de peligro correspondiente. |
+| **Descripción** | El sistema deberá clasificar las alertas generadas según el nivel de peligro correspondiente (Normal, Precaución, Alerta, Emergencia) |
 
 ---
 
@@ -286,7 +286,7 @@
 
 ---
 
-### USR-RF-003 – Asignar roles
+### USR-RF-003 – Consulta de bitácora
 
 | Campo | Descripción |
 |--------|-------------|

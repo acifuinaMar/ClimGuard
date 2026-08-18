@@ -61,9 +61,9 @@ Cada comunidad deberá poseer un identificador único dentro del sistema.
 
 # 4. Gestión de Sensores
 
-## RN-005 – Asociación obligatoria
+## RN-005 – Asociación de sensores
 
-Todo sensor deberá estar asociado a una única comunidad.
+Podrá crearse un sensor sin necesariamente estar asociado a una comunidad.
 
 ---
 

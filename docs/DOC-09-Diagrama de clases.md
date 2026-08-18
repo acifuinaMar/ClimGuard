@@ -40,6 +40,12 @@ class TipoSensor{
     +unidadMedida:String
 }
 
+class TipoAlerta{
+    +idTipoAlerta:int
+    +nombre:String
+    +descripcion:String
+}
+
 %%========================
 %% ENUMERACIONES
 %%========================
@@ -65,6 +71,12 @@ class NivelRiesgo{
     PRECAUCIÓN
     ALERTA
     EMERGENCIA
+}
+
+class TipoComparacion{
+    <<enumeration>>
+    MAYOR_QUE
+    MENOR_QUE
 }
 
 %%========================
@@ -101,10 +113,12 @@ class Sensor{
 
 class Umbral{
     +idUmbral:int
-    +valorAdvertencia:decimal
-    +valorCritico:decimal
+    +valorPrecaucion:decimal
+    +valorAlerta:decimal
+    +valorEmergencia:decimal
+    +tipoComparacion:TipoComparacion
 
-    +evaluar(valor)
+    +evaluar(valor:decimal)
 }
 
 class Lectura{
@@ -121,6 +135,7 @@ class Alerta{
     +descripcion:String
 
     +cerrar()
+    +atender()
 }
 
 class Notificacion{
@@ -152,7 +167,7 @@ Rol "1" <-- "*" Usuario
 
 Usuario "1" --> "*" Bitacora
 
-Comunidad "0..1" --> "*" Sensor : monitorea >
+Comunidad "1" <-- "0..*" Sensor : monitorea >
 
 TipoSensor "1" <-- "*" Sensor
 
@@ -172,6 +187,7 @@ Alerta --> EstadoAlerta
 
 Alerta --> NivelRiesgo
 Usuario "1" --> "*" Notificacion
+TipoAlerta "1" <-- "*" Umbral
 ```
 
 ---
@@ -181,3 +197,4 @@ Usuario "1" --> "*" Notificacion
 - El diagrama representa únicamente las clases pertenecientes al dominio del negocio.
 - Los componentes de infraestructura (Controllers, Services, Repositories, SignalR y Base de Datos) no forman parte de este modelo, ya que corresponden a la arquitectura de software.
 - La clase **Sensor** constituye la clase experta (GRASP Expert) del dominio, siendo responsable del registro de lecturas, evaluación de umbrales y creación de alertas.
+- Las enumeraciones representadas en este diagrama corresponden al modelo conceptual del dominio. Durante la implementación en la base de datos serán implementadas como tablas catálogo en el modelo relacional para facilitar su administración y escalabilidad.
