@@ -1,0 +1,62 @@
+<div class="disposicion" [class.disposicion--cerrado]="!menuAbierto()">
+
+  <!-- ================= MENÚ LATERAL ================= -->
+  <aside class="lateral">
+    <div class="marca">
+      <span class="marca__icono">◈</span>
+      <span class="marca__texto">ClimGuard</span>
+    </div>
+
+    <nav class="nav">
+      @for (s of secciones; track s.ruta) {
+        <a class="nav__enlace"
+           [routerLink]="s.ruta"
+           routerLinkActive="nav__enlace--activo">
+          <span class="nav__icono">{{ s.icono }}</span>
+          <span class="nav__texto">{{ s.texto }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="lateral__pie">
+      <span>Monitoreo y alerta temprana</span>
+    </div>
+  </aside>
+
+  <!-- ================= ZONA PRINCIPAL ================= -->
+  <div class="principal">
+
+    <header class="encabezado">
+      <button class="encabezado__menu"
+              type="button"
+              (click)="alternarMenu()"
+              aria-label="Mostrar u ocultar el menú">☰</button>
+
+      <div class="encabezado__titulo">
+        Sistema de Monitoreo y Alerta Temprana
+      </div>
+
+      <div class="encabezado__usuario">
+        <div class="encabezado__datos">
+          <span class="encabezado__nombre">{{ nombre() }}</span>
+          @if (rol()) {
+            <span class="encabezado__rol">{{ rol() }}</span>
+          }
+        </div>
+
+        <span class="encabezado__avatar">{{ iniciales() }}</span>
+
+        <button class="encabezado__salir"
+                type="button"
+                (click)="cerrarSesion()"
+                title="Cerrar sesión">Salir</button>
+      </div>
+    </header>
+
+    <!-- Aquí Angular pinta la pantalla que corresponda a la dirección -->
+    <main class="contenido">
+      <router-outlet />
+    </main>
+
+  </div>
+</div>

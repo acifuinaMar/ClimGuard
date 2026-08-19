@@ -2,12 +2,14 @@
 export const environment = {
   produccion: false,
 
-  // La dirección de la API. Es la ÚNICA línea que hay que cambiar
-  // cuando nos pasen la dirección real.
-  // Por ahora apunta a datos de prueba locales.
-  apiUrl: '/datos-prueba',
+  // ---- API REAL, en el servidor del equipo ----
+  apiUrl: 'http://157.245.253.228:8080/api',
+  sufijoArchivo: ''
 
-  // Los datos de prueba son archivos .json en disco; la API real no lleva extensión.
-  // Al cambiar a la API de verdad, esto pasa a ser cadena vacía.
-  sufijoArchivo: '.json'
+  // ---- DATOS DE PRUEBA LOCALES ----
+  // Para construir pantallas cuando la API no tenga datos cargados,
+  // comenta las dos líneas de arriba y descomenta estas dos:
+  //
+  // apiUrl: '/datos-prueba',
+  // sufijoArchivo: '.json'
 };

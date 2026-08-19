@@ -1,0 +1,80 @@
+<div class="pantalla">
+
+  <section class="tarjeta">
+
+    <header class="tarjeta__cabecera">
+      <div class="marca">
+        <span class="marca__icono">◈</span>
+        <span class="marca__texto">ClimGuard</span>
+      </div>
+      <h1 class="tarjeta__titulo">Iniciar sesión</h1>
+      <p class="tarjeta__sub">Sistema de monitoreo y alerta temprana</p>
+    </header>
+
+    <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+
+      <!-- ============ USUARIO ============ -->
+      <div class="campo">
+        <label for="usuario">Usuario</label>
+        <input id="usuario"
+               type="text"
+               formControlName="nombreUsuario"
+               autocomplete="username"
+               placeholder="Tu nombre de usuario"
+               [class.campo--malo]="usuario.invalid && usuario.touched">
+
+        @if (usuario.touched && usuario.hasError('required')) {
+          <span class="campo__error">El usuario es obligatorio.</span>
+        } @else if (usuario.touched && usuario.hasError('minlength')) {
+          <span class="campo__error">Debe tener al menos 3 caracteres.</span>
+        }
+      </div>
+
+      <!-- ============ CONTRASEÑA ============ -->
+      <div class="campo">
+        <label for="clave">Contraseña</label>
+
+        <div class="campo__caja">
+          <input id="clave"
+                 [type]="verClave() ? 'text' : 'password'"
+                 formControlName="password"
+                 autocomplete="current-password"
+                 placeholder="Tu contraseña"
+                 [class.campo--malo]="password.invalid && password.touched">
+
+          <button type="button"
+                  class="campo__ojo"
+                  (click)="alternarClave()"
+                  [attr.aria-label]="verClave() ? 'Ocultar contraseña' : 'Mostrar contraseña'">
+            {{ verClave() ? '🙈' : '👁' }}
+          </button>
+        </div>
+
+        @if (password.touched && password.hasError('required')) {
+          <span class="campo__error">La contraseña es obligatoria.</span>
+        } @else if (password.touched && password.hasError('minlength')) {
+          <span class="campo__error">Debe tener al menos 6 caracteres.</span>
+        }
+      </div>
+
+      <!-- ============ ERROR GENERAL ============ -->
+      @if (error()) {
+        <div class="aviso-error" role="alert">{{ error() }}</div>
+      }
+
+      <button type="submit" class="boton" [disabled]="entrando()">
+        @if (entrando()) { Entrando… } @else { Entrar }
+      </button>
+
+    </form>
+
+    <!-- ⚠️ Este bloque desaparece cuando el backend publique el
+         endpoint de inicio de sesión. -->
+    <footer class="tarjeta__pie">
+      <span class="pie__aviso">Acceso provisional para pruebas</span>
+      <code>admin / admin123</code>
+      <code>operador / operador123</code>
+    </footer>
+
+  </section>
+</div>

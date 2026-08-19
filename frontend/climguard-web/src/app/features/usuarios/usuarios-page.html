@@ -1,0 +1,68 @@
+<header class="cabecera">
+  <div>
+    <h1>Usuarios</h1>
+    <p class="cabecera__sub">Personas con acceso al sistema</p>
+  </div>
+  @if (!cargando() && !error()) {
+    <span class="cuenta">{{ activos() }} de {{ usuarios().length }} activos</span>
+  }
+</header>
+
+@if (cargando()) {
+  <div class="estado">
+    <span class="estado__titulo">Cargando usuarios…</span>
+  </div>
+}
+
+@else if (error()) {
+  <div class="estado estado--error">
+    <span class="estado__titulo">{{ error() }}</span>
+    <span>Comprueba que el servidor esté en línea.</span>
+  </div>
+}
+
+@else if (usuarios().length === 0) {
+  <div class="estado">
+    <span class="estado__titulo">No hay usuarios registrados</span>
+  </div>
+}
+
+@else {
+  <div class="tabla-caja">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Cuenta</th>
+          <th>Rol</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (u of usuarios(); track u.usuarioId) {
+          <tr>
+            <td>
+              <div class="persona">
+                <span class="persona__avatar">{{ iniciales(u) }}</span>
+                <span class="persona__nombre">{{ nombreCompleto(u) }}</span>
+              </div>
+            </td>
+            <td class="mono">{{ u.nombreUsuario }}</td>
+            <td>
+              <span class="rol" [class.rol--admin]="u.rol.toLowerCase() === 'administrador'">
+                {{ u.rol }}
+              </span>
+            </td>
+            <td>
+              @if (u.activo) {
+                <span class="nivel nivel--verde">Activo</span>
+              } @else {
+                <span class="nivel nivel--rojo">Inactivo</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

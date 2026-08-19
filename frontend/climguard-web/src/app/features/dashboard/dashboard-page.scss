@@ -1,0 +1,103 @@
+.cabecera { margin-bottom: 1.4rem; }
+.cabecera h1 { font-size: 1.55rem; font-weight: 650; }
+.cabecera__sub { color: var(--cg-texto-tenue); font-size: .92rem; margin-top: .15rem; }
+
+/* ================= INDICADORES ================= */
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: .9rem;
+  margin-bottom: 1.6rem;
+}
+
+.tarjeta-ind {
+  background: var(--cg-superficie);
+  border: 1px solid var(--cg-borde);
+  border-radius: var(--cg-radio);
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: .1rem;
+  box-shadow: var(--cg-sombra);
+}
+.tarjeta-ind__num {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--cg-texto);
+}
+.tarjeta-ind__tit {
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--cg-texto-tenue);
+  font-weight: 600;
+}
+
+/* El indicador cambia de color solo cuando hay algo que mirar.
+   Si todo estuviera siempre de color, el color dejaría de significar nada. */
+.tarjeta-ind--aviso  { border-color: var(--cg-naranja); background: var(--cg-naranja-fondo); }
+.tarjeta-ind--aviso  .tarjeta-ind__num { color: var(--cg-naranja); }
+.tarjeta-ind--peligro { border-color: var(--cg-rojo); background: var(--cg-rojo-fondo); }
+.tarjeta-ind--peligro .tarjeta-ind__num { color: var(--cg-rojo); }
+
+/* ================= TARJETAS DE SENSOR ================= */
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: .9rem;
+}
+
+.sensor {
+  background: var(--cg-superficie);
+  border: 1px solid var(--cg-borde);
+  border-left: 4px solid var(--cg-borde);
+  border-radius: var(--cg-radio);
+  padding: 1rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+  box-shadow: var(--cg-sombra);
+}
+
+/* La franja de la izquierda repite el nivel de peligro.
+   Así se distingue de un vistazo aunque no se lea la insignia. */
+.sensor--verde    { border-left-color: var(--cg-verde); }
+.sensor--amarillo { border-left-color: var(--cg-amarillo); }
+.sensor--naranja  { border-left-color: var(--cg-naranja); }
+.sensor--rojo     { border-left-color: var(--cg-rojo); background: var(--cg-rojo-fondo); }
+
+.sensor__alto { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.sensor__variable {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--cg-texto-tenue);
+  font-weight: 600;
+}
+
+.sensor__nombre { font-size: 1rem; font-weight: 600; }
+
+.sensor__lectura { display: flex; align-items: baseline; gap: .3rem; }
+.sensor__valor {
+  font-size: 2.1rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.sensor__unidad { font-size: .95rem; color: var(--cg-texto-tenue); font-weight: 600; }
+
+.sensor__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: .5rem;
+  border-top: 1px solid var(--cg-borde);
+  font-size: .78rem;
+}
+.sensor__estado { display: inline-flex; align-items: center; gap: .3rem; font-weight: 600; }
+.sensor__estado::before { content: ""; width: .45rem; height: .45rem; border-radius: 50%; background: currentColor; }
+.sensor__estado--on  { color: var(--cg-verde); }
+.sensor__estado--off { color: var(--cg-texto-tenue); }
+.sensor__id { color: var(--cg-texto-tenue); font-variant-numeric: tabular-nums; }
