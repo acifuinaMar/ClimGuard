@@ -56,4 +56,17 @@ export class SensorService {
   cambiarEstado(sensor: Sensor, activo: boolean): Observable<Sensor> {
     return this.actualizar(sensor.sensorId, { ...sensor, activo });
   }
+
+  /**
+ * Simula nuevas lecturas de los sensores.
+ * Se usa únicamente para la demostración del dashboard.
+ */
+  simular(): Observable<boolean> {
+
+    return this.http.post<boolean>(
+      `${this.base}/simular`,
+      {}
+    );
+
+  }
 }
