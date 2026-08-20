@@ -63,7 +63,7 @@ namespace Infraestructure.Repositories
 
                 return list.Select(a => new LecturaSensorDomain
                 (
-                    a.LecturaId,
+                    Convert.ToInt32(a.LecturaId),
                     a.SensorId,
                     a.Valor,
                     a.FechaHora
@@ -84,11 +84,36 @@ namespace Infraestructure.Repositories
 
                 return new LecturaSensorDomain
                 (
-                    obj.LecturaId,
+                    Convert.ToInt32(obj.LecturaId),
                     obj.SensorId,
                     obj.Valor,
                     obj.FechaHora
                 );
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public async Task<IReadOnlyList<LecturaSensorDomain>> GetBySensorAndDateRange(int sensorId, DateTime desde, DateTime hasta)
+        {
+            try
+            {
+                var list = await _context.LecturaSensors
+                    .Where(a => a.SensorId == sensorId
+                        && a.FechaHora.Date >= desde.Date
+                        && a.FechaHora.Date <= hasta.Date)
+                    .OrderBy(a => a.FechaHora)
+                    .ToListAsync();
+
+                return list.Select(a => new LecturaSensorDomain
+                (
+                    Convert.ToInt32(a.LecturaId),
+                    a.SensorId,
+                    a.Valor,
+                    a.FechaHora
+                )).ToList();
             }
             catch (Exception)
             {

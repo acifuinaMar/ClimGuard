@@ -2,18 +2,16 @@
 {
     public class LoginDomain
     {
-        public LoginDomain(string usuario, bool exito, string mensaje, string token)
+        public LoginDomain(string mensaje, string nombreUsuario, string rol)
         {
-            this.usuario = usuario;
-            Exito = exito;
             Mensaje = mensaje;
-            Token = token;
+            NombreUsuario = nombreUsuario;
+            Rol = rol;
         }
 
-        public string usuario { get; set; } = string.Empty;
-        public bool Exito { get; set; } 
         public string Mensaje { get; set; } = string.Empty;
-        public string Token { get; set; } = string.Empty;
+        public string NombreUsuario { get; set; } = string.Empty;
+        public string Rol { get; set; } = string.Empty;
 
     }
 }

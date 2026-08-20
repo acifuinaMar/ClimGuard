@@ -1,4 +1,5 @@
-﻿using Domain.Entities.Login;
+﻿using Application.Common.Encrypt;
+using Domain.Entities.Login;
 using Domain.Interfaces;
 using Infraestructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -8,24 +9,24 @@ namespace Infraestructure.Repositories
     public class LoginRepository : ILogin
     {
         private readonly MonitoreoContext _context;
+        private readonly EncryptPassword _encrypt;
 
-        public LoginRepository(MonitoreoContext context)
+        public LoginRepository(MonitoreoContext context, EncryptPassword encrypt)
         {
             _context = context;
+            _encrypt = encrypt;
         }
 
-        public async Task<LoginDomain> IniciarSesion(string Usuario, string Contraseña)
+        public async Task<LoginDomain> IniciarSesion(string Usuario,string Contraseña)
         {
             // 1. Validar entradas
             if (string.IsNullOrWhiteSpace(Usuario) ||
                 string.IsNullOrWhiteSpace(Contraseña))
             {
-                return new LoginDomain
-                (
-                    Usuario,
-                    false,
+                return new LoginDomain(
                     "Debe ingresar usuario y contraseña.",
-                    string.Empty
+                    "",
+                    ""
                 );
             }
 
@@ -38,51 +39,42 @@ namespace Infraestructure.Repositories
             // 3. Validar usuario
             if (usuario == null)
             {
-                return new LoginDomain
-                (
-                    Usuario,
-                    false,
+                return new LoginDomain(
                     "Usuario o contraseña incorrectos.",
-                    string.Empty
+                    "",
+                    ""
                 );
             }
 
             // 4. Validar estado
             if (!usuario.Activo)
             {
-                return new LoginDomain
-                (
-                    usuario.NombreUsuario,
-                    false,
+                return new LoginDomain(
                     "La cuenta se encuentra inactiva.",
-                    string.Empty
+                    "",
+                    ""
                 );
             }
 
             // 5. Validar contraseña
-            bool esValido = BCrypt.Net.BCrypt.Verify(
-                Contraseña,
-                usuario.PasswordHash
-            );
+            string hashIngresado = _encrypt.encryptSHA256(Contraseña);
+
+            bool esValido = hashIngresado == usuario.PasswordHash;
 
             if (!esValido)
             {
-                return new LoginDomain
-                (
-                    usuario.NombreUsuario,
-                    false,
+                return new LoginDomain(
                     "Usuario o contraseña incorrectos.",
-                    string.Empty
+                    "",
+                    ""
                 );
             }
 
             // 6. Autenticación exitosa
-            return new LoginDomain
-            (
-                usuario.NombreUsuario,
-                true,
+            return new LoginDomain(
                 "Autenticación exitosa.",
-                string.Empty
+                usuario.NombreUsuario,
+                usuario.Rol
             );
         }
     }

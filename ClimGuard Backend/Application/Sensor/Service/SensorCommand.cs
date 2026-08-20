@@ -10,7 +10,8 @@ namespace Application.Sensor.Service
             decimal ValorActual,
             bool Activo,
             DateTime FechaInstalacion,
-            DateTime UltimaActualizacion
+            DateTime UltimaActualizacion,
+            int UsuarioLogeado
         ) : IRequest<SensorResultDto>;
 
     public record UpdateSensorCommand(
@@ -21,10 +22,12 @@ namespace Application.Sensor.Service
         decimal ValorActual,
         bool Activo,
         DateTime FechaInstalacion,
-        DateTime UltimaActualizacion
+        DateTime UltimaActualizacion,
+        int UsuarioLogeado
     ) : IRequest<SensorResultDto>;
 
     public record DeleteSensorCommand(
-        int SensorId
+        int SensorId,
+        int UsuarioLogeado
     ) : IRequest<bool>;
 }

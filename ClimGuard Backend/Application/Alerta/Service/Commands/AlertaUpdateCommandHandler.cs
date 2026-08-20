@@ -1,4 +1,6 @@
 ﻿using Application.Comunidad;
+using Domain.Bitacora;
+using Domain.Interfaces;
 using MediatR;
 using Services.Services.Interfaces;
 using tickets.Application.Common.UnitOfWork;
@@ -9,15 +11,17 @@ namespace Application.Alerta.Service.Commands
     {
         private readonly IAlerta _repository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IBitacora _repositoryBitacora;
 
-        public AlertaUpdateCommandHandler(IAlerta repository, IUnitOfWork unitOfWork)
+        public AlertaUpdateCommandHandler(IAlerta repository, IUnitOfWork unitOfWork, IBitacora repositoryBitacora)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _repositoryBitacora = repositoryBitacora;
         }
         public async Task<AlertaResultDto> Handle(AlertUpdateCommand request, CancellationToken cancellationToken)
         {
-            // 1. Buscar la alerta
+            // Buscar la alerta
             var alerta = await _repository.GetById(request.alertaId);
 
             if (alerta == null)
@@ -26,7 +30,7 @@ namespace Application.Alerta.Service.Commands
                     $"No se encontró la alerta con ID {request.alertaId}");
             }
 
-            // 2. Actualizar propiedades
+            //  Actualizar propiedades
             alerta.AlertaId = request.alertaId;
             alerta.ComunidadId = request.comunidadId;
             alerta.SensorId = request.sensorId;
@@ -37,13 +41,22 @@ namespace Application.Alerta.Service.Commands
             alerta.Activa = request.activa;
             alerta.FechaResolucion = request.fechaResolucion;
 
-            // 3. Actualizar entidad
+            //Guardado de bitacora
+            var bitacora = new BitacoraDomain(
+                0,
+                request.UsuarioLogeado,
+                $"Actualizacion de alerta {request.alertaId}",
+                DateTime.Now
+                );
+            await _repositoryBitacora.Create(bitacora);
+
+            //  Actualizar entidad
             await _repository.Update(alerta);
 
-            // 4. Guardar cambios
+            // Guardar cambios
             await _unitOfWork.SaveChangeAsync(cancellationToken);
 
-            // 5. Retornar resultado
+            // Retornar resultado
             return new AlertaResultDto(
                 alerta.AlertaId,
                 alerta.ComunidadId,

@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using Domain.Bitacora;
+using Domain.Interfaces;
+using MediatR;
 using Services.Services.Interfaces;
 using tickets.Application.Common.UnitOfWork;
 
@@ -8,16 +10,18 @@ namespace Application.Sensor.Service.Commands
     {
         private readonly ISensor _repository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IBitacora _repositoryBitacora;
 
-        public UpdateSensorCommandHandler(ISensor repository, IUnitOfWork unitOfWork)
+        public UpdateSensorCommandHandler(ISensor repository, IUnitOfWork unitOfWork, IBitacora repositoryBitacora)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _repositoryBitacora = repositoryBitacora;
         }
 
         public async Task<SensorResultDto> Handle(UpdateSensorCommand request, CancellationToken cancellationToken)
         {
-            // 1. Buscar sensor
+            // Buscar sensor
             var sensor = await _repository.GetById(request.SensorId);
 
             if (sensor == null)
@@ -26,7 +30,7 @@ namespace Application.Sensor.Service.Commands
                     $"No se encontró la comunidad con ID {request.ComunidadId}");
             }
 
-            // 2. Actualizar propiedades
+            //  Actualizar propiedades
             //sensor.SensorId = sensorId;
             sensor.ComunidadId = request.ComunidadId;
             sensor.TipoSensorId = request.TipoSensorId;
@@ -35,15 +39,24 @@ namespace Application.Sensor.Service.Commands
             sensor.Activo = request.Activo;
             sensor.FechaInstalacion = request.FechaInstalacion;
             sensor.UltimaActualizacion = request.UltimaActualizacion;
-            
 
-            // 3. Actualizar entidad
+
+
+            var bitacora = new BitacoraDomain(
+                0,
+                request.UsuarioLogeado,
+                $"Actualizacion de sensor {request.Nombre}",
+                DateTime.Now
+                );
+            await _repositoryBitacora.Create(bitacora);
+
+            //  Actualizar entidad
             await _repository.Update(sensor);
 
-            // 4. Guardar cambios
+            // Guardar cambios
             await _unitOfWork.SaveChangeAsync(cancellationToken);
 
-            // 5. Retornar resultado
+            //  Retornar resultado
             return new SensorResultDto(
                 sensor.SensorId,
                 sensor.ComunidadId,

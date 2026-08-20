@@ -1,4 +1,7 @@
-﻿using MediatR;
+﻿using Application.Common.Encrypt;
+using Domain.Bitacora;
+using Domain.Interfaces;
+using MediatR;
 using Services.Services.Interfaces;
 using tickets.Application.Common.UnitOfWork;
 
@@ -8,15 +11,24 @@ namespace Application.Usuario.Service.Commands
     {
         private readonly IUsuario _repository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly EncryptPassword _encrypt;
+        private readonly IBitacora _repositoryBitacora;
 
-        public UpdateUsuarioCommandHandler(IUsuario repository, IUnitOfWork unitOfWork)
+        public UpdateUsuarioCommandHandler(IUsuario repository, IUnitOfWork unitOfWork, EncryptPassword encrypt, IBitacora repositoryBitacora)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _encrypt = encrypt;
+            _repositoryBitacora = repositoryBitacora;
         }
         public async Task<UsuarioResultDto> Handle(UpdateUsuarioCommand request, CancellationToken cancellationToken)
         {
-            // 1. Buscar la comunidad
+
+            var nombreUsuario = !string.IsNullOrWhiteSpace(request.Nombre1) && !string.IsNullOrWhiteSpace(request.Apellido1)
+                ? $"{char.ToUpper(request.Nombre1.Trim()[0])}{request.Apellido1.Trim()}"
+                : "" ?? string.Empty;
+
+            //  Buscar usuario
             var usuario = await _repository.GetById(request.UsuarioId);
 
             if (usuario == null)
@@ -31,18 +43,27 @@ namespace Application.Usuario.Service.Commands
             usuario.Apellido1 = request.Apellido1;
             usuario.Nombre2 = request.Nombre2;
             usuario.Nombre1 = request.Nombre1;
-            usuario.NombreUsuario = request.NombreUsuario;
-            usuario.PasswordHash = request.PasswordHash;
+            usuario.NombreUsuario = nombreUsuario.ToLower();
+            usuario.PasswordHash = _encrypt.encryptSHA256(request.PasswordHash);
             usuario.Rol = request.Rol;
             usuario.Activo = request.Activo;
 
-            // 3. Actualizar entidad
+
+            var bitacora = new BitacoraDomain(
+                0,
+                request.UsuarioLogeado,
+                $"Actualiza de usuario {request.UsuarioId}",
+                DateTime.Now
+                );
+            await _repositoryBitacora.Create(bitacora);
+
+            // Actualizar entidad
             await _repository.Update(usuario);
 
-            // 4. Guardar cambios
+            //  Guardar cambios
             await _unitOfWork.SaveChangeAsync(cancellationToken);
 
-            // 5. Retornar resultado
+            //  Retornar resultado
             return new UsuarioResultDto(
                 usuario.UsuarioId,
                 usuario.Apellido2,
@@ -50,7 +71,6 @@ namespace Application.Usuario.Service.Commands
                 usuario.Nombre2,
                 usuario.Nombre1,
                 usuario.NombreUsuario,
-                usuario.PasswordHash,
                 usuario.Rol,
                 usuario.Activo,
                 usuario.FechaRegistro

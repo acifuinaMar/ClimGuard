@@ -10,7 +10,8 @@ namespace Application.Alerta.Service
         string mensaje, 
         DateTime fechaHora, 
         bool activa, 
-        DateTime fechaResolucion
+        DateTime fechaResolucion,
+        int UsuarioLogeado
         ) : IRequest<AlertaResultDto>;
 
     public record AlertUpdateCommand(
@@ -22,10 +23,12 @@ namespace Application.Alerta.Service
         string mensaje,
         DateTime fechaHora,
         bool activa,
-        DateTime fechaResolucion
+        DateTime fechaResolucion,
+        int UsuarioLogeado
     ) : IRequest<AlertaResultDto>;
 
     public record AlertDeleteCommand(
-        int alertaId
+        int alertaId,
+        int UsuarioLogeado
     ) : IRequest<bool>;
 }

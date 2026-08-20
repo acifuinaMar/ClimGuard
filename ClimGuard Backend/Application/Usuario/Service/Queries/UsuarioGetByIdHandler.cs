@@ -23,7 +23,6 @@ namespace Application.Usuario.Service.Queries
                 usuario.Nombre2,
                 usuario.Nombre1,
                 usuario.NombreUsuario,
-                usuario.PasswordHash,
                 usuario.Rol,
                 usuario.Activo,
                 usuario.FechaRegistro

@@ -1,4 +1,6 @@
-﻿using Domain.Interfaces;
+﻿using Application.JWT;
+using Domain.Interfaces;
+using Infraestructure.BackgroudService;
 using Infraestructure.Persistence;
 using Infraestructure.Repositories;
 using Infraestructure.UnitOfWork;
@@ -26,6 +28,12 @@ namespace Infraestructure
             service.AddScoped<IComunidad, ComunidadRepository>();
             service.AddScoped<IAlerta, AlertaRespository>();
             service.AddScoped<ILogin, LoginRepository>();
+            service.AddScoped<ILecturaSensor, LecturaSensorRepository>();
+            service.AddScoped<IBitacora, BitacoraRepository>();
+            service.AddScoped<TokenService>();
+
+            service.AddScoped<ISimuladorLecturas, SimuladorLecturas>();
+            service.AddHostedService<SimuladorLecturasBackgroundService>();
             return service;
         }
     }

@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using Domain.Bitacora;
+using Domain.Interfaces;
+using MediatR;
 using Services.Services.Interfaces;
 using tickets.Application.Common.UnitOfWork;
 
@@ -8,16 +10,18 @@ namespace Application.Comunidad.Service.Commands
     {
         private readonly IComunidad _repository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IBitacora _repositoryBitacora;
 
-        public UpdateComunidadCommandHandler(IComunidad repository,IUnitOfWork unitOfWork)
+        public UpdateComunidadCommandHandler(IComunidad repository,IUnitOfWork unitOfWork, IBitacora repositoryBitacora)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _repositoryBitacora = repositoryBitacora;
         }
 
         public async Task<ComunidadResultDto> Handle(UpdateComunidadCommand request,CancellationToken cancellationToken)
         {
-            // 1. Buscar la comunidad
+            //  Buscar la comunidad
             var comunidad = await _repository.GetById(request.ComunidadId);
 
             if (comunidad == null)
@@ -26,7 +30,7 @@ namespace Application.Comunidad.Service.Commands
                     $"No se encontró la comunidad con ID {request.ComunidadId}");
             }
 
-            // 2. Actualizar propiedades
+            //  Actualizar propiedades
             comunidad.ComunidadId = request.ComunidadId;
             comunidad.Nombre = request.Nombre;
             comunidad.Latitud = request.Latitud;
@@ -34,14 +38,22 @@ namespace Application.Comunidad.Service.Commands
             comunidad.Descripcion = request.Descripcion;
             comunidad.FechaRegistro = request.FechaRegistro;
 
+            // Guardado en bitacora
+            var bitacora = new BitacoraDomain(
+                0,
+                request.UsuarioLogeado,
+                $"Actualiazción de comunidad {request.ComunidadId}",
+                DateTime.Now
+                );
+            await _repositoryBitacora.Create(bitacora);
 
-            // 3. Actualizar entidad
+            //  Actualizar entidad
             await _repository.Update(comunidad);
 
-            // 4. Guardar cambios
+            //  Guardar cambios
             await _unitOfWork.SaveChangeAsync(cancellationToken);
 
-            // 5. Retornar resultado
+            //  Retornar resultado
             return new ComunidadResultDto(
                 comunidad.ComunidadId,
                 comunidad.Nombre,

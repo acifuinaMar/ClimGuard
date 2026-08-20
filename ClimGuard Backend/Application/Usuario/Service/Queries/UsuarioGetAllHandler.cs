@@ -24,7 +24,6 @@ namespace Application.Usuario.Service.Queries
                 a.Nombre2,
                 a.Nombre1,
                 a.NombreUsuario,
-                a.PasswordHash,
                 a.Rol,
                 a.Activo,
                 a.FechaRegistro

@@ -7,7 +7,6 @@
         string Nombre2,
         string Nombre1,
         string NombreUsuario,
-        string PasswordHash,
         string Rol,
         bool Activo,
         DateTime FechaRegistro
