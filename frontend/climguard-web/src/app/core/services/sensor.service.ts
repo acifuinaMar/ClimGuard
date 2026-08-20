@@ -4,22 +4,56 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Sensor } from '../models/sensor.model';
 
-// providedIn: 'root' = existe UNA sola copia en toda la aplicación.
-// Cualquier pantalla que lo pida recibe la misma, no una nueva.
+/**
+ * Todo el trato con /api/Sensor vive aquí.
+ *
+ * Los componentes NUNCA llaman a la API por su cuenta: le piden a este
+ * servicio. Así, si mañana cambia la dirección, el formato o hay que
+ * agregar un token, se toca un solo archivo.
+ */
 @Injectable({ providedIn: 'root' })
 export class SensorService {
-
-  // inject() pide la herramienta para hacer llamadas HTTP.
-  // No la construimos nosotros: nos la entregan. Eso es inyección de dependencias.
   private http = inject(HttpClient);
 
+  /** Dirección base, armada una sola vez. */
+  private get base(): string {
+    return `${environment.apiUrl}/Sensor`;
+  }
+  private get suf(): string {
+    return environment.sufijoArchivo;
+  }
+
   listar(): Observable<Sensor[]> {
-    // La dirección NUNCA se escribe a mano: sale de environment.
-    // Hoy vale  /datos-prueba/Sensor.json
-    // Mañana valdrá  https://loquesea/api/Sensor
-    // y esta línea no cambia.
-    return this.http.get<Sensor[]>(
-      `${environment.apiUrl}/Sensor${environment.sufijoArchivo}`
-    );
+    return this.http.get<Sensor[]>(`${this.base}${this.suf}`);
+  }
+
+  obtener(id: number): Observable<Sensor> {
+    return this.http.get<Sensor>(`${this.base}/${id}${this.suf}`);
+  }
+
+  /** POST — el servidor asigna el id, por eso se manda en 0. */
+  crear(sensor: Sensor): Observable<Sensor> {
+    return this.http.post<Sensor>(this.base, sensor);
+  }
+
+  /** PUT — reemplaza el registro completo. */
+  actualizar(id: number, sensor: Sensor): Observable<Sensor> {
+    return this.http.put<Sensor>(`${this.base}/${id}`, sensor);
+  }
+
+  /** DELETE — la API devuelve true si borró. */
+  eliminar(id: number): Observable<boolean> {
+    return this.http.delete<boolean>(`${this.base}/${id}`);
+  }
+
+  /**
+   * Activar o desactivar. Es un caso del enunciado (Administración, punto 3).
+   *
+   * La API no tiene un endpoint dedicado, así que se manda el sensor
+   * completo con el campo cambiado. Si mañana Mahuerk agrega algo como
+   * PATCH /api/Sensor/{id}/estado, solo cambia este método.
+   */
+  cambiarEstado(sensor: Sensor, activo: boolean): Observable<Sensor> {
+    return this.actualizar(sensor.sensorId, { ...sensor, activo });
   }
 }
