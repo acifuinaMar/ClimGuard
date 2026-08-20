@@ -234,8 +234,20 @@ public partial class MonitoreoContext : DbContext
 
             entity.ToTable("Umbral");
 
-            entity.Property(e => e.ValorAdvertencia).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.ValorCritico).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ValorPrecaucion)
+                .HasColumnType("decimal(10, 2)");
+
+            entity.Property(e => e.ValorAlerta)
+                .HasColumnType("decimal(10, 2)");
+
+            entity.Property(e => e.ValorEmergencia)
+                .HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.TipoSensor)
+                .WithMany(p => p.Umbrals)
+                .HasForeignKey(d => d.TipoSensorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Umbral_TipoSensor");
         });
 
         modelBuilder.Entity<Usuario>(entity =>
