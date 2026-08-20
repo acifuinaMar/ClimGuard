@@ -37,10 +37,10 @@ export class SensorForm {
    *  TipoSensor, esta lista se reemplaza por una consulta. */
   tipos = [
     { id: 1, nombre: 'Temperatura' },
-    { id: 2, nombre: 'Nivel de río' },
-    { id: 3, nombre: 'Lluvia' },
-    { id: 4, nombre: 'Viento' },
-    { id: 5, nombre: 'Humedad' }
+    { id: 2, nombre: 'Humedad' },
+    { id: 3, nombre: 'Viento' },
+    { id: 4, nombre: 'Lluvia' },
+    { id: 5, nombre: 'Nivel de río' }
   ];
 
   formulario = this.fb.nonNullable.group({

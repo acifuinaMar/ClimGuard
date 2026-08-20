@@ -3,7 +3,7 @@ export const environment = {
   produccion: false,
 
   // ---- API REAL, en el servidor del equipo ----
-  apiUrl: 'http://157.245.253.228:8080/api',
+  apiUrl: 'http://localhost:5093/api',
   sufijoArchivo: ''
 
   // ---- DATOS DE PRUEBA LOCALES ----

@@ -34,56 +34,36 @@ interface ReglaLocal {
  * Fíjate en que temperatura y lluvia vigilan HACIA ABAJO: son los casos
  * de helada y sequía, los que el modelo original no podía detectar.
  */
-const REGLAS: Record<number, ReglaLocal> = {
+const REGLAS = {
 
   1: {
     nombre: 'Temperatura',
     unidad: '°C',
-    direccion: 'baja',
-    precaucion: 5,
-    alerta: 2,
-    emergencia: 0,
-    fenomeno: 'Helada'
+    ...
   },
 
   2: {
     nombre: 'Humedad',
     unidad: '%',
-    direccion: 'baja',
-    precaucion: 30,
-    alerta: 20,
-    emergencia: 12,
-    fenomeno: 'Incendio forestal'
+    ...
   },
 
   3: {
     nombre: 'Viento',
     unidad: 'km/h',
-    direccion: 'sube',
-    precaucion: 40,
-    alerta: 60,
-    emergencia: 80,
-    fenomeno: 'Tormenta'
+    ...
   },
 
   4: {
     nombre: 'Lluvia',
     unidad: 'mm',
-    direccion: 'sube',
-    precaucion: 20,
-    alerta: 50,
-    emergencia: 100,
-    fenomeno: 'Tormenta'
+    ...
   },
 
   5: {
     nombre: 'Nivel de río',
     unidad: 'm',
-    direccion: 'sube',
-    precaucion: 3,
-    alerta: 3.8,
-    emergencia: 4.5,
-    fenomeno: 'Inundación'
+    ...
   }
 
 };
