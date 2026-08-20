@@ -5,6 +5,7 @@ import { DashboardPage } from './features/dashboard/dashboard-page';
 import { LoginPage } from './features/auth/login-page';
 import { SensoresPage } from './features/sensores/sensores-page';
 import { UsuariosPage } from './features/usuarios/usuarios-page';
+import { ComunidadesPage } from './features/comunidades/comunidades-page';
 
 export const routes: Routes = [
 
@@ -21,7 +22,8 @@ export const routes: Routes = [
     children: [
       { path: '',         redirectTo: 'panel', pathMatch: 'full' },
       { path: 'panel',    component: DashboardPage },
-      { path: 'sensores', component: SensoresPage },
+      { path: 'sensores',    component: SensoresPage },
+      { path: 'comunidades', component: ComunidadesPage },
       { path: 'usuarios', component: UsuariosPage }
     ]
   },

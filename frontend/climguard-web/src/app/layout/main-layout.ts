@@ -40,7 +40,8 @@ export class MainLayout {
    */
   secciones = [
     { ruta: '/panel',    icono: '◉', texto: 'Panel' },
-    { ruta: '/sensores', icono: '▤', texto: 'Sensores' },
+    { ruta: '/sensores',    icono: '▤', texto: 'Sensores' },
+    { ruta: '/comunidades', icono: '◈', texto: 'Comunidades' },
     { ruta: '/usuarios', icono: '◇', texto: 'Usuarios' }
   ];
 

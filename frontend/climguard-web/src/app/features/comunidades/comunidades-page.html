@@ -1,0 +1,85 @@
+<header class="cabecera">
+  <div>
+    <h1>Comunidades</h1>
+    <p class="cabecera__sub">Comunidades monitoreadas por el sistema</p>
+  </div>
+  <div class="cabecera__acciones">
+    @if (!cargando() && !error()) {
+      <span class="cuenta">{{ comunidades().length }} registradas</span>
+    }
+    <button type="button" class="btn btn--primario" (click)="nueva()">+ Nueva comunidad</button>
+  </div>
+</header>
+
+@if (aviso()) {
+  <div class="aviso-ok" role="status">{{ aviso() }}</div>
+}
+@if (error()) {
+  <div class="aviso-mal" role="alert">
+    {{ error() }}
+    <button type="button" class="enlace" (click)="cargar()">Reintentar</button>
+  </div>
+}
+
+@if (cargando()) {
+  <div class="estado"><span class="estado__titulo">Cargando comunidades…</span></div>
+}
+
+@else if (comunidades().length === 0) {
+  <div class="estado">
+    <span class="estado__titulo">Todavía no hay comunidades registradas</span>
+    <span>Registra la primera con el botón «Nueva comunidad».</span>
+  </div>
+}
+
+@else {
+  <div class="rejilla">
+    @for (c of comunidades(); track c.comunidadId) {
+      <article class="tarjeta">
+        <div class="tarjeta__alto">
+          <span class="tarjeta__icono">◈</span>
+          <span class="tarjeta__id">#{{ c.comunidadId }}</span>
+        </div>
+
+        <h2 class="tarjeta__nombre">{{ c.nombre }}</h2>
+        <p class="tarjeta__desc">{{ c.descripcion || 'Sin descripción' }}</p>
+
+        <div class="tarjeta__coords">
+          <span title="Latitud">◐ {{ c.latitud }}</span>
+          <span title="Longitud">◑ {{ c.longitud }}</span>
+        </div>
+
+        <div class="tarjeta__pie">
+          <span class="tarjeta__fecha">Registrada: {{ c.fechaRegistro }}</span>
+          <div class="tarjeta__acciones">
+            <button type="button" class="btn btn--chico" (click)="editar(c)">Editar</button>
+            <button type="button" class="btn btn--chico btn--peligro" (click)="pedirBorrar(c)">Eliminar</button>
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+}
+
+@if (formAbierto()) {
+  <app-comunidad-form
+    [comunidad]="editando()"
+    [guardando]="guardando()"
+    (guardar)="onGuardar($event)"
+    (cancelar)="cerrarForm()" />
+}
+
+@if (porBorrar(); as c) {
+  <div class="fondo" (click)="cancelarBorrar()">
+    <div class="confirmar" (click)="$event.stopPropagation()">
+      <h2>¿Eliminar esta comunidad?</h2>
+      <p>Vas a eliminar <strong>{{ c.nombre }}</strong>. Esta acción no se puede deshacer.</p>
+      <div class="confirmar__pie">
+        <button type="button" class="btn btn--claro" (click)="cancelarBorrar()" [disabled]="borrando()">Cancelar</button>
+        <button type="button" class="btn btn--peligro-lleno" (click)="confirmarBorrar()" [disabled]="borrando()">
+          @if (borrando()) { Eliminando… } @else { Sí, eliminar }
+        </button>
+      </div>
+    </div>
+  </div>
+}
