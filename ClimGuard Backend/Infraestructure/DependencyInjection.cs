@@ -27,6 +27,7 @@ namespace Infraestructure
             service.AddScoped<ISensor, SensorRepository>();
             service.AddScoped<IComunidad, ComunidadRepository>();
             service.AddScoped<IAlerta, AlertaRespository>();
+            service.AddScoped<IUmbral, UmbralRepository>();
             service.AddScoped<ILogin, LoginRepository>();
             service.AddScoped<ILecturaSensor, LecturaSensorRepository>();
             service.AddScoped<IBitacora, BitacoraRepository>();
