@@ -22,4 +22,12 @@ export class SensorService {
       `${environment.apiUrl}/Sensor${environment.sufijoArchivo}`
     );
   }
+
+  simular(): Observable<boolean> {
+
+    return this.http.post<boolean>(
+      `${environment.apiUrl}/Sensor/simular`,
+      {}
+    );
+  }
 }

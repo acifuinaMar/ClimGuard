@@ -9,5 +9,6 @@ namespace Services.Services.Interfaces
         Task<SensorDomain> Create(SensorDomain sensor);
         Task<bool> Update(SensorDomain sensor);
         Task<bool> Delete(SensorDomain sensor);
+        Task<bool> SimularSensores();
     }
 }

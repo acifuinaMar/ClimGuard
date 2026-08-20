@@ -4,12 +4,11 @@ using Infraestructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Services.Services.Interfaces;
 
-namespace Services.Services
-{
+namespace Services.Services{
     public class SensorRepository : ISensor
     {
         private readonly MonitoreoContext _context;
-        public SensorRepository(MonitoreoContext context) => _context = context; 
+        public SensorRepository(MonitoreoContext context) => _context = context;
         public async Task<SensorDomain> Create(SensorDomain sensor)
         {
             try
@@ -137,5 +136,47 @@ namespace Services.Services
                 throw;
             }
         }
+
+        public async Task<bool> SimularSensores()
+        {
+            var random = new Random();
+
+            var sensores = await _context.Sensors.ToListAsync();
+
+            foreach (var sensor in sensores)
+            {
+                decimal nuevoValor = sensor.ValorActual;
+
+                switch (sensor.TipoSensorId)
+                {
+                    case 1: // Temperatura
+                        nuevoValor += (decimal)(random.NextDouble() * 4 - 2);
+                        nuevoValor = Math.Clamp(nuevoValor, -10m, 45m);
+                        break;
+
+                    case 2: // Humedad
+                        nuevoValor += (decimal)(random.NextDouble() * 10 - 5);
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 100m);
+                        break;
+
+                    case 3: // Lluvia
+                        nuevoValor += (decimal)(random.NextDouble() * 20 - 10);
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 300m);
+                        break;
+
+                    default:
+                        nuevoValor += (decimal)(random.NextDouble() * 4 - 2);
+                        break;
+                }
+
+                sensor.ValorActual = Math.Round(nuevoValor, 2);
+                sensor.UltimaActualizacion = DateTime.Now;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
     }
+
 }
