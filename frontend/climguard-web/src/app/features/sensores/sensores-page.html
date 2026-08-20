@@ -1,27 +1,115 @@
-<h1>Sensores</h1>
+<header class="cabecera">
+  <div>
+    <h1>Sensores</h1>
+    <p class="cabecera__sub">Administración de los sensores de monitoreo</p>
+  </div>
+
+  <div class="cabecera__acciones">
+    @if (!cargando() && !error()) {
+      <span class="cuenta">{{ activos() }} de {{ sensores().length }} activos</span>
+    }
+    <button type="button" class="btn btn--primario" (click)="nuevo()">+ Nuevo sensor</button>
+  </div>
+</header>
+
+@if (aviso()) {
+  <div class="aviso-ok" role="status">{{ aviso() }}</div>
+}
+
+@if (error()) {
+  <div class="aviso-mal" role="alert">
+    {{ error() }}
+    <button type="button" class="enlace" (click)="cargar()">Reintentar</button>
+  </div>
+}
 
 @if (cargando()) {
-  <p class="aviso">Cargando sensores…</p>
-} @else if (error()) {
-  <p class="aviso error">{{ error() }}</p>
-} @else if (sensores().length === 0) {
-  <p class="aviso">No hay sensores registrados todavía.</p>
-} @else {
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th><th>Nombre</th><th>Valor actual</th><th>Estado</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (s of sensores(); track s.sensorId) {
+  <div class="estado"><span class="estado__titulo">Cargando sensores…</span></div>
+}
+
+@else if (sensores().length === 0) {
+  <div class="estado">
+    <span class="estado__titulo">Todavía no hay sensores registrados</span>
+    <span>Da de alta el primero con el botón «Nuevo sensor».</span>
+  </div>
+}
+
+@else {
+  <div class="tabla-caja">
+    <table class="tabla">
+      <thead>
         <tr>
-          <td>{{ s.sensorId }}</td>
-          <td>{{ s.nombre }}</td>
-          <td>{{ s.valorActual }}</td>
-          <td>{{ s.activo ? 'Activo' : 'Inactivo' }}</td>
+          <th>Sensor</th>
+          <th>Variable</th>
+          <th>Lectura</th>
+          <th>Nivel</th>
+          <th>Estado</th>
+          <th class="der">Acciones</th>
         </tr>
-      }
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        @for (s of sensores(); track s.sensorId) {
+          <tr [class.fila--inactiva]="!s.activo">
+            <td>
+              <span class="nombre">{{ s.nombre }}</span>
+              <span class="sub">#{{ s.sensorId }} · comunidad {{ s.comunidadId }}</span>
+            </td>
+
+            <td>{{ s.variable }}</td>
+
+            <td class="num">
+              <strong>{{ s.valorActual }}</strong> <span class="unidad">{{ s.unidad }}</span>
+            </td>
+
+            <td>
+              <span class="nivel" [class]="'nivel nivel--' + s.nivel">{{ s.nivelTexto }}</span>
+            </td>
+
+            <td>
+              <button type="button"
+                      class="pastilla"
+                      [class.pastilla--on]="s.activo"
+                      (click)="alternarEstado(s)"
+                      [title]="s.activo ? 'Clic para desactivar' : 'Clic para activar'">
+                {{ s.activo ? 'Activo' : 'Inactivo' }}
+              </button>
+            </td>
+
+            <td class="der">
+              <button type="button" class="btn btn--chico" (click)="editar(s)">Editar</button>
+              <button type="button" class="btn btn--chico btn--peligro" (click)="pedirBorrar(s)">Eliminar</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<!-- ============ VENTANA DE ALTA / EDICIÓN ============ -->
+@if (formAbierto()) {
+  <app-sensor-form
+    [sensor]="sensorEditando()"
+    [guardando]="guardando()"
+    (guardar)="onGuardar($event)"
+    (cancelar)="cerrarForm()" />
+}
+
+<!-- ============ CONFIRMACIÓN DE BORRADO ============ -->
+@if (porBorrar(); as s) {
+  <div class="fondo" (click)="cancelarBorrar()">
+    <div class="confirmar" (click)="$event.stopPropagation()">
+      <h2>¿Eliminar este sensor?</h2>
+      <p>
+        Vas a eliminar <strong>{{ s.nombre }}</strong>.
+        Esta acción no se puede deshacer.
+      </p>
+      <div class="confirmar__pie">
+        <button type="button" class="btn btn--claro" (click)="cancelarBorrar()" [disabled]="borrando()">Cancelar</button>
+        <button type="button" class="btn btn--peligro-lleno" (click)="confirmarBorrar()" [disabled]="borrando()">
+          @if (borrando()) { Eliminando… } @else { Sí, eliminar }
+        </button>
+      </div>
+    </div>
+  </div>
 }

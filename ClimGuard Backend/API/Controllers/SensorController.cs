@@ -43,9 +43,19 @@ namespace API.Controllers
 
             return CreatedAtAction(
                 nameof(GetById),
-                new { id = result.ComunidadId },
+                new { id = result.SensorId },
                 result
             );
+        }
+
+        [HttpPost("simular")]
+        public async Task<IActionResult> Simular()
+        {
+            var result = await _mediator.Send(
+                new SimularSensoresCommand()
+            );
+
+            return Ok(result);
         }
 
         [HttpPut("{id:int}")]

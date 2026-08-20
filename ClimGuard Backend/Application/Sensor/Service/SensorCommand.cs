@@ -30,4 +30,6 @@ namespace Application.Sensor.Service
         int SensorId,
         int UsuarioLogeado
     ) : IRequest<bool>;
+
+    public record SimularSensoresCommand() : IRequest<bool>;
 }
