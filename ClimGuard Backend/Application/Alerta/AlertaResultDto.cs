@@ -9,6 +9,6 @@
         string mensaje, 
         DateTime fechaHora, 
         bool activa, 
-        DateTime fechaResolucion
+        DateTime? fechaResolucion
         );
 }

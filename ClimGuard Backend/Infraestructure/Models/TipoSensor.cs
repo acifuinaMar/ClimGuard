@@ -12,4 +12,5 @@ public partial class TipoSensor
     public string UnidadMedida { get; set; } = null!;
 
     public virtual ICollection<Sensor> Sensors { get; set; } = new List<Sensor>();
+    public virtual ICollection<Umbral> Umbrals { get; set; } = new List<Umbral>();
 }

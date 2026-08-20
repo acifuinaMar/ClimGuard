@@ -82,6 +82,15 @@ namespace Infraestructure.BackgroudService
         CancellationToken cancellationToken)
         {
             // Ejemplo de condición de alerta
+            int tipoFenomenoId = sensor.TipoSensorId switch
+            {
+                1 => 4, // Temperatura -> Helada
+                2 => 1, // Nivel de río -> Inundación
+                3 => 1, // Lluvia -> Inundación
+                4 => 3, // Viento -> Tormenta
+                5 => 5, // Humedad -> Incendio Forestal
+                _ => 1
+            };
             if (valor < 80)
                 return;
 
@@ -89,6 +98,7 @@ namespace Infraestructure.BackgroudService
             {
                 ComunidadId = sensor.ComunidadId,
                 SensorId = sensor.SensorId,
+                TipoFenomenoId = tipoFenomenoId,
                 NivelAlertaId = 1,
                 Mensaje = $"Valor crítico detectado: {valor}",
                 FechaHora = DateTime.Now,

@@ -7,7 +7,7 @@ namespace Domain.Entities.Alert;
 
 public partial class AlertaDomain
 {
-    public AlertaDomain(int alertaId, int comunidadId, int sensorId, int tipoFenomenoId, int nivelAlertaId, string mensaje, DateTime fechaHora, bool activa, DateTime fechaResolucion)
+    public AlertaDomain(int alertaId, int comunidadId, int sensorId, int tipoFenomenoId, int nivelAlertaId, string mensaje, DateTime fechaHora, bool activa, DateTime? fechaResolucion)
     {
         AlertaId = alertaId;
         ComunidadId = comunidadId;
@@ -36,7 +36,7 @@ public partial class AlertaDomain
 
     public bool Activa { get; set; }
 
-    public DateTime FechaResolucion { get; set; }
+    public DateTime? FechaResolucion { get; set; }
 
     public virtual ComunidadDomain Comunidad { get; set; } = null!;
 

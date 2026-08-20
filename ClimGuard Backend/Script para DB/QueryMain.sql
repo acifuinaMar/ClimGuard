@@ -150,6 +150,14 @@ INSERT INTO TipoFenomeno (Nombre) VALUES
 ('Incendio Forestal');
 GO
 
+INSERT INTO Umbral
+(TipoSensorId, ValorPrecaucion, ValorAlerta, ValorEmergencia)
+VALUES
+(1, 5.00, 2.00, 0.00),      -- Temperatura
+(2, 30.00, 20.00, 12.00),   -- Humedad
+(3, 40.00, 60.00, 80.00),   -- Viento
+(4, 20.00, 50.00, 100.00),  -- Lluvia
+(5, 3.00, 3.80, 4.50);      -- Nivel de río
 -- =========================================================
 -- 8. Rol
 -- =========================================================
@@ -206,9 +214,15 @@ CREATE TABLE Bitacora (
 -- 8. Umbral
 -- =========================================================
 CREATE TABLE Umbral (
-    UmbralId       INT IDENTITY(1,1) PRIMARY KEY,
-    ValorAdvertencia  DECIMAL(10,2),
-    ValorCritico    decimal(10,2),
+    UmbralId INT IDENTITY(1,1) PRIMARY KEY,
+    TipoSensorId INT NOT NULL,
+    ValorPrecaucion DECIMAL(10,2) NOT NULL,
+    ValorAlerta DECIMAL(10,2) NOT NULL,
+    ValorEmergencia DECIMAL(10,2) NOT NULL,
+
+    CONSTRAINT FK_Umbral_TipoSensor
+        FOREIGN KEY (TipoSensorId)
+        REFERENCES TipoSensor(TipoSensorId)
 );
 -- =========================================================
 -- 8. Notificacion
