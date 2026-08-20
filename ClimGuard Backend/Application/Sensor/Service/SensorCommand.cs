@@ -27,4 +27,6 @@ namespace Application.Sensor.Service
     public record DeleteSensorCommand(
         int SensorId
     ) : IRequest<bool>;
+
+    public record SimularSensoresCommand() : IRequest<bool>;
 }

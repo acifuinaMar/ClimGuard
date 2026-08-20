@@ -25,7 +25,33 @@
 }
 
 @else {
+  <section class="estado-general">
 
+    <div class="estado-general__texto">
+
+        <span class="estado-general__titulo">
+            Estado general del sistema
+        </span>
+
+        <span
+            class="estado-general__estado"
+            [class]="'estado-general__estado estado-general__estado--' + estadoGeneral().clase">
+
+            {{ estadoGeneral().texto }}
+
+        </span>
+
+    </div>
+
+    <div class="estado-general__fecha">
+
+        <span>Última actualización</span>
+
+        <strong>{{ ultimaActualizacion() }}</strong>
+
+    </div>
+
+</section>
   <!-- ============ INDICADORES ============ -->
   <section class="indicadores">
     <article class="tarjeta-ind">
@@ -77,5 +103,47 @@
 
       </article>
     }
+  </section>
+
+  <section class="grafica">
+
+    <h2>Evolución de los sensores</h2>
+
+    @if (ordenados().length > 1) {
+
+      <svg
+        viewBox="0 0 700 220"
+        preserveAspectRatio="none">
+
+        <polyline
+          [attr.points]="grafica()"
+          fill="none"
+          stroke="#0ea5e9"
+          stroke-width="4"/>
+
+      </svg>
+
+    } @else {
+
+      <div class="grafica-vacia">
+
+        Agrega más sensores o lecturas para visualizar la evolución.
+
+      </div>
+
+    }
+
+  </section>
+
+    <section class="ultimas-alertas">
+
+      <h2>Últimas alertas</h2>
+
+      <div class="sin-alertas">
+
+          No existen alertas registradas.
+
+      </div>
+
   </section>
 }
