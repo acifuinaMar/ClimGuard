@@ -21,7 +21,7 @@ public partial class Alerta
 
     public bool Activa { get; set; }
 
-    public DateTime FechaResolucion { get; set; }
+    public DateTime? FechaResolucion { get; set; }
 
     public virtual Comunidad Comunidad { get; set; } = null!;
 
