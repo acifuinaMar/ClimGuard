@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, delay, of, throwError } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CredencialesLogin, Sesion } from '../models/sesion.model';
+import { CredencialesLogin, RespuestaLogin, Sesion } from '../models/sesion.model';
 
 const CLAVE_ALMACEN = 'climguard.sesion';
 
@@ -21,22 +21,42 @@ export class AuthService {
     (this.sesion()?.rol ?? '').toLowerCase() === 'administrador'
   );
 
+  /** El token, para que el interceptor lo pegue a cada petición. */
+  token = computed(() => this.sesion()?.token ?? null);
+
   // ==========================================================
-  //  INICIO DE SESIÓN
+  //  INICIO DE SESIÓN — contra el backend REAL
   // ==========================================================
 
   iniciarSesion(cred: CredencialesLogin): Observable<Sesion> {
-    // ⚠️ TEMPORAL — ver la nota al final del archivo.
-    return this.validacionProvisional(cred);
+    // El backend espera { nombreUsuario, contraseña }  (con ñ).
+    const cuerpo = {
+      nombreUsuario: cred.nombreUsuario.trim(),
+      'contraseña': cred.password
+    };
 
-    /* CUANDO EL BACKEND PUBLIQUE EL ENDPOINT, esto se reemplaza por:
-     *
-     * return this.http.post<Sesion>(`${environment.apiUrl}/Auth/login`, cred)
-     *          .pipe(tap(s => this.guardarSesion(s)));
-     *
-     * El resto de la aplicación no cambia ni una línea: las pantallas, las
-     * guardas y el menú siguen preguntándole a este mismo servicio.
-     */
+    return this.http.post<RespuestaLogin>(`${environment.apiUrl}/login`, cuerpo).pipe(
+      map(respuesta => {
+        if (!respuesta.token) {
+          // Login rechazado: el backend manda 200 con token vacío y un mensaje.
+          throw new Error(respuesta.mensaje || 'Usuario o contraseña incorrectos.');
+        }
+
+        // El rol viene DENTRO del token (en los claims), no en la respuesta.
+        const datos = this.leerToken(respuesta.token);
+
+        const sesion: Sesion = {
+          usuarioId: 0, // el backend no lo devuelve; no lo necesitamos para operar
+          nombreUsuario: respuesta.usuario || cred.nombreUsuario,
+          nombreMostrado: respuesta.usuario || cred.nombreUsuario,
+          rol: datos.rol,
+          token: respuesta.token
+        };
+
+        this.guardarSesion(sesion);
+        return sesion;
+      })
+    );
   }
 
   cerrarSesion(): void {
@@ -63,47 +83,26 @@ export class AuthService {
     }
   }
 
-  /* ============================================================
-     ⚠️ VALIDACIÓN PROVISIONAL — BORRAR CUANDO EXISTA EL BACKEND
-     ------------------------------------------------------------
-     El backend todavía no publica POST /api/Auth/login (devuelve 404),
-     así que esta lista permite navegar y presentar el sistema mientras
-     tanto. NO es seguridad: cualquiera que abra el código la ve.
+  /**
+   * Un token JWT tiene tres partes separadas por punto. La del medio guarda
+   * los datos del usuario (los "claims"), codificados en base64. Aquí solo
+   * los LEEMOS para saber el rol; la VALIDACIÓN de verdad la hace el servidor
+   * con su firma. El navegador nunca debe confiar en esto para seguridad.
+   */
+  private leerToken(token: string): { rol: string; usuario: string } {
+    try {
+      const payload = token.split('.')[1];
+      const json = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
 
-     ¿Por qué NO se valida contra GET /api/Usuario?
-     Porque ese endpoint devuelve el campo passwordHash de todos los
-     usuarios. Compararlo aquí obligaría al navegador a descargarse las
-     contraseñas de todo el mundo para dejar entrar a uno. La verificación
-     de credenciales SIEMPRE ocurre en el servidor: el navegador manda
-     usuario y contraseña, y recibe un token o un rechazo. Nunca al revés.
-     ============================================================ */
-  private validacionProvisional(cred: CredencialesLogin): Observable<Sesion> {
-    const demo = [
-      { nombreUsuario: 'admin',    password: 'admin123',    rol: 'Administrador', nombre: 'Administrador del sistema', id: 1 },
-      { nombreUsuario: 'operador', password: 'operador123', rol: 'Operador',      nombre: 'Operador de monitoreo',     id: 2 }
-    ];
+      // Los claims de .NET usan URLs largas como nombre de campo.
+      const rol = json['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+                ?? json['role'] ?? 'Usuario';
+      const usuario = json['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier']
+                    ?? json['nameid'] ?? '';
 
-    const hallado = demo.find(
-      d => d.nombreUsuario === cred.nombreUsuario.trim().toLowerCase() &&
-           d.password === cred.password
-    );
-
-    if (!hallado) {
-      // Mensaje genérico a propósito: no se revela si falló el usuario o
-      // la contraseña, para no ayudar a quien esté probando combinaciones.
-      return throwError(() => new Error('Usuario o contraseña incorrectos.')).pipe(delay(500));
+      return { rol, usuario };
+    } catch {
+      return { rol: 'Usuario', usuario: '' };
     }
-
-    const sesion: Sesion = {
-      usuarioId: hallado.id,
-      nombreUsuario: hallado.nombreUsuario,
-      nombreMostrado: hallado.nombre,
-      rol: hallado.rol,
-      token: ''
-    };
-
-    this.guardarSesion(sesion);
-    // El retraso simula el viaje a la red, para que se vea el estado "Entrando…".
-    return of(sesion).pipe(delay(500));
   }
 }

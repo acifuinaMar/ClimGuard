@@ -5,13 +5,7 @@ export interface Sesion {
   nombreMostrado: string;
   rol: string;
 
-  /**
-   * El token que la API pedirá en cada llamada.
-   *
-   * Hoy está vacío porque el backend todavía no publica el endpoint de
-   * inicio de sesión. El campo ya existe para que, cuando llegue, no haya
-   * que cambiar nada más que la forma de obtenerlo.
-   */
+  /** El token JWT que la API exige en cada llamada. */
   token: string;
 }
 
@@ -19,4 +13,15 @@ export interface Sesion {
 export interface CredencialesLogin {
   nombreUsuario: string;
   password: string;
+}
+
+/**
+ * Forma EXACTA de lo que devuelve POST /api/login.
+ * Verificada contra el backend real (LoginResultDto):
+ *   { usuario, token, mensaje }
+ */
+export interface RespuestaLogin {
+  usuario: string;
+  token: string;
+  mensaje: string;
 }

@@ -56,4 +56,14 @@ export class SensorService {
   cambiarEstado(sensor: Sensor, activo: boolean): Observable<Sensor> {
     return this.actualizar(sensor.sensorId, { ...sensor, activo });
   }
+
+  /**
+   * Pide al backend que genere nuevas lecturas simuladas para todos los
+   * sensores activos. Es lo que el dashboard llama cada pocos segundos para
+   * dar el efecto de tiempo real mientras no haya SignalR.
+   * Endpoint real: POST /api/Sensor/simular
+   */
+  simular(): Observable<boolean> {
+    return this.http.post<boolean>(`${this.base}/simular`, {});
+  }
 }
