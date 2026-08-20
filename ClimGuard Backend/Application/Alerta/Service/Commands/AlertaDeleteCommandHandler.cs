@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using Domain.Bitacora;
+using Domain.Interfaces;
+using MediatR;
 using Services.Services.Interfaces;
 using tickets.Application.Common.UnitOfWork;
 
@@ -8,11 +10,13 @@ namespace Application.Alerta.Service.Commands
     {
         private readonly IAlerta _repository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IBitacora _repositoryBitacora;
 
-        public AlertaDeleteCommandHandler(IAlerta repository, IUnitOfWork unitOfWork)
+        public AlertaDeleteCommandHandler(IAlerta repository, IUnitOfWork unitOfWork, IBitacora repositoryBitacora)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _repositoryBitacora = repositoryBitacora;
         }
         public async Task<bool> Handle(AlertDeleteCommand request, CancellationToken cancellationToken)
         {
@@ -24,6 +28,14 @@ namespace Application.Alerta.Service.Commands
                 return false;
             }
 
+
+            var bitacora = new BitacoraDomain(
+                0,
+                request.UsuarioLogeado,
+                $"Eliminacion de alerta {request.alertaId}",
+                DateTime.Now
+                );
+            await _repositoryBitacora.Create(bitacora);
             // Eliminar
             await _repository.Delete(alerta);
 

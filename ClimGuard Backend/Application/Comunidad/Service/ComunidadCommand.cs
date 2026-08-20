@@ -8,7 +8,8 @@ namespace Application.Comunidad.Service
         decimal Latitud,
         decimal Longitud,
         string Descripcion,
-        DateOnly FechaRegistro
+        DateOnly FechaRegistro,
+        int UsuarioLogeado
     ) : IRequest<ComunidadResultDto>;
 
 
@@ -18,11 +19,13 @@ namespace Application.Comunidad.Service
         decimal Latitud,
         decimal Longitud,
         string Descripcion,
-        DateOnly FechaRegistro
+        DateOnly FechaRegistro,
+        int UsuarioLogeado
     ) : IRequest<ComunidadResultDto>;
 
 
     public record DeleteComunidadCommand(
-        int ComunidadId
+        int ComunidadId,
+        int UsuarioLogeado
     ) : IRequest<bool>;
 }

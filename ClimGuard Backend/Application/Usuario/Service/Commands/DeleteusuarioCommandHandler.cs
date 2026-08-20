@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using Domain.Bitacora;
+using Domain.Interfaces;
+using MediatR;
 using Services.Services.Interfaces;
 using tickets.Application.Common.UnitOfWork;
 
@@ -8,11 +10,13 @@ namespace Application.Usuario.Service.Commands
     {
         private readonly IUsuario _repository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IBitacora _repositoryBitacora;
 
-        public DeleteusuarioCommandHandler(IUsuario repository, IUnitOfWork unitOfWork)
+        public DeleteusuarioCommandHandler(IUsuario repository, IUnitOfWork unitOfWork, IBitacora repositoryBitacora)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _repositoryBitacora = repositoryBitacora;
         }
         public async Task<bool> Handle(DeleteUsuarioCommand request, CancellationToken cancellationToken)
         {
@@ -23,6 +27,15 @@ namespace Application.Usuario.Service.Commands
             {
                 return false;
             }
+
+            // Guardado de bitacor
+            var bitacora = new BitacoraDomain(
+                0,
+                request.UsuarioLogeado,
+                $"Eliminacion de usuario {request.id}",
+                DateTime.Now
+                );
+            await _repositoryBitacora.Create(bitacora);
 
             // Eliminar
             await _repository.Delete(usuario);

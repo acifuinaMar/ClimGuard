@@ -1,11 +1,14 @@
 ﻿using Application.Comunidad.Service;
 using Application.Comunidad.Service.Queries;
+using Application.Usuario.Service;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
 namespace API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ComunidadController : ControllerBase
@@ -54,15 +57,28 @@ namespace API.Controllers
             return Ok(result);
         }
 
+
+        //localhost:5093/api/comunidad/2?usuarioLogeado=1
+        //comunidad/2 = el id de la comunidad a eliminar
+        //?usuarioLogeado=1 = id del usuario quien inicio sesion
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, [FromQuery] int usuarioLogeado)
         {
             await _mediator.Send(
-                new DeleteComunidadCommand(id)
-            );
-
+                new DeleteComunidadCommand(id, usuarioLogeado)
+                );
             return NoContent();
         }
+
+        //[HttpDelete("{id:int}")]
+        //public async Task<IActionResult> Delete(int id, int usuarioLogeado)
+        //{
+        //    await _mediator.Send(
+        //        new DeleteComunidadCommand(id, usuarioLogeado)
+        //    );
+
+        //    return NoContent();
+        //}
 
 
     }

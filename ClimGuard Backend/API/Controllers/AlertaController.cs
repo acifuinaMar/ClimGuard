@@ -1,13 +1,13 @@
 ﻿using Application.Alerta.Service;
 using Application.Alerta.Service.Queries;
-using Application.Usuario.Service;
-using Application.Usuario.Service.Queries;
+using Application.Sensor.Service;
 using MediatR;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class AlertaController : ControllerBase
@@ -56,14 +56,26 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        //localhost:5093/api/alerta/2?usuarioLogeado=1
+        //alerta/2 = el id del alerta a eliminar
+        //?usuarioLogeado=1 = id del usuario quien inicio sesion
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, [FromQuery] int usuarioLogeado)
         {
             await _mediator.Send(
-                new AlertDeleteCommand(id)
-            );
-
+                new AlertDeleteCommand(id, usuarioLogeado)
+                );
             return NoContent();
         }
+
+        //[HttpDelete("{id:int}")]
+        //public async Task<IActionResult> Delete(int id, int usuarioLogeado)
+        //{
+        //    await _mediator.Send(
+        //        new AlertDeleteCommand(id, usuarioLogeado)
+        //    );
+
+        //    return NoContent();
+        //}
     }
 }

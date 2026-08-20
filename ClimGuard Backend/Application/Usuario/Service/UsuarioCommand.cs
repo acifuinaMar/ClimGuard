@@ -7,11 +7,11 @@ namespace Application.Usuario.Service
         string Apellido1,
         string Nombre2,
         string Nombre1,
-        string NombreUsuario,
         string PasswordHash,
         string Rol,
         bool Activo,
-        DateOnly FechaRegistro
+        DateOnly FechaRegistro,
+        int UsuarioLogeado
         ) : IRequest<UsuarioResultDto>;
 
     public record UpdateUsuarioCommand(
@@ -20,11 +20,11 @@ namespace Application.Usuario.Service
         string Apellido1,
         string Nombre2,
         string Nombre1,
-        string NombreUsuario,
         string PasswordHash,
         string Rol,
-        bool Activo
+        bool Activo,
+        int UsuarioLogeado
         ) : IRequest<UsuarioResultDto>;
 
-    public record DeleteUsuarioCommand(int id) : IRequest<bool>;
+    public record DeleteUsuarioCommand(int id, int UsuarioLogeado) : IRequest<bool>;
 }

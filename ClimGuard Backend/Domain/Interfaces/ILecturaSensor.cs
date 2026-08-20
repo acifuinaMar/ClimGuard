@@ -9,5 +9,8 @@ namespace Services.Services.Interfaces
         Task<LecturaSensorDomain> Create(LecturaSensorDomain lectura);
         Task<bool> Update(LecturaSensorDomain lectura);
         Task<bool> Delete(LecturaSensorDomain lectura);
+
+ 
+        Task<IReadOnlyList<LecturaSensorDomain>> GetBySensorAndDateRange(int sensorId, DateTime desde, DateTime hasta);
     }
 }

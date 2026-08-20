@@ -1,4 +1,6 @@
-﻿using MediatR;
+﻿using Domain.Bitacora;
+using Domain.Interfaces;
+using MediatR;
 using Services.Services.Interfaces;
 using tickets.Application.Common.UnitOfWork;
 
@@ -8,11 +10,13 @@ namespace Application.Comunidad.Service.Commands
     {
         private readonly IComunidad _repository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IBitacora _repositoryBitacora;
 
-        public DeleteComunidadCommandHandler(IComunidad repository, IUnitOfWork unitOfWork)
+        public DeleteComunidadCommandHandler(IComunidad repository, IUnitOfWork unitOfWork, IBitacora repositoryBitacora)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _repositoryBitacora = repositoryBitacora;
         }
 
         public async Task<bool> Handle(DeleteComunidadCommand request, CancellationToken cancellationToken)
@@ -25,6 +29,13 @@ namespace Application.Comunidad.Service.Commands
                 return false;
             }
 
+            var bitacora = new BitacoraDomain(
+                0,
+                request.UsuarioLogeado,
+                $"Eliminacion de comunidad {request.ComunidadId}",
+                DateTime.Now
+                );
+            await _repositoryBitacora.Create(bitacora);
             // Eliminar
             await _repository.Delete(comunidad);
 

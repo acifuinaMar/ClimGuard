@@ -1,10 +1,12 @@
 ﻿using Application.Usuario.Service;
 using Application.Usuario.Service.Queries;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class UsuarioController : ControllerBase
@@ -53,14 +55,17 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        //localhost:5093/api/usuario/2?usuarioLogeado=1
+        //usuario/2 = el id del usuario a eliminar
+        //?usuarioLogeado=1 = id del usuario quien inicio sesion
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, [FromQuery] int usuarioLogeado)
         {
             await _mediator.Send(
-                new DeleteUsuarioCommand(id)
-            );
-
+                new DeleteUsuarioCommand(id, usuarioLogeado)
+                );
             return NoContent();
         }
+
     }
 }

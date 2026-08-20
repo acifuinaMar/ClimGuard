@@ -1,13 +1,13 @@
 ﻿using Application.Comunidad.Service;
-using Application.Comunidad.Service.Queries;
 using Application.Sensor.Service;
 using Application.Sensor.Service.Queries;
 using MediatR;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class SensorController : ControllerBase
@@ -66,14 +66,26 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        //localhost:5093/api/sensor/2?usuarioLogeado=1
+        //sensor/2 = el id del sensor a eliminar
+        //?usuarioLogeado=1 = id del usuario quien inicio sesion
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, [FromQuery] int usuarioLogeado)
         {
             await _mediator.Send(
-                new DeleteSensorCommand(id)
-            );
-
+                new DeleteSensorCommand(id, usuarioLogeado)
+                );
             return NoContent();
         }
+
+        //[HttpDelete("{id:int}")]
+        //public async Task<IActionResult> Delete(int id, int usuarioLogeado)
+        //{
+        //    await _mediator.Send(
+        //        new DeleteSensorCommand(id, usuarioLogeado)
+        //    );
+
+        //    return NoContent();
+        //}
     }
 }

@@ -4,7 +4,7 @@ namespace Domain.Entities.SensorReading;
 
 public partial class LecturaSensorDomain
 {
-    public LecturaSensorDomain(long lecturaId, int sensorId, decimal valor, DateTime fechaHora)
+    public LecturaSensorDomain(int lecturaId, int sensorId, decimal valor, DateTime fechaHora)
     {
         LecturaId = lecturaId;
         SensorId = sensorId;
@@ -12,7 +12,7 @@ public partial class LecturaSensorDomain
         FechaHora = fechaHora;
     }
 
-    public long LecturaId { get; set; }
+    public int LecturaId { get; set; }
 
     public int SensorId { get; set; }
 

@@ -1,4 +1,6 @@
-﻿using Domain.Entities.Alert;
+﻿using Domain.Bitacora;
+using Domain.Entities.Alert;
+using Domain.Interfaces;
 using MediatR;
 using Services.Services.Interfaces;
 using tickets.Application.Common.UnitOfWork;
@@ -9,11 +11,13 @@ namespace Application.Alerta.Service.Commands
     {
         private readonly IAlerta _repository;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IBitacora _repositoryBitacora;
 
-        public AlertaCreateCommandHandler(IAlerta repository, IUnitOfWork unitOfWork)
+        public AlertaCreateCommandHandler(IAlerta repository, IUnitOfWork unitOfWork, IBitacora repositoryBitacora)
         {
             _repository = repository;
             _unitOfWork = unitOfWork;
+            _repositoryBitacora = repositoryBitacora;
         }
 
         public async Task<AlertaResultDto> Handle(AlertCreateCommand request, CancellationToken cancellationToken)
@@ -29,6 +33,14 @@ namespace Application.Alerta.Service.Commands
                 request.activa,
                 request.fechaResolucion
             );
+
+            var bitacora = new BitacoraDomain(
+                0,
+                request.UsuarioLogeado,
+                $"Registro de nueva alerta ",
+                DateTime.Now
+                );
+            await _repositoryBitacora.Create(bitacora);
             await _repository.Create(alerta);
             await _unitOfWork.SaveChangeAsync(cancellationToken);
 
