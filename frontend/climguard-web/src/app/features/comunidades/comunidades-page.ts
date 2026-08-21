@@ -76,11 +76,9 @@ export class ComunidadesPage {
     const c = this.porBorrar();
     if (!c) return;
 
-    // El backend pide quién borra, para la bitácora. Sale de la sesión.
-    const idUsuario = this.auth.sesion()?.usuarioId ?? 0;
-
+    // El servicio ya toma de la sesión quién borra (para la bitácora).
     this.borrando.set(true);
-    this.servicio.eliminar(c.comunidadId, idUsuario).subscribe({
+    this.servicio.eliminar(c.comunidadId).subscribe({
       next: () => {
         this.borrando.set(false);
         this.porBorrar.set(null);
