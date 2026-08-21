@@ -4,6 +4,9 @@ import { SensorService } from '../../core/services/sensor.service';
 import { calcularNivel, textoNivel, unidadDe, variableDe, Nivel } from '../../core/nivel-alerta';
 import { interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { Alerta } from '../../core/models/alerta.model';
+import { AlertaService } from '../../core/services/alerta.service';
+import { DatePipe } from '@angular/common';
 
 /** Un sensor con su nivel ya calculado, listo para pintar. */
 interface SensorConNivel extends Sensor {
@@ -16,15 +19,17 @@ interface SensorConNivel extends Sensor {
 @Component({
   selector: 'app-dashboard-page',
   templateUrl: './dashboard-page.html',
-  styleUrl: './dashboard-page.scss'
+  styleUrl: './dashboard-page.scss',
+  imports: [DatePipe]
 })
 export class DashboardPage {
   private servicio = inject(SensorService);
-
+  private alertaService = inject(AlertaService);
   cargando = signal(true);
   error = signal<string | null>(null);
   sensores = signal<SensorConNivel[]>([]);
   historial = signal<number[]>([]);
+  alertas = signal<Alerta[]>([]);
 
   /* ---- Indicadores calculados ----
      computed() se recalcula SOLO cuando cambia lo que usa dentro.
@@ -133,8 +138,37 @@ export class DashboardPage {
     });
 
   }
+  private cargarAlertas(): void {
+
+    this.alertaService.listar().subscribe({
+
+      next: datos => {
+
+        const activas = datos
+            .filter(a => a.activa)
+            .sort(
+                (a, b) =>
+                    new Date(b.fechaHora).getTime() -
+                    new Date(a.fechaHora).getTime()
+            )
+            .slice(0, 5);
+
+        this.alertas.set(activas);
+
+    },
+
+    error: err => {
+
+      console.error(err);
+
+    }
+
+  });
+
+}
   constructor() {
    this.cargarSensores();
+   this.cargarAlertas();
    // Cada 5 segundos:
   // 1. Simula nuevos valores
   // 2. Vuelve a cargar los sensores
@@ -200,4 +234,79 @@ export class DashboardPage {
     }).join(' ');
 
 });
+
+tipoFenomeno(id: number): string {
+
+  switch (id) {
+
+    case 1:
+      return 'Inundación';
+
+    case 2:
+      return 'Sequía';
+
+    case 3:
+      return 'Tormenta';
+
+    case 4:
+      return 'Helada';
+
+    case 5:
+      return 'Incendio Forestal';
+
+    default:
+      return 'Fenómeno desconocido';
+
+  }
+
+}
+
+colorAlerta(id: number): string {
+
+  switch (id) {
+
+    case 1:
+      return 'verde';
+
+    case 2:
+      return 'amarillo';
+
+    case 3:
+      return 'naranja';
+
+    case 4:
+      return 'rojo';
+
+    default:
+      return 'gris';
+
+  }
+
+}
+
+nombreComunidad(id: number): string {
+
+  switch (id) {
+
+    case 1:
+      return 'Comunidad Central';
+
+    case 2:
+      return 'Comunidad Norte';
+
+    case 3:
+      return 'Comunidad Sur';
+
+    case 4:
+      return 'Comunidad Oriente';
+
+    case 5:
+      return 'Comunidad Occidente';
+
+    default:
+      return `Comunidad ${id}`;
+
+  }
+
+}
 }

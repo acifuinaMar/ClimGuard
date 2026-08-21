@@ -52,6 +52,56 @@
     </div>
 
 </section>
+
+<section class="alertas">
+
+  <h2>Alertas Activas</h2>
+
+  @if (alertas().length === 0) {
+
+    <p>No existen alertas activas.</p>
+
+  } @else {
+
+    <div class="alertas__grid">
+      @for (a of alertas(); track a.alertaId) {
+
+        <article
+          class="alerta"
+          [class.alerta--verde]="colorAlerta(a.nivelAlertaId) === 'verde'"
+          [class.alerta--amarillo]="colorAlerta(a.nivelAlertaId) === 'amarillo'"
+          [class.alerta--naranja]="colorAlerta(a.nivelAlertaId) === 'naranja'"
+          [class.alerta--rojo]="colorAlerta(a.nivelAlertaId) === 'rojo'">
+
+          <h3>
+            {{ tipoFenomeno(a.tipoFenomenoId) }}
+          </h3>
+
+          <p class="alerta__mensaje">
+            {{ a.mensaje }}
+          </p>
+
+          <div class="alerta__info">
+
+            <small>
+              {{ nombreComunidad(a.comunidadId) }}
+            </small>
+
+            <small>
+              {{ a.fechaHora | date:'HH:mm:ss' }}
+            </small>
+
+          </div>
+
+        </article>
+
+    }
+
+    </div>
+
+  }
+
+</section>
   <!-- ============ INDICADORES ============ -->
   <section class="indicadores">
     <article class="tarjeta-ind">
@@ -132,18 +182,6 @@
       </div>
 
     }
-
-  </section>
-
-    <section class="ultimas-alertas">
-
-      <h2>Últimas alertas</h2>
-
-      <div class="sin-alertas">
-
-          No existen alertas registradas.
-
-      </div>
 
   </section>
 }

@@ -149,23 +149,29 @@ namespace Services.Services{
 
                 switch (sensor.TipoSensorId)
                 {
-                    case 1: // Temperatura
+                    case 1: // Temperatura (°C)
                         nuevoValor += (decimal)(random.NextDouble() * 4 - 2);
                         nuevoValor = Math.Clamp(nuevoValor, -10m, 45m);
                         break;
 
-                    case 2: // Humedad
+                    case 2: // Humedad (%)
                         nuevoValor += (decimal)(random.NextDouble() * 10 - 5);
                         nuevoValor = Math.Clamp(nuevoValor, 0m, 100m);
                         break;
 
-                    case 3: // Lluvia
+                    case 3: // Viento (km/h)
+                        nuevoValor += (decimal)(random.NextDouble() * 15 - 7.5);
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 150m);
+                        break;
+
+                    case 4: // Lluvia (mm)
                         nuevoValor += (decimal)(random.NextDouble() * 20 - 10);
                         nuevoValor = Math.Clamp(nuevoValor, 0m, 300m);
                         break;
 
-                    default:
-                        nuevoValor += (decimal)(random.NextDouble() * 4 - 2);
+                    case 5: // Nivel del Río (m)
+                        nuevoValor += (decimal)(random.NextDouble() * 2 - 1);
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 20m);
                         break;
                 }
 

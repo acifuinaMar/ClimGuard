@@ -12,13 +12,17 @@ namespace Infraestructure.BackgroudService
     {
         private readonly MonitoreoContext _context;
         private readonly IRealtimeNotifier _notifier;
+        private readonly IUmbral _umbralRepository;
         private readonly Random _random = new();
 
-        public SimuladorLecturas(MonitoreoContext context, IRealtimeNotifier notifier)
+        public SimuladorLecturas(
+    MonitoreoContext context,
+    IRealtimeNotifier notifier,
+    IUmbral umbralRepository)
         {
             _context = context;
             _notifier = notifier;
-
+            _umbralRepository = umbralRepository;
         }
 
         public async Task GenerarLecturasAsync(CancellationToken cancellationToken)
@@ -77,38 +81,78 @@ namespace Infraestructure.BackgroudService
         }
 
         private async Task EvaluarAlertaAsync(
-        Sensor sensor,
-        decimal valor,
-        CancellationToken cancellationToken)
+    Sensor sensor,
+    decimal valor,
+    CancellationToken cancellationToken)
         {
-            // Ejemplo de condición de alerta
+            // Obtener los umbrales configurados para este tipo de sensor
+            var umbral = await _umbralRepository.GetByTipoSensor(sensor.TipoSensorId);
+
+            // Determinar el nivel según los umbrales configurados
+            int nivelAlertaId;
+
+            if (valor >= umbral.ValorEmergencia)
+            {
+                nivelAlertaId = 4; // Rojo
+            }
+            else if (valor >= umbral.ValorAlerta)
+            {
+                nivelAlertaId = 3; // Naranja
+            }
+            else if (valor >= umbral.ValorPrecaucion)
+            {
+                nivelAlertaId = 2; // Amarillo
+            }
+            else
+            {
+                // No supera el umbral de precaución
+                return;
+            }
+
+            // Determinar el fenómeno asociado al tipo de sensor
             int tipoFenomenoId = sensor.TipoSensorId switch
             {
-                1 => 4, // Temperatura -> Helada
-                2 => 1, // Nivel de río -> Inundación
-                3 => 1, // Lluvia -> Inundación
-                4 => 3, // Viento -> Tormenta
-                5 => 5, // Humedad -> Incendio Forestal
+                1 => 5, // Temperatura -> Incendio Forestal
+                2 => 2, // Humedad -> Sequía
+                3 => 3, // Viento -> Tormenta
+                4 => 1, // Lluvia -> Inundación
+                5 => 1, // Nivel del Río -> Inundación
                 _ => 1
             };
-            if (valor < 80)
-                return;
 
+            // Construir un mensaje descriptivo
+            string mensaje = sensor.TipoSensorId switch
+            {
+                1 => $"Temperatura de {valor:F2} °C. Existe riesgo de incendio forestal.",
+
+                2 => $"Humedad de {valor:F2} %. Existe riesgo de sequía.",
+
+                3 => $"Velocidad del viento de {valor:F2} km/h. Existe riesgo de tormenta.",
+
+                4 => $"Lluvia acumulada de {valor:F2} mm. Existe riesgo de inundación.",
+
+                5 => $"Nivel del río de {valor:F2} m. Existe riesgo de desbordamiento.",
+
+                _ => $"Valor crítico detectado: {valor:F2}"
+            };
+
+            // Crear la alerta
             var alerta = new Alerta
             {
                 ComunidadId = sensor.ComunidadId,
                 SensorId = sensor.SensorId,
                 TipoFenomenoId = tipoFenomenoId,
-                NivelAlertaId = 1,
-                Mensaje = $"Valor crítico detectado: {valor}",
+                NivelAlertaId = nivelAlertaId,
+                Mensaje = mensaje,
                 FechaHora = DateTime.Now,
-                Activa  = true               
+                Activa = true
             };
 
             _context.Alerta.Add(alerta);
 
             await _context.SaveChangesAsync(cancellationToken);
 
+            // Notificar por SignalR
             var alertaDto = new AlertaNuevaDto
             {
                 AlertaId = alerta.AlertaId,
