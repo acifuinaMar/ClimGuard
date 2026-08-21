@@ -6,6 +6,7 @@ import { LoginPage } from './features/auth/login-page';
 import { SensoresPage } from './features/sensores/sensores-page';
 import { UsuariosPage } from './features/usuarios/usuarios-page';
 import { ComunidadesPage } from './features/comunidades/comunidades-page';
+import { UmbralesPage } from './features/umbrales/umbrales-page';
 
 export const routes: Routes = [
 
@@ -20,11 +21,12 @@ export const routes: Routes = [
     component: MainLayout,
     canActivate: [authGuard],
     children: [
-      { path: '',         redirectTo: 'panel', pathMatch: 'full' },
-      { path: 'panel',    component: DashboardPage },
-      { path: 'sensores',    component: SensoresPage },
+      { path: '', redirectTo: 'panel', pathMatch: 'full' },
+      { path: 'panel', component: DashboardPage },
+      { path: 'sensores', component: SensoresPage },
       { path: 'comunidades', component: ComunidadesPage },
-      { path: 'usuarios', component: UsuariosPage }
+      { path: 'usuarios', component: UsuariosPage },
+      { path: 'umbrales', component: UmbralesPage }
     ]
   },
 
