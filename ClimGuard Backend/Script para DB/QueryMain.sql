@@ -150,14 +150,6 @@ INSERT INTO TipoFenomeno (Nombre) VALUES
 ('Incendio Forestal');
 GO
 
-INSERT INTO Umbral
-(TipoSensorId, ValorPrecaucion, ValorAlerta, ValorEmergencia)
-VALUES
-(1, 5.00, 2.00, 0.00),      -- Temperatura
-(2, 30.00, 20.00, 12.00),   -- Humedad
-(3, 40.00, 60.00, 80.00),   -- Viento
-(4, 20.00, 50.00, 100.00),  -- Lluvia
-(5, 3.00, 3.80, 4.50);      -- Nivel de río
 -- =========================================================
 -- 8. Rol
 -- =========================================================
@@ -224,6 +216,23 @@ CREATE TABLE Umbral (
         FOREIGN KEY (TipoSensorId)
         REFERENCES TipoSensor(TipoSensorId)
 );
+GO
+
+INSERT INTO Umbral
+(
+    TipoSensorId,
+    ValorPrecaucion,
+    ValorAlerta,
+    ValorEmergencia
+)
+VALUES
+(1, 30.00, 35.00, 40.00),    -- Temperatura
+(2, 30.00, 20.00, 10.00),    -- Humedad (entre menor, peor)
+(3, 40.00, 60.00, 80.00),    -- Viento
+(4, 20.00, 50.00, 100.00),   -- Lluvia
+(5, 3.00, 3.80, 4.50);       -- Nivel de río
+
+GO
 -- =========================================================
 -- 8. Notificacion
 -- =========================================================
