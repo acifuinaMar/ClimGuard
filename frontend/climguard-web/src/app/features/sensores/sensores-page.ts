@@ -135,7 +135,7 @@ export class SensoresPage {
 
   // ==================== BORRAR ====================
 
-  pedirBorrar(s: Sensor): void { this.porBorrar.set(s); }
+  /*pedirBorrar(s: Sensor): void { this.porBorrar.set(s); }
   cancelarBorrar(): void { this.porBorrar.set(null); }
 
   confirmarBorrar(): void {
@@ -156,7 +156,7 @@ export class SensoresPage {
         this.error.set('No se pudo eliminar el sensor.');
       }
     });
-  }
+  }*/
 
   // ==================== AVISOS ====================
 

@@ -76,8 +76,28 @@
             </td>
 
             <td class="der">
-              <button type="button" class="btn btn--chico" (click)="editar(s)">Editar</button>
-              <button type="button" class="btn btn--chico btn--peligro" (click)="pedirBorrar(s)">Eliminar</button>
+              <button
+                type="button"
+                class="btn btn--chico"
+                (click)="editar(s)">
+                Editar
+              </button>
+
+              @if (s.activo) {
+                <button
+                  type="button"
+                  class="btn btn--chico btn--peligro"
+                  (click)="alternarEstado(s)">
+                  Desactivar
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn--chico"
+                  (click)="alternarEstado(s)">
+                  Activar
+                </button>
+              }
             </td>
           </tr>
         }
@@ -96,7 +116,7 @@
 }
 
 <!-- ============ CONFIRMACIÓN DE BORRADO ============ -->
-@if (porBorrar(); as s) {
+<!--@if (porBorrar(); as s) {
   <div class="fondo" (click)="cancelarBorrar()">
     <div class="confirmar" (click)="$event.stopPropagation()">
       <h2>¿Eliminar este sensor?</h2>
@@ -112,4 +132,4 @@
       </div>
     </div>
   </div>
-}
+}-->
