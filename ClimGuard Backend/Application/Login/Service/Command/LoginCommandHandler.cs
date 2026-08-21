@@ -19,9 +19,10 @@ namespace Application.Login.Service.Command
         {
             var obj = await _login.IniciarSesion(request.NombreUsuario, request.Contraseña);
             return new LoginResultDto(
+                obj.UsuarioId,
                 _token.GenerateToken(obj.NombreUsuario, obj.Rol),
                 obj.Mensaje
-                );
+            );
         }
     }
 }

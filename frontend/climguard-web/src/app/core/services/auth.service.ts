@@ -37,6 +37,7 @@ export class AuthService {
 
     return this.http.post<RespuestaLogin>(`${environment.apiUrl}/login`, cuerpo).pipe(
       map(respuesta => {
+        console.log('Respuesta del login:', respuesta);
         if (!respuesta.token) {
           // Login rechazado: el backend manda 200 con token vacío y un mensaje.
           throw new Error(respuesta.mensaje || 'Usuario o contraseña incorrectos.');
@@ -46,13 +47,13 @@ export class AuthService {
         const datos = this.leerToken(respuesta.token);
 
         const sesion: Sesion = {
-          usuarioId: 0, // el backend no lo devuelve; no lo necesitamos para operar
+          usuarioId: respuesta.usuarioId,
           nombreUsuario: respuesta.usuario || cred.nombreUsuario,
           nombreMostrado: respuesta.usuario || cred.nombreUsuario,
           rol: datos.rol,
           token: respuesta.token
         };
-
+        console.log('Sesión creada:', sesion);
         this.guardarSesion(sesion);
         return sesion;
       })

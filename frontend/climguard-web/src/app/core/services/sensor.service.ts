@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Sensor } from '../models/sensor.model';
+import { AuthService } from './auth.service';
 
 /**
  * Todo el trato con /api/Sensor vive aquí.
@@ -14,7 +15,7 @@ import { Sensor } from '../models/sensor.model';
 @Injectable({ providedIn: 'root' })
 export class SensorService {
   private http = inject(HttpClient);
-
+  private auth = inject(AuthService);
   /** Dirección base, armada una sola vez. */
   private get base(): string {
     return `${environment.apiUrl}/Sensor`;
@@ -33,17 +34,28 @@ export class SensorService {
 
   /** POST — el servidor asigna el id, por eso se manda en 0. */
   crear(sensor: Sensor): Observable<Sensor> {
-    return this.http.post<Sensor>(this.base, sensor);
+    return this.http.post<Sensor>(this.base, {
+      ...sensor,
+      usuarioLogeado: this.auth.sesion()?.usuarioId ?? 0
+    });
   }
 
   /** PUT — reemplaza el registro completo. */
   actualizar(id: number, sensor: Sensor): Observable<Sensor> {
-    return this.http.put<Sensor>(`${this.base}/${id}`, sensor);
+    return this.http.put<Sensor>(`${this.base}/${id}`, {
+      ...sensor,
+      usuarioLogeado: this.auth.sesion()?.usuarioId ?? 0
+    });
   }
 
   /** DELETE — la API devuelve true si borró. */
   eliminar(id: number): Observable<boolean> {
-    return this.http.delete<boolean>(`${this.base}/${id}`);
+
+    const usuario = this.auth.sesion()?.usuarioId ?? 0;
+
+    return this.http.delete<boolean>(
+      `${this.base}/${id}?usuarioLogeado=${usuario}`
+    );
   }
 
   /**

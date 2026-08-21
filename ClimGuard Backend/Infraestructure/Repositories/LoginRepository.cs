@@ -24,10 +24,11 @@ namespace Infraestructure.Repositories
                 string.IsNullOrWhiteSpace(Contraseña))
             {
                 return new LoginDomain(
-                    "Debe ingresar usuario y contraseña.",
-                    "",
-                    ""
-                );
+                     0,
+                     "Debe ingresar usuario y contraseña.",
+                     "",
+                     ""
+                 );
             }
 
             // 2. Buscar usuario
@@ -40,6 +41,7 @@ namespace Infraestructure.Repositories
             if (usuario == null)
             {
                 return new LoginDomain(
+                    0,
                     "Usuario o contraseña incorrectos.",
                     "",
                     ""
@@ -50,6 +52,7 @@ namespace Infraestructure.Repositories
             if (!usuario.Activo)
             {
                 return new LoginDomain(
+                    0,
                     "La cuenta se encuentra inactiva.",
                     "",
                     ""
@@ -64,6 +67,7 @@ namespace Infraestructure.Repositories
             if (!esValido)
             {
                 return new LoginDomain(
+                    0,
                     "Usuario o contraseña incorrectos.",
                     "",
                     ""
@@ -72,6 +76,7 @@ namespace Infraestructure.Repositories
 
             // 6. Autenticación exitosa
             return new LoginDomain(
+                usuario.UsuarioId,
                 "Autenticación exitosa.",
                 usuario.NombreUsuario,
                 usuario.Rol

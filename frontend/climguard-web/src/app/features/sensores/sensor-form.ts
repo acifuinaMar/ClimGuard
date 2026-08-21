@@ -90,7 +90,8 @@ export class SensorForm {
       valorActual: v.valorActual,
       activo: v.activo,
       fechaInstalacion: existente?.fechaInstalacion ?? ahora,
-      ultimaActualizacion: ahora
+      ultimaActualizacion: ahora,
+      usuarioLogeado: 0
     });
   }
 }

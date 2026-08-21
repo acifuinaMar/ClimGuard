@@ -13,4 +13,5 @@ export interface Sensor {
   activo: boolean;
   fechaInstalacion: string;
   ultimaActualizacion: string;
+  usuarioLogeado: number;
 }

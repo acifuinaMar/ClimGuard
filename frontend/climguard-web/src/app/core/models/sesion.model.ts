@@ -18,10 +18,16 @@ export interface CredencialesLogin {
 /**
  * Forma EXACTA de lo que devuelve POST /api/login.
  * Verificada contra el backend real (LoginResultDto):
- *   { usuario, token, mensaje }
+ *   { usuarioID, usuario, token, mensaje }
  */
 export interface RespuestaLogin {
+
+  usuarioId: number;
+
   usuario: string;
+
   token: string;
+
   mensaje: string;
+
 }
