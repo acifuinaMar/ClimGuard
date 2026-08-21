@@ -1,9 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { map, Observable } from 'rxjs';
+import { map, Observable, switchMap, of, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CredencialesLogin, RespuestaLogin, Sesion } from '../models/sesion.model';
+import { Usuario } from '../models/usuario.model';
 
 const CLAVE_ALMACEN = 'climguard.sesion';
 
@@ -36,27 +37,53 @@ export class AuthService {
     };
 
     return this.http.post<RespuestaLogin>(`${environment.apiUrl}/login`, cuerpo).pipe(
-      map(respuesta => {
-        console.log('Respuesta del login:', respuesta);
+      switchMap(respuesta => {
         if (!respuesta.token) {
           // Login rechazado: el backend manda 200 con token vacío y un mensaje.
           throw new Error(respuesta.mensaje || 'Usuario o contraseña incorrectos.');
         }
 
-        // El rol viene DENTRO del token (en los claims), no en la respuesta.
+        // El rol y el nombre vienen DENTRO del token (en los claims).
         const datos = this.leerToken(respuesta.token);
+        const nombre = respuesta.usuario || datos.usuario || cred.nombreUsuario;
 
-        const sesion: Sesion = {
-          usuarioId: respuesta.usuarioId,
-          nombreUsuario: respuesta.usuario || cred.nombreUsuario,
-          nombreMostrado: respuesta.usuario || cred.nombreUsuario,
-          rol: datos.rol,
-          token: respuesta.token
-        };
-        console.log('Sesión creada:', sesion);
-        this.guardarSesion(sesion);
-        return sesion;
+        // El backend NO devuelve el id numérico del usuario, y el token solo
+        // trae el nombre. Pero las operaciones (crear sensor, borrar comunidad)
+        // necesitan ese id para la bitácora: si mandan 0, el servidor da error
+        // porque el usuario 0 no existe.
+        // Por eso lo buscamos en /api/Usuario cruzando por el nombre.
+        return this.buscarIdUsuario(nombre, respuesta.token).pipe(
+          map(usuarioId => {
+            const sesion: Sesion = {
+              usuarioId,
+              nombreUsuario: nombre,
+              nombreMostrado: nombre,
+              rol: datos.rol,
+              token: respuesta.token
+            };
+            this.guardarSesion(sesion);
+            return sesion;
+          })
+        );
       })
+    );
+  }
+
+  /**
+   * Busca el id numérico del usuario a partir de su nombre de usuario.
+   * Si no lo encuentra (o la llamada falla), devuelve 1 como respaldo, que es
+   * un usuario que siempre existe, para no bloquear las operaciones.
+   */
+  private buscarIdUsuario(nombreUsuario: string, token: string): Observable<number> {
+    return this.http.get<Usuario[]>(`${environment.apiUrl}/Usuario`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).pipe(
+      map(usuarios => {
+        const objetivo = nombreUsuario.trim().toLowerCase();
+        const hallado = usuarios.find(u => u.nombreUsuario.trim().toLowerCase() === objetivo);
+        return hallado?.usuarioId ?? 1;
+      }),
+      catchError(() => of(1))
     );
   }
 
