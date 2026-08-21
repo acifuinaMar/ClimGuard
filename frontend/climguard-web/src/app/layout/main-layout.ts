@@ -37,14 +37,25 @@ export class MainLayout {
    * El menú se define como DATOS, no como HTML repetido.
    * Agregar una sección nueva es añadir una línea a este arreglo,
    * no copiar y pegar otro bloque de <a> en la plantilla.
+   *
+   * `soloAdmin` marca las secciones que solo ve el Administrador.
    */
-  secciones = [
-    { ruta: '/panel',    icono: '◉', texto: 'Panel' },
-    { ruta: '/sensores',    icono: '▤', texto: 'Sensores' },
-    { ruta: '/umbrales', icono: '⚙', texto: 'Umbrales' },
-    { ruta: '/comunidades', icono: '◈', texto: 'Comunidades' },
-    { ruta: '/usuarios', icono: '◇', texto: 'Usuarios' }
+  private todasLasSecciones = [
+    { ruta: '/panel',       icono: '◉', texto: 'Panel',       soloAdmin: false },
+    { ruta: '/sensores',    icono: '▤', texto: 'Sensores',    soloAdmin: false },
+    { ruta: '/umbrales',    icono: '⚙', texto: 'Umbrales',    soloAdmin: false },
+    { ruta: '/comunidades', icono: '◈', texto: 'Comunidades', soloAdmin: false },
+    { ruta: '/usuarios',    icono: '◇', texto: 'Usuarios',    soloAdmin: false },
+    { ruta: '/bitacora',    icono: '❑', texto: 'Bitácora',    soloAdmin: true }
   ];
+
+  /**
+   * El menú que se muestra: oculta las secciones de administrador si el
+   * usuario no lo es. La bitácora solo aparece para el Administrador (RN-019).
+   */
+  secciones = computed(() =>
+    this.todasLasSecciones.filter(s => !s.soloAdmin || this.auth.esAdministrador())
+  );
 
   alternarMenu() {
     this.menuAbierto.update(v => !v);

@@ -8,7 +8,7 @@
     </div>
 
     <nav class="nav">
-      @for (s of secciones; track s.ruta) {
+      @for (s of secciones(); track s.ruta) {
         <a class="nav__enlace"
            [routerLink]="s.ruta"
            routerLinkActive="nav__enlace--activo">

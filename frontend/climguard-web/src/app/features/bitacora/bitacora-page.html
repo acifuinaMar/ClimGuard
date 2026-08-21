@@ -1,0 +1,72 @@
+<header class="cabecera">
+  <div>
+    <h1>Bitácora</h1>
+    <p class="cabecera__sub">Registro de acciones realizadas por los usuarios</p>
+  </div>
+  @if (!cargando() && !error()) {
+    <span class="cuenta">{{ total() }} registros</span>
+  }
+</header>
+
+@if (cargando()) {
+  <div class="estado"><span class="estado__titulo">Cargando bitácora…</span></div>
+}
+
+@else if (error()) {
+  <div class="estado estado--error">
+    <span class="estado__titulo">{{ error() }}</span>
+    <span>Comprueba que el servidor esté en línea.</span>
+  </div>
+}
+
+@else if (total() === 0) {
+  <div class="estado">
+    <span class="estado__titulo">Todavía no hay acciones registradas</span>
+    <span>Cada vez que alguien cree o modifique algo, aparecerá aquí.</span>
+  </div>
+}
+
+@else {
+  <div class="tabla-caja">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Acción</th>
+          <th>Tipo</th>
+          <th>Fecha</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (r of registros(); track r.bitacoraId) {
+          <tr>
+            <td>
+              <div class="persona">
+                <span class="persona__avatar">{{ r.iniciales }}</span>
+                <span class="persona__nombre">{{ r.nombreUsuario }}</span>
+              </div>
+            </td>
+
+            <td class="accion">{{ r.accion }}</td>
+
+            <td>
+              <span class="tipo" [class]="'tipo tipo--' + r.tipo">
+                @switch (r.tipo) {
+                  @case ('crear')  { Creación }
+                  @case ('editar') { Edición }
+                  @case ('borrar') { Eliminación }
+                  @default         { Acción }
+                }
+              </span>
+            </td>
+
+            <td class="fecha">
+              <span class="fecha__dia">{{ r.fecha }}</span>
+              @if (r.hora) { <span class="fecha__hora">{{ r.hora }}</span> }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

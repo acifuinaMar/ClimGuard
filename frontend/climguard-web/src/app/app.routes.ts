@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard, adminGuard } from './core/guards/auth.guard';
 import { MainLayout } from './layout/main-layout';
 import { DashboardPage } from './features/dashboard/dashboard-page';
 import { LoginPage } from './features/auth/login-page';
@@ -7,6 +7,7 @@ import { SensoresPage } from './features/sensores/sensores-page';
 import { UsuariosPage } from './features/usuarios/usuarios-page';
 import { ComunidadesPage } from './features/comunidades/comunidades-page';
 import { UmbralesPage } from './features/umbrales/umbrales-page';
+import { BitacoraPage } from './features/bitacora/bitacora-page';
 
 export const routes: Routes = [
 
@@ -26,7 +27,11 @@ export const routes: Routes = [
       { path: 'sensores', component: SensoresPage },
       { path: 'comunidades', component: ComunidadesPage },
       { path: 'usuarios', component: UsuariosPage },
-      { path: 'umbrales', component: UmbralesPage }
+      { path: 'umbrales', component: UmbralesPage },
+
+      // La bitácora solo la puede ver el Administrador (regla RN-019).
+      // adminGuard lo comprueba; si no es admin, lo manda al panel.
+      { path: 'bitacora', component: BitacoraPage, canActivate: [adminGuard] }
     ]
   },
 
