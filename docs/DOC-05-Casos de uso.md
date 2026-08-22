@@ -6,15 +6,12 @@
 | Documento | Casos de uso |
 | Código | DOC-05 |
 | Versión | 1.0 |
-| Estado | En desarrollo |
+| Estado | Finalizado |
 
 ---
 
 # Objetivo
-
-El presente documento representa gráficamente la interacción entre los actores del sistema ClimGuard y los casos de uso definidos durante el análisis funcional.
-
-El diagrama permite visualizar las funcionalidades disponibles para cada actor, así como las relaciones existentes entre los diferentes casos de uso.
+El presente documento describe los casos de uso implementados en ClimGuard, especificando los actores involucrados, el flujo principal, los flujos alternos, las reglas de negocio y los requerimientos funcionales asociados a cada funcionalidad del sistema.
 
 # CU-001 – Acceder al Sistema
 
@@ -48,7 +45,6 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 - El usuario accederá al sistema.
 - El sistema identificará el rol del usuario.
 - Se mostrará el dashboard correspondiente al rol asignado.
-- La acción realizada será registrada automáticamente en la bitácora.
 
 ### En caso de fallo
 
@@ -65,8 +61,7 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 3. El sistema valida las credenciales ingresadas.
 4. El sistema verifica que la cuenta se encuentre activa.
 5. El sistema identifica el rol asignado al usuario.
-6. El sistema registra el inicio de sesión en la bitácora.
-7. El sistema muestra el dashboard correspondiente.
+6. El sistema muestra el dashboard correspondiente.
 
 ---
 
@@ -154,7 +149,7 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 - La comunidad será registrada, modificada o eliminada correctamente.
 - La información quedará actualizada.
-- - La acción realizada será registrada automáticamente en la bitácora.
+- La acción realizada será registrada automáticamente en la bitácora.
 
 ### En caso de fallo
 
@@ -275,11 +270,11 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 ## Flujos Alternos
 
-### FA-01 – Identificador duplicado
+### FA-01 – Nombre duplicado
 
-1. El sistema detecta un identificador ya registrado.
+1. El sistema detecta un nombre ya registrado.
 2. El sistema informa el error.
-3. El administrador deberá ingresar otro identificador.
+3. El administrador deberá ingresar otro nombre.
 
 ---
 
@@ -295,7 +290,6 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 - RN-005
 - RN-006
-- RN-007
 - RN-018
 
 ---
@@ -317,128 +311,27 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 - Todo sensor deberá pertenecer a una única comunidad.
 
-# CU-004 – Gestionar Usuarios
+# CU-004 – Configurar Umbrales
 
 ## Información General
 
 | Campo | Descripción |
 |--------|-------------|
 | **Código** | CU-004 |
-| **Nombre** | Gestionar usuarios |
-| **Objetivo** | Permitir al administrador registrar, consultar, modificar y desactivar usuarios, así como asignarles un rol dentro del sistema. |
+| **Nombre** | Configurar umbrales |
+| **Objetivo** | Permitir al operador configurar los valores utilizados para determinar condiciones de riesgo en las variables climáticas monitoreadas. |
 | **Actor principal** | Administrador |
 | **Actores secundarios** | — |
 | **Prioridad** | Alta |
-| **Frecuencia de uso** | Media |
-| **Disparador** | El administrador selecciona el módulo de Usuarios. |
+| **Frecuencia de uso** | Baja |
+| **Disparador** | El administrador selecciona el módulo de Configuración. |
 
 ---
 
 ## Precondiciones
 
 - El administrador deberá encontrarse autenticado.
-- El administrador deberá contar con permisos para administrar usuarios.
-
----
-
-## Postcondiciones
-
-### En caso de éxito
-
-- El usuario será registrado, actualizado o desactivado correctamente.
-- El rol asignado quedará registrado.
-- La acción realizada será registrada automáticamente en la bitácora.
-
-### En caso de fallo
-
-- No se realizarán modificaciones.
-- El sistema mostrará el motivo del error.
-
----
-
-## Flujo Principal
-
-1. El administrador accede al módulo de Usuarios.
-2. El sistema muestra el listado de usuarios registrados.
-3. El administrador selecciona la acción a realizar.
-4. El administrador ingresa o modifica la información del usuario.
-5. El administrador asigna el rol correspondiente.
-6. El sistema valida la información.
-7. El sistema guarda los cambios.
-8. El sistema confirma la operación.
-9. El sistema actualiza el listado de usuarios.
-
----
-
-## Flujos Alternos
-
-### FA-01 – Usuario duplicado
-
-1. El sistema detecta que el nombre de usuario ya existe.
-2. El sistema informa el error.
-3. El administrador deberá ingresar un nombre de usuario diferente.
-
----
-
-### FA-02 – Información inválida
-
-1. El sistema detecta información incompleta o inválida.
-2. El sistema informa los errores encontrados.
-3. El administrador corrige la información.
-
----
-
-## Reglas de Negocio Relacionadas
-
-- RN-001
-- RN-002
-- RN-016
-- RN-017
-- RN-018
-- RN-019
-
----
-
-## Requerimientos Funcionales Relacionados
-
-- USR-RF-001
-- USR-RF-002
-- USR-RF-003
-
----
-
-## Historia de Usuario Relacionada
-
-- HU-004
-
----
-
-## Observaciones
-
-- Cada usuario deberá tener un único rol asignado.
-- Un usuario desactivado no podrá iniciar sesión.
-
-# CU-005 – Configurar Umbrales
-
-## Información General
-
-| Campo | Descripción |
-|--------|-------------|
-| **Código** | CU-005 |
-| **Nombre** | Configurar umbrales |
-| **Objetivo** | Permitir al operador configurar los valores utilizados para determinar condiciones de riesgo en las variables climáticas monitoreadas. |
-| **Actor principal** | Operador |
-| **Actores secundarios** | — |
-| **Prioridad** | Alta |
-| **Frecuencia de uso** | Baja |
-| **Disparador** | El operador selecciona el módulo de Configuración. |
-
----
-
-## Precondiciones
-
-- El operador deberá encontrarse autenticado.
-- El operador deberá contar con permisos para modificar la configuración.
+- El administrador deberá contar con permisos para modificar la configuración.
 
 ---
 
@@ -459,9 +352,9 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 ## Flujo Principal
 
-1. El operador accede al módulo de Configuración.
+1. El administrador accede al módulo de Configuración.
 2. El sistema muestra los umbrales actuales.
-3. El operador modifica los valores correspondientes.
+3. El administrador modifica los valores correspondientes.
 4. El sistema valida la información ingresada.
 5. El sistema guarda la nueva configuración.
 6. El sistema registra la acción en la bitácora.
@@ -475,7 +368,7 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 1. El sistema detecta un valor fuera del rango permitido.
 2. El sistema informa el error.
-3. El operador corrige la información.
+3. El administrador corrige la información.
 
 ---
 
@@ -504,16 +397,16 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 - Los cambios únicamente afectarán las lecturas procesadas después de guardar la nueva configuración.
 
 
-# CU-006 – Monitorear Variables Climáticas
+# CU-005 – Monitorear Variables Climáticas
 
 ## Información General
 
 | Campo | Descripción |
 |--------|-------------|
-| **Código** | CU-006 |
+| **Código** | CU-005 |
 | **Nombre** | Monitorear variables climáticas |
-| **Objetivo** | Permitir al operador y al usuario de monitoreo visualizar en tiempo real las variables climáticas registradas por los sensores de las comunidades. |
-| **Actor principal** | Operador, Usuario de Monitoreo |
+| **Objetivo** | Permitir al operador visualizar en tiempo real las variables climáticas registradas por los sensores de las comunidades. |
+| **Actor principal** | Operador |
 | **Actores secundarios** | — |
 | **Prioridad** | Alta |
 | **Frecuencia de uso** | Alta |
@@ -564,16 +457,14 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 ### FA-02 – Sensor sin comunicación
 
-1. El sistema detecta que uno o más sensores no están transmitiendo información.
-2. El sistema identifica dichos sensores como inactivos.
-3. El resto de la información continúa mostrándose normalmente.
+1. Uno o más sensores no están transmitiendo información.
+2. El resto de la información continúa mostrándose normalmente.
 
 ---
 
 ## Reglas de Negocio Relacionadas
 
 - RN-005
-- RN-007
 - RN-008
 - RN-009
 
@@ -600,17 +491,17 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 - La actualización de la información deberá realizarse automáticamente mediante SignalR.
 
-# CU-007 – Recibir Alertas
+# CU-006 – Recibir Alertas
 
 ## Información General
 
 | Campo | Descripción |
 |--------|-------------|
-| **Código** | CU-007 |
+| **Código** | CU-006 |
 | **Nombre** | Recibir alertas |
 | **Objetivo** | Notificar al usuario cuando el sistema detecte una condición de riesgo. |
-| **Actor principal** | Usuario de Monitoreo |
-| **Actores secundarios** | Operador |
+| **Actor principal** | Operador |
+| **Actores secundarios** |  |
 | **Prioridad** | Alta |
 | **Frecuencia de uso** | Alta |
 | **Disparador** | Una lectura supera un umbral configurado. |
@@ -629,7 +520,7 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 ### En caso de éxito
 
 - El usuario recibirá la alerta.
-- La alerta será registrada en el historial.
+- La alerta será almacenada en la base de datos.
 
 ### En caso de fallo
 
@@ -683,21 +574,23 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 ## Observaciones
 - La generación de alertas será completamente automática.
+- La notificación de nuevas alertas será enviada en tiempo real mediante SignalR.
 
-# CU-008 – Consultar Alertas
+
+# CU-007 – Visualizar alertas activas
 
 ## Información General
 
 | Campo | Descripción |
 |--------|-------------|
-| **Código** | CU-008 |
-| **Nombre** | Consultar alertas |
-| **Objetivo** | Permitir al operador consultar el detalle de las alertas generadas por el sistema. |
+| **Código** | CU-007 |
+| **Nombre** | Visualizar alertas activas |
+| **Objetivo** | Permitir al operador visualizar las alertas activas generadas por el sistema. |
 | **Actor principal** | Operador |
 | **Actores secundarios** | — |
 | **Prioridad** | Media |
 | **Frecuencia de uso** | Alta |
-| **Disparador** | El operador selecciona una alerta registrada. |
+| **Disparador** | El operador accede al panel de alertas activas. |
 
 ---
 
@@ -712,7 +605,7 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 ### En caso de éxito
 
-- El sistema mostrará el detalle de la alerta seleccionada.
+- El sistema mostrará las alertas activas disponibles.
 
 ### En caso de fallo
 
@@ -722,11 +615,9 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 ## Flujo Principal
 
-1. El operador accede al módulo de Alertas.
-2. El sistema muestra el listado de alertas.
-3. El operador selecciona una alerta.
-4. El sistema obtiene la información correspondiente.
-5. El sistema muestra el detalle de la alerta.
+1. El operador accede al panel de alertas.
+2. El sistema obtiene las alertas activas registradas.
+3. El sistema muestra las alertas disponibles.
 
 ---
 
@@ -758,78 +649,8 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 
 - HU-008
 
-# CU-009 – Consultar Historial
 
-## Información General
-
-| Campo | Descripción |
-|--------|-------------|
-| **Código** | CU-009 |
-| **Nombre** | Consultar historial |
-| **Objetivo** | Permitir al operador consultar el historial de eventos registrados por el sistema. |
-| **Actor principal** | Operador |
-| **Actores secundarios** | — |
-| **Prioridad** | Media |
-| **Frecuencia de uso** | Media |
-| **Disparador** | El operador accede al módulo de Historial. |
-
----
-
-## Precondiciones
-
-- El operador deberá encontrarse autenticado.
-
----
-
-## Postcondiciones
-
-### En caso de éxito
-
-- El historial será mostrado correctamente.
-
-### En caso de fallo
-
-- El sistema informará el error correspondiente.
-
----
-
-## Flujo Principal
-
-1. El operador accede al módulo de Historial.
-2. El sistema muestra los eventos registrados.
-3. El operador selecciona un evento.
-4. El sistema muestra el detalle del evento.
-
----
-
-## Flujos Alternos
-
-### FA-01 – Historial vacío
-
-1. El sistema detecta que no existen eventos registrados.
-2. El sistema informa al operador.
-
----
-
-## Reglas de Negocio Relacionadas
-
-- RN-013
-
----
-
-## Requerimientos Funcionales Relacionados
-
-- HIS-RF-001
-- HIS-RF-002
-- HIS-RF-003
-
----
-
-## Historia de Usuario Relacionada
-
-- HU-009
-
-# CU-010 – Consultar Bitácora
+# CU-008 – Consultar Bitácora
 
 ## Información General
 
@@ -898,231 +719,3 @@ El diagrama permite visualizar las funcionalidades disponibles para cada actor, 
 ## Historia de Usuario Relacionada
 
 - HU-010
-
-# CU-011 – Reiniciar el sistema de monitoreo
-
-## Información General
-
-| Campo | Descripción |
-|--------|-------------|
-| **Código** | CU-011 |
-| **Nombre** | Reiniciar monitoreo |
-| **Objetivo** | Permitir al administrador reiniciar el sistema de monitoreo para restablecer su funcionamiento cuando sea necesario. |
-| **Actor principal** | Administrador |
-| **Actores secundarios** | — |
-| **Prioridad** | Media |
-| **Frecuencia de uso** | Baja |
-| **Disparador** | El administrador selecciona la opción "Reiniciar monitoreo". |
-
----
-
-## Precondiciones
-
-- El administrador deberá encontrarse autenticado.
-- El sistema deberá encontrarse en funcionamiento.
-
----
-
-## Postcondiciones
-
-### En caso de éxito
-
-- El monitoreo será reiniciado correctamente.
-
-### En caso de fallo
-
-- El sistema mantendrá el monitoreo actual.
-- Se notificará el error.
-
----
-
-## Flujo Principal
-
-1. El administrador solicita reiniciar el monitoreo.
-2. El sistema solicita confirmación.
-3. El administrador confirma la operación.
-4. El sistema reinicia el servicio de monitoreo.
-5. El sistema verifica que el servicio se encuentre nuevamente operativo.
-6. El sistema confirma que el reinicio fue realizado correctamente.
-
----
-
-## Flujos Alternos
-
-### FA-01 – Operación cancelada
-
-1. El administrador cancela la operación.
-2. El sistema finaliza el proceso sin realizar cambios.
-
----
-
-## Reglas de Negocio Relacionadas
-
-- RN-018
-
----
-
-## Requerimientos Funcionales Relacionados
-
-- CFG-RF-002
-- CFG-RF-003
-
----
-
-## Historia de Usuario Relacionada
-
-- HU-011
-
-# CU-012 – Recuperar Contraseña
-
-## Información General
-
-| Campo | Descripción |
-|--------|-------------|
-| **Código** | CU-012 |
-| **Nombre** | Recuperar contraseña |
-| **Objetivo** | Permitir al usuario iniciar el proceso de recuperación de su contraseña cuando no pueda acceder al sistema. |
-| **Actor principal** | Usuario registrado |
-| **Actores secundarios** | — |
-| **Prioridad** | Alta |
-| **Frecuencia de uso** | Baja |
-| **Disparador** | El usuario selecciona la opción "¿Olvidó su contraseña?". |
-
----
-
-## Precondiciones
-
-- El usuario deberá encontrarse registrado en el sistema.
-
----
-
-## Postcondiciones
-
-### En caso de éxito
-
-- El sistema iniciará el proceso de recuperación de contraseña.
-
-### En caso de fallo
-
-- El sistema informará el motivo por el cual no fue posible iniciar el proceso.
-
----
-
-## Flujo Principal
-
-1. El usuario selecciona la opción "Recuperar contraseña".
-2. El sistema solicita el correo electrónico asociado a la cuenta.
-3. El usuario ingresa el correo electrónico.
-4. El sistema valida la existencia del usuario.
-5. El sistema inicia el proceso de recuperación.
-6. El sistema informa que el proceso ha sido iniciado correctamente.
-
----
-
-## Flujos Alternos
-
-### FA-01 – Usuario no registrado
-
-1. El sistema detecta que el correo no pertenece a ningún usuario registrado.
-2. El sistema informa el error.
-3. El proceso finaliza.
-
----
-
-## Reglas de Negocio Relacionadas
-
-- RN-016
-
----
-
-## Requerimientos Funcionales Relacionados
-
-- AUT-RF-003
-
----
-
-## Historia de Usuario Relacionada
-
-- HU-012
-
-# CU-013 – Restablecer Contraseña
-
-## Información General
-
-| Campo | Descripción |
-|--------|-------------|
-| **Código** | CU-013 |
-| **Nombre** | Restablecer contraseña |
-| **Objetivo** | Permitir al usuario establecer una nueva contraseña para recuperar el acceso a su cuenta. |
-| **Actor principal** | Usuario registrado |
-| **Actores secundarios** | — |
-| **Prioridad** | Alta |
-| **Frecuencia de uso** | Baja |
-| **Disparador** | El usuario accede al formulario de restablecimiento de contraseña. |
-
----
-
-## Precondiciones
-
-- El usuario deberá haber iniciado correctamente el proceso de recuperación de contraseña.
-
----
-
-## Postcondiciones
-
-### En caso de éxito
-
-- La contraseña del usuario será actualizada.
-- El usuario podrá iniciar sesión con la nueva contraseña.
-
-### En caso de fallo
-
-- La contraseña permanecerá sin cambios.
-- El sistema informará el motivo del error.
-
----
-
-## Flujo Principal
-
-1. El usuario accede al formulario de restablecimiento.
-2. El sistema solicita la nueva contraseña.
-3. El usuario ingresa y confirma la nueva contraseña.
-4. El sistema valida la información.
-5. El sistema actualiza la contraseña.
-6. El sistema confirma que la operación fue realizada correctamente.
-
----
-
-## Flujos Alternos
-
-### FA-01 – Contraseñas diferentes
-
-1. El sistema detecta que las contraseñas no coinciden.
-2. El sistema informa el error.
-3. El usuario vuelve a ingresar la información.
-
----
-
-### FA-02 – Contraseña inválida
-
-1. El sistema detecta que la contraseña no cumple con las políticas establecidas.
-2. El sistema informa el error.
-3. El usuario ingresa una nueva contraseña.
-
----
-
-## Reglas de Negocio Relacionadas
-
-- RN-016
-
----
-
-## Requerimientos Funcionales Relacionados
-
-- AUT-RF-004
-
----
-
-## Historia de Usuario Relacionada
-
-- HU-013

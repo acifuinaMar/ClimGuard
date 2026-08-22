@@ -6,15 +6,15 @@
 | Documento | Diagrama de Clases |
 | Código | DOC-09 |
 | Versión | 1.0 |
-| Estado | En desarrollo |
+| Estado | Finalizado |
 
 ---
 
 # Objetivo
 
-El presente documento describe el modelo de clases del dominio del sistema ClimGuard, identificando las entidades, catálogos, enumeraciones, atributos, métodos y relaciones que conforman la estructura orientada a objetos de la aplicación.
+El presente documento describe el modelo de clases del dominio del sistema ClimGuard, representando las principales entidades, catálogos, atributos y relaciones implementadas en la aplicación.
 
-El diagrama de clases constituye la base para la implementación del sistema, permitiendo representar la organización del dominio y las responsabilidades de cada clase de acuerdo con los principios de orientación a objetos y las reglas de negocio definidas durante la etapa de análisis.
+El diagrama constituye una vista conceptual del dominio y sirve como base para comprender la estructura de los datos y la interacción entre las entidades del sistema.
 
 ---
 
@@ -40,43 +40,18 @@ class TipoSensor{
     +unidadMedida:String
 }
 
-class TipoAlerta{
-    +idTipoAlerta:int
-    +nombre:String
-    +descripcion:String
-}
-
 %%========================
 %% ENUMERACIONES
 %%========================
 
 class EstadoSensor{
-    <<enumeration>>
-    ACTIVO
-    INACTIVO
-    MANTENIMIENTO
-    FUERA_DE_LINEA
+    +EstadoSensorId:int
+    +Estado:String
 }
 
 class EstadoAlerta{
-    <<enumeration>>
-    ACTIVA
-    ATENDIDA
-    CERRADA
-}
-
-class NivelRiesgo{
-    <<enumeration>>
-    NORMAL
-    PRECAUCIÓN
-    ALERTA
-    EMERGENCIA
-}
-
-class TipoComparacion{
-    <<enumeration>>
-    MAYOR_QUE
-    MENOR_QUE
+    +EstadoAlertaId:int
+    +Estado:String
 }
 
 %%========================
@@ -84,31 +59,31 @@ class TipoComparacion{
 %%========================
 
 class Usuario{
-    +idUsuario:int
-    +nombre:String
-    +correo:String
-    +password:String
-    +activo:boolean
+    +UsuarioId:int
+    +Nombre1:String
+    +Nombre2:String
+    +Apellido1:String
+    +Apellido2:String
+    +NombreUsuario:String
+    +PasswordHash:String
+    +Activo:boolean
 }
 
 class Comunidad{
-    +idComunidad:int
-    +nombre:String
-    +descripcion:String
+    +ComunidadId:int
+    +Nombre:String
+    +Latitud:decimal
+    +Longitud:decimal
+    +Descripcion:String
 }
 
 class Sensor{
-    +idSensor:int
-    +codigo:String
-    +ubicacion:String
-    +latitud:decimal
-    +longitud:decimal
-    +estado:EstadoSensor
-    +fechaInstalacion:Date
-
-    +registrarLectura()
-    +evaluarLectura()
-    +crearAlerta()
+    +SensorId:int
+    +Nombre:String
+    +ValorActual:decimal
+    +Activo:boolean
+    +FechaInstalacion:Date
+    +UltimaActualizacion:Date
 }
 
 class Umbral{
@@ -116,9 +91,6 @@ class Umbral{
     +valorPrecaucion:decimal
     +valorAlerta:decimal
     +valorEmergencia:decimal
-    +tipoComparacion:TipoComparacion
-
-    +evaluar(valor:decimal)
 }
 
 class Lectura{
@@ -128,35 +100,35 @@ class Lectura{
 }
 
 class Alerta{
-    +idAlerta:int
-    +nivel:NivelRiesgo
-    +estado:EstadoAlerta
-    +fechaHora:DateTime
-    +descripcion:String
-
-    +cerrar()
-    +atender()
+    +AlertaId:int
+    +Mensaje:String
+    +FechaHora:DateTime
+    +FechaResolucion:DateTime
+    +Activa:boolean
 }
 
 class Notificacion{
     +idNotificacion:int
     +fechaEnvio:DateTime
     +leida:boolean
-
-    +marcarLeida()
-}
-
-class Evento{
-    +idEvento:int
-    +tipo:String
-    +descripcion:String
-    +fechaHora:DateTime
 }
 
 class Bitacora{
     +idBitacora:int
     +accion:String
     +fechaHora:DateTime
+}
+
+class NivelAlerta{
+    +NivelAlertaId:int
+    +Nombre:String
+    +ColorHex:String
+    +Orden:int
+}
+
+class TipoFenomeno{
+    +TipoFenomenoId:int
+    +Nombre:String
 }
 
 %%========================
@@ -169,25 +141,23 @@ Usuario "1" --> "*" Bitacora
 
 Comunidad "1" <-- "0..*" Sensor : monitorea >
 
-TipoSensor "1" <-- "*" Sensor
+TipoSensor "1" <-- "0..*" Sensor
 
-Sensor "1" *-- "1" Umbral
+TipoSensor "1" <-- "*" Umbral
 
-Sensor "1" *-- "*" Lectura
+Sensor "1" *-- "0..*" Lectura
 
-Sensor "1" --> "*" Alerta
+Sensor "1" <-- "0..*" Alerta
 
-Alerta "1" --> "*" Notificacion
+EstadoSensor "1" <-- "*" Sensor
 
-Alerta "1" --> "1" Evento
+EstadoAlerta "1" <-- "*" Alerta
 
-Sensor --> EstadoSensor
+NivelAlerta "1" <-- "*" Alerta
 
-Alerta --> EstadoAlerta
+TipoFenomeno "1" <-- "*" Alerta
 
-Alerta --> NivelRiesgo
-Usuario "1" --> "*" Notificacion
-TipoAlerta "1" <-- "*" Umbral
+Comunidad "1" <-- "*" Alerta
 ```
 
 ---
@@ -196,5 +166,5 @@ TipoAlerta "1" <-- "*" Umbral
 
 - El diagrama representa únicamente las clases pertenecientes al dominio del negocio.
 - Los componentes de infraestructura (Controllers, Services, Repositories, SignalR y Base de Datos) no forman parte de este modelo, ya que corresponden a la arquitectura de software.
-- La clase **Sensor** constituye la clase experta (GRASP Expert) del dominio, siendo responsable del registro de lecturas, evaluación de umbrales y creación de alertas.
-- Las enumeraciones representadas en este diagrama corresponden al modelo conceptual del dominio. Durante la implementación en la base de datos serán implementadas como tablas catálogo en el modelo relacional para facilitar su administración y escalabilidad.
+- Las entidades del dominio representan la información persistida por el sistema. La lógica de negocio asociada a la evaluación de lecturas, generación de alertas y notificaciones se implementa en la capa de servicios del backend.
+- Los estados y catálogos del sistema (Rol, TipoSensor, EstadoSensor, EstadoAlerta, NivelAlerta y TipoFenomeno) se representan como clases debido a que son administrados mediante tablas de catálogo en la base de datos.

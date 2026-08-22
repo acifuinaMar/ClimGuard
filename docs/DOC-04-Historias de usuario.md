@@ -6,7 +6,7 @@
 | Documento | Historias de Usuario |
 | Código | DOC-04 |
 | Versión | 1.0 |
-| Estado | En desarrollo |
+| Estado | Finalizado |
 
 ---
 
@@ -19,7 +19,7 @@
 
 # 1. Objetivo
 
-El presente documento describe las historias de usuario del sistema ClimGuard. Cada historia representa una necesidad del usuario expresada desde su perspectiva y servirá como base para la elaboración de los casos de uso, diagramas de secuencia y planificación del desarrollo.
+El presente documento describe las historias de usuario implementadas en ClimGuard. Cada historia representa una necesidad del usuario expresada desde su perspectiva y mantiene trazabilidad con los requerimientos funcionales, casos de uso y componentes desarrollados durante la implementación del sistema.
 
 ---
 
@@ -116,18 +116,17 @@ Garantiza la correcta administración de los dispositivos de monitoreo.
 
 ---
 
-## HU-004 – Administrar usuarios
+## HU-004 – Consultar usuarios
 
 **Como** Administrador
 
-**Quiero** gestionar los usuarios del sistema
+**Quiero** consultar la información de los usuarios registrados.
 
-**Para** controlar quién puede acceder a la plataforma.
+**Para** verificar los usuarios con acceso al sistema.
 
 **Requerimientos relacionados**
 
 - USR-RF-001
-- USR-RF-002
 
 **Prioridad**
 
@@ -135,20 +134,18 @@ Alta
 
 **Criterios de aceptación**
 
-- El administrador podrá registrar usuarios.
-- El administrador podrá modificar usuarios.
-- El administrador podrá desactivar usuarios.
-- El administrador podrá asignar roles.
+- El administrador podrá consultar los usuarios.
+- El sistema mostrará el rol de cada usuario.
 
-**Valor de negocio**
+**Nota**
 
-Permite mantener un control adecuado sobre el acceso al sistema.
+La creación de usuarios será responsabilidad del DBA y no forma parte del alcance del sistema.
 
 ---
 
 ## HU-005 – Configurar umbrales
 
-**Como** Operador
+**Como** Administrador
 
 **Quiero** configurar los umbrales de las variables climáticas
 
@@ -164,9 +161,9 @@ Alta
 
 **Criterios de aceptación**
 
-- El operador podrá configurar los umbrales.
+- El administrador podrá configurar los umbrales.
 - Los cambios deberán aplicarse a futuras lecturas.
-- Solo usuarios autorizados podrán modificar los umbrales.
+- Solo usuarios autorizados podrán modificar los umbrales (administrador).
 
 **Valor de negocio**
 
@@ -176,7 +173,7 @@ Permite adaptar el sistema a las condiciones de cada comunidad.
 
 ## HU-006 – Monitorear variables climáticas
 
-**Como** Operador o Usuario de Monitoreo
+**Como** Operador
 
 **Quiero** visualizar las variables climáticas en tiempo real
 
@@ -209,7 +206,7 @@ Facilita el monitoreo continuo de las condiciones climáticas.
 
 ## HU-007 – Recibir alertas
 
-**Como** Usuario de Monitoreo
+**Como** operador
 
 **Quiero** recibir alertas cuando exista una condición de riesgo
 
@@ -235,9 +232,12 @@ Alta
 
 Reduce el tiempo de respuesta ante eventos climáticos.
 
+**Nota**
+Las alertas serán notificadas en tiempo real mediante SignalR.
+
 ---
 
-## HU-008 – Consultar alertas
+## HU-008 – Visualizar alertas activas
 
 **Como** Operador
 
@@ -263,36 +263,7 @@ Facilita la evaluación de las situaciones de riesgo.
 
 ---
 
-## HU-009 – Consultar historial
-
-**Como** Operador
-
-**Quiero** consultar el historial de eventos
-
-**Para** analizar eventos ocurridos anteriormente.
-
-**Requerimientos relacionados**
-
-- HIS-RF-001
-- HIS-RF-002
-- HIS-RF-003
-
-**Prioridad**
-
-Media
-
-**Criterios de aceptación**
-
-- El sistema mostrará el historial registrado.
-- El usuario podrá consultar el detalle de cada evento.
-
-**Valor de negocio**
-
-Permite realizar seguimiento y análisis histórico de los eventos registrados.
-
----
-
-## HU-010 – Consultar bitácora
+## HU-009– Consultar bitácora
 
 **Como** Administrador
 
@@ -312,89 +283,8 @@ Media
 
 - El administrador podrá consultar la bitácora.
 - El sistema mostrará el usuario, fecha, hora y acción realizada.
+- Solo el administrador podrá acceder a este módulo.
 
 **Valor de negocio**
 
 Facilita la auditoría y trazabilidad de las acciones administrativas.
-
----
-
-## HU-011 – Reiniciar monitoreo
-
-**Como** Administrador
-
-**Quiero** reiniciar el proceso de monitoreo
-
-**Para** restablecer el funcionamiento del sistema cuando sea necesario.
-
-**Requerimientos relacionados**
-
-- CFG-RF-002
-- CFG-RF-003
-
-**Prioridad**
-
-Media
-
-**Criterios de aceptación**
-
-- El administrador podrá reiniciar el monitoreo.
-- El sistema continuará operando correctamente después del reinicio.
-
-**Valor de negocio**
-
-Permite recuperar rápidamente la operación del sistema.
-
----
-
-## HU-012 – Recuperar contraseña
-
-**Como** usuario registrado
-
-**Quiero** solicitar la recuperación de mi contraseña
-
-**Para** volver a acceder al sistema cuando la haya olvidado.
-
-**Requerimientos relacionados**
-
-- AUT-RF-003
-
-**Prioridad**
-
-Alta
-
-**Criterios de aceptación**
-
-- El usuario podrá solicitar la recuperación.
-- El sistema iniciará el proceso de validación correspondiente.
-
-**Valor de negocio**
-
-Reduce la dependencia del administrador para recuperar accesos.
-
----
-
-## HU-013 – Restablecer contraseña
-
-**Como** usuario registrado
-
-**Quiero** establecer una nueva contraseña
-
-**Para** recuperar el acceso a mi cuenta.
-
-**Requerimientos relacionados**
-
-- AUT-RF-004
-
-**Prioridad**
-
-Alta
-
-**Criterios de aceptación**
-
-- El usuario podrá registrar una nueva contraseña.
-- El sistema validará que el proceso de recuperación haya sido autorizado.
-
-**Valor de negocio**
-
-Garantiza la continuidad del acceso al sistema de forma segura.

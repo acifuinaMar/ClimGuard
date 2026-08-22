@@ -178,113 +178,11 @@ Permite a un usuario autenticarse en el sistema.
 
 ## 2.1 Usuarios
 
-### Obtener usuarios
+La administración de usuarios no forma parte del alcance del primer release de ClimGuard.
 
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/usuarios` |
-| Autenticación | Sí |
-| Roles | Administrador |
-| RF relacionado | USR-RF-001 |
+Los usuarios y sus roles son administrados directamente por el administrador de la base de datos, por lo que la API no expone endpoints para crear, modificar o eliminar usuarios.
 
-### Response
-
-```json
-{
-    "success":true,
-    "data":[
-        {
-            "idUsuario":1,
-            "nombre":"Administrador",
-            "correo":"admin@climguard.com",
-            "rol":"Administrador",
-            "activo":true
-        }
-    ]
-}
-```
-
----
-
-### Obtener usuario
-
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/usuarios/{id}` |
-| Autenticación | Sí |
-| Roles | Administrador |
-| RF relacionado | USR-RF-001 |
-
----
-
-### Crear usuario
-
-| Campo | Valor |
-|--------|-------|
-| Método | **POST** |
-| Endpoint | `/api/usuarios` |
-| Autenticación | Sí |
-| Roles | Administrador |
-| RF relacionado | USR-RF-002 |
-
-### Request
-
-```json
-{
-    "nombre":"Juan Pérez",
-    "correo":"juan@climguard.com",
-    "password":"123456",
-    "idRol":2
-}
-```
-
-### Response
-
-```json
-{
-    "success":true,
-    "message":"Usuario creado correctamente."
-}
-```
-
----
-
-### Actualizar usuario
-
-| Campo | Valor |
-|--------|-------|
-| Método | **PUT** |
-| Endpoint | `/api/usuarios/{id}` |
-| Autenticación | Sí |
-| Roles | Administrador |
-| RF relacionado | USR-RF-002 |
-
-### Request
-
-```json
-{
-    "nombre":"Juan Pérez",
-    "correo":"juan@climguard.com",
-    "idRol":2,
-    "activo":true
-}
-```
-
----
-
-### Eliminar usuario
-
-| Campo | Valor |
-|--------|-------|
-| Método | **DELETE** |
-| Endpoint | `/api/usuarios/{id}` |
-| Autenticación | Sí |
-| Roles | Administrador |
-| RF relacionado | USR-RF-002 |
-
----
+Únicamente se utilizan los endpoints de autenticación para validar las credenciales del usuario y obtener su información de sesión.
 
 ## 2.2 Comunidades
 
@@ -349,10 +247,11 @@ PUT `/api/comunidades/{id}`
 
 ### Eliminar comunidad
 
-DELETE `/api/comunidades/{id}`
+DELETE /api/comunidades/{id}
 
 > Regla de negocio:
-> Una comunidad únicamente podrá eliminarse cuando no existan sensores asociados.
+
+> Antes de eliminar una comunidad el sistema validará que la operación no comprometa la integridad referencial de la información almacenada.
 
 ---
 
@@ -428,13 +327,24 @@ POST `/api/sensores`
 PUT `/api/sensores/{id}`
 
 ---
+### Cambiar estado del sensor
 
-### Eliminar sensor
+| Campo | Valor |
+|--------|-------|
+| Método | **PATCH** |
+| Endpoint | `/api/sensores/{id}/estado` |
+| Autenticación | Sí |
+| Roles | Administrador |
+| RF relacionado | SEN-RF-002 |
 
-DELETE `/api/sensores/{id}`
+### Request
 
-> Regla de negocio:
-> Un sensor únicamente podrá eliminarse cuando no posea lecturas ni alertas asociadas.
+```json
+{
+    "activo": false
+}
+```
+> El sistema permitirá activar o desactivar sensores mediante la actualización de su estado. Los sensores no serán eliminados físicamente del sistema.
 
 ---
 
@@ -456,35 +366,13 @@ GET `/api/umbrales/{id}`
 
 ---
 
-### Crear umbral
-
-POST `/api/umbrales`
-
-```json
-{
-    "idSensor":1,
-    "idTipoComparacion":2,
-    "idTipoAlerta":1,
-    "valorPrecaucion":5,
-    "valorAlerta":0,
-    "valorEmergencia":-5
-}
-```
-
----
-
 ### Actualizar umbral
 
 PUT `/api/umbrales/{id}`
-
----
-
-### Eliminar umbral
-
-DELETE `/api/umbrales/{id}`
-
 > Regla de negocio:
-> Cada sensor únicamente podrá poseer un umbral activo.
+
+> El sistema únicamente permitirá modificar los valores de los umbrales previamente configurados para cada tipo de sensor. No se contempla la creación ni eliminación de umbrales durante la operación del sistema.
+---
 
 # 3. Monitoreo
 
@@ -500,8 +388,8 @@ El módulo de monitoreo concentra las operaciones relacionadas con la recepción
 |--------|-------|
 | Método | **POST** |
 | Endpoint | `/api/lecturas` |
-| Autenticación | Sí |
-| Roles | Administrador |
+| Autenticación | No (servicio interno) |
+| Roles | Sistema |
 | RF relacionado | MON-RF-001 |
 
 ### Descripción
@@ -584,7 +472,7 @@ GET /api/lecturas?idSensor=3&fechaInicio=2026-08-01&fechaFin=2026-08-31
 
 ## 3.2 Alertas
 
-### 3.2.1 Consultar alertas
+### 3.2.1 Visualizar alertas activas
 
 | Campo | Valor |
 |--------|-------|
@@ -711,6 +599,11 @@ GET /api/lecturas?idSensor=3&fechaInicio=2026-08-01&fechaFin=2026-08-31
 ---
 
 ### 3.3.2 Obtener evolución de lecturas
+### Descripción
+
+Obtiene la información utilizada para representar la gráfica del Dashboard.
+
+En el primer release los valores mostrados corresponden a datos simulados utilizados para fines demostrativos.
 
 | Campo | Valor |
 |--------|-------|
@@ -817,7 +710,7 @@ GET /api/bitacora?idUsuario=2&fechaInicio=2026-08-01&fechaFin=2026-08-31
 - Los nombres de los endpoints se definieron siguiendo principios REST.
 - Las respuestas de la API utilizarán JSON como formato de intercambio.
 - Los códigos HTTP deberán emplearse conforme a su significado estándar.
-
+- Algunos indicadores mostrados en el Dashboard corresponden a información simulada utilizada durante el desarrollo del primer release del sistema.
 ---
 
 # Consideraciones de Implementación
@@ -829,5 +722,6 @@ GET /api/bitacora?idUsuario=2&fechaInicio=2026-08-01&fechaFin=2026-08-31
 - La validación de los datos de entrada deberá realizarse tanto en el cliente como en el servidor.
 - Las alertas serán generadas automáticamente por el sistema al evaluar las lecturas registradas contra los umbrales configurados.
 - La documentación de la API podrá complementarse mediante Swagger/OpenAPI durante la etapa de desarrollo.
+- La activación y desactivación de sensores se realiza mediante la actualización de su estado. El sistema no contempla la eliminación física de sensores durante la operación.
 
 ---

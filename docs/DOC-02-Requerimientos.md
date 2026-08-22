@@ -1,12 +1,19 @@
 # ClimGuard
-## Requerimientos
+## Sistema Web de Monitoreo y Alerta Temprana para Riesgos Climáticos
 
 | Proyecto | ClimGuard |
 |-----------|-----------|
-| Documento | Requerimientos |
+| Documento | Especificación de Requerimientos |
 | Código | DOC-02 |
 | Versión | 1.0 |
-| Estado | En desarrollo |
+| Estado | Finalizado |
+| Fecha | Agosto 2026 |
+| Tecnologías | Angular 20, .NET 10, SQL Server 2022, SignalR, Docker Compose |
+---
+
+# Introducción
+
+El presente documento especifica los requerimientos funcionales y no funcionales del sistema **ClimGuard**, identificando las funcionalidades implementadas, las restricciones técnicas, los supuestos del proyecto y los criterios generales de aceptación. Este documento sirve como base para verificar que la solución desarrollada cumple con los objetivos definidos durante el análisis y diseño del sistema.
 
 ---
 
@@ -37,32 +44,6 @@
 | **Actor** | Administrador, Operador, Usuario de Monitoreo |
 | **Prioridad** | Alta |
 | **Descripción** | El sistema deberá permitir a los usuarios finalizar su sesión de forma segura. |
-
----
-
-### AUT-RF-003 – Recuperar contraseña
-
-| Campo | Descripción |
-|--------|-------------|
-| **Código** | AUT-RF-003 |
-| **Nombre** | Recuperar contraseña |
-| **Módulo** | Autenticación |
-| **Actor** | Administrador, Operador, Usuario de Monitoreo |
-| **Prioridad** | Baja |
-| **Descripción** | El sistema deberá permitir al usuario solicitar el proceso de recuperación de su contraseña. |
-
----
-
-### AUT-RF-004 – Restablecer contraseña
-
-| Campo | Descripción |
-|--------|-------------|
-| **Código** | AUT-RF-004 |
-| **Nombre** | Restablecer contraseña |
-| **Módulo** | Autenticación |
-| **Actor** | Administrador, Operador, Usuario de Monitoreo |
-| **Prioridad** | Baja |
-| **Descripción** | El sistema deberá permitir al usuario establecer una nueva contraseña una vez validado el proceso de recuperación. |
 
 ---
 
@@ -213,7 +194,7 @@
 | **Módulo** | Gestión de Sensores |
 | **Actor** | Administrador |
 | **Prioridad** | Alta |
-| **Descripción** | El sistema deberá permitir registrar, consultar y modificar la información de los sensores. |
+| **Descripción** | El sistema deberá permitir registrar, consultar y modificar la información de los sensores registrados. |
 
 ---
 
@@ -260,16 +241,16 @@
 
 ## 7. Módulo de Gestión de Usuarios
 
-### USR-RF-001 – Gestionar usuarios
+### USR-RF-001 – Administrar información de usuarios
 
 | Campo | Descripción |
 |--------|-------------|
 | **Código** | USR-RF-001 |
-| **Nombre** | Gestionar usuarios |
+| **Nombre** | Administrar información de usuarios |
 | **Módulo** | Gestión de Usuarios |
 | **Actor** | Administrador |
 | **Prioridad** | Alta |
-| **Descripción** | El sistema deberá permitir registrar, consultar, modificar y desactivar usuarios del sistema. |
+| **Descripción** | El sistema deberá permitir consultar la información de los usuarios registrados. La creación de nuevas cuentas será responsabilidad del administrador de la base de datos (DBA), por tratarse de una plataforma institucional. |
 
 ---
 
@@ -350,28 +331,15 @@
 | **Módulo** | Configuración |
 | **Actor** | Operador |
 | **Prioridad** | Alta |
-| **Descripción** | El sistema deberá permitir configurar los umbrales utilizados para la detección de condiciones de riesgo. |
+| **Descripción** |El sistema deberá permitir modificar los valores de precaución, alerta y emergencia asociados a cada uno de los tipos de sensor definidos en el sistema. |
 
 ---
 
-### CFG-RF-002 – Reiniciar monitoreo
+### CFG-RF-002 – Configurar parámetros generales
 
 | Campo | Descripción |
 |--------|-------------|
 | **Código** | CFG-RF-002 |
-| **Nombre** | Reiniciar monitoreo |
-| **Módulo** | Configuración |
-| **Actor** | Administrador |
-| **Prioridad** | Media |
-| **Descripción** | El sistema deberá permitir reiniciar el proceso de monitoreo cuando sea requerido. |
-
----
-
-### CFG-RF-003 – Configurar parámetros generales
-
-| Campo | Descripción |
-|--------|-------------|
-| **Código** | CFG-RF-003 |
 | **Nombre** | Configurar parámetros generales |
 | **Módulo** | Configuración |
 | **Actor** | Administrador |
@@ -409,7 +377,7 @@
 | **Código** | RNF-003 |
 | **Nombre** | Rendimiento |
 | **Prioridad** | Alta |
-| **Descripción** | El sistema deberá actualizar la información en tiempo real sin retrasos perceptibles para el usuario. |
+| **Descripción** | El sistema deberá actualizar automáticamente las lecturas y alertas mediante SignalR, manteniendo tiempos de respuesta adecuados para el monitoreo en tiempo real. |
 
 ---
 
@@ -420,7 +388,7 @@
 | **Código** | RNF-004 |
 | **Nombre** | Seguridad |
 | **Prioridad** | Alta |
-| **Descripción** | El acceso al sistema deberá realizarse únicamente mediante autenticación de usuarios y control de permisos según el rol asignado. |
+| **Descripción** | El acceso al sistema deberá realizarse mediante autenticación de usuarios y autorización basada en roles, utilizando tokens JWT para proteger los recursos de la API. |
 
 ---
 
@@ -453,7 +421,7 @@
 | **Código** | RNF-007 |
 | **Nombre** | Mantenibilidad |
 | **Prioridad** | Media |
-| **Descripción** | La solución deberá desarrollarse utilizando una arquitectura modular que facilite su mantenimiento y evolución. |
+| **Descripción** | La solución deberá desarrollarse utilizando una arquitectura en capas que facilite su mantenimiento y evolución. |
 
 ---
 
@@ -464,7 +432,7 @@
 | **Código** | RNF-008 |
 | **Nombre** | Portabilidad |
 | **Prioridad** | Media |
-| **Descripción** | La solución deberá poder desplegarse mediante contenedores Docker en entornos compatibles. |
+| **Descripción** | La solución deberá poder desplegarse mediante contenedores Docker Compose en entornos compatibles. |
 
 ---
 
@@ -488,6 +456,17 @@
 | **Prioridad** | Media |
 | **Descripción** | La interfaz del sistema deberá adaptarse correctamente a diferentes resoluciones de pantalla y dispositivos.
 
+---
+
+## RNF-011 – Despliegue
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | RNF-011 |
+| **Nombre** | Despliegue |
+| **Prioridad** | Media |
+| **Descripción** | El sistema deberá poder desplegarse utilizando Docker Compose, permitiendo reproducir el entorno de ejecución de manera consistente.|
+
 # Restricciones
 
 | Código | Restricción |
@@ -496,9 +475,10 @@
 | RES-002 | El backend deberá implementarse utilizando .NET 10 o una versión superior. |
 | RES-003 | La base de datos deberá implementarse utilizando SQL Server 2022 o una versión superior. |
 | RES-004 | La comunicación entre el cliente y el servidor deberá realizarse mediante una API REST. |
-| RES-005 | La solución deberá ejecutarse mediante contenedores Docker. |
+| RES-005 | La solución deberá ejecutarse mediante contenedores Docker Compose. |
 | RES-006 | El sistema deberá implementar comunicación en tiempo real utilizando SignalR. |
 | RES-007 | Toda la documentación del proyecto deberá desarrollarse en formato Markdown (.md). |
+| RES-008 | La autenticación deberá implementarse utilizando JWT. |
 
 # Supuestos
 
@@ -510,6 +490,7 @@
 | SUP-004 | Existirá conectividad de red entre el cliente, el servidor y los dispositivos que transmitan información. |
 | SUP-005 | Los navegadores utilizados por los usuarios tendrán habilitado JavaScript. |
 | SUP-006 | Los valores recibidos por el sistema corresponderán a variables climáticas previamente definidas y configuradas. |
+|SUP-007 | La base de datos deberá encontrarse inicializada con los catálogos necesarios para el funcionamiento del sistema.|
 
 # Dependencias
 
@@ -519,10 +500,11 @@
 | DEP-002 | .NET 10 |
 | DEP-003 | SQL Server 2022 |
 | DEP-004 | SignalR |
-| DEP-005 | Docker |
+| DEP-005 | Docker Compose|
 | DEP-006 | Git |
 | DEP-007 | GitHub |
 | DEP-008 | Navegador web compatible |
+| DEP-009 | JWT|
 
 # Criterios Generales de Aceptación
 
@@ -533,8 +515,11 @@ Para considerar que el sistema ClimGuard cumple con la presente especificación 
 - Cada usuario únicamente podrá acceder a las funcionalidades autorizadas según su rol.
 - El sistema deberá registrar y almacenar correctamente las lecturas, alertas y eventos generados.
 - El sistema deberá detectar automáticamente condiciones de riesgo utilizando los umbrales configurados.
-- Las alertas deberán notificarse oportunamente a los usuarios correspondientes.
 - La información del dashboard deberá actualizarse en tiempo real.
 - El sistema deberá ejecutarse correctamente utilizando contenedores Docker.
 - Toda la información deberá persistirse correctamente en la base de datos SQL Server.
 - La solución deberá cumplir con los requerimientos no funcionales definidos en este documento.
+- El sistema deberá permitir la actualización de los umbrales asociados a cada tipo de sensor.
+- El sistema deberá mostrar las alertas generadas en tiempo real mediante SignalR.
+- El sistema deberá registrar en la bitácora las acciones realizadas por los usuarios autorizados.
+- El sistema deberá ejecutarse correctamente utilizando Docker Compose.

@@ -6,15 +6,15 @@
 | Documento | Diagramas de Secuencia |
 | Código | DOC-08 |
 | Versión | 1.0 |
-| Estado | En desarrollo |
+| Estado | Finalizado |
 
 ---
 
 # Objetivo
 
-El presente documento representa la interacción dinámica entre los diferentes componentes del sistema ClimGuard durante la ejecución de los casos de uso principales.
+El presente documento describe la secuencia de interacción entre los actores y los componentes del sistema ClimGuard durante la ejecución de los principales casos de uso implementados.
 
-Los diagramas muestran la secuencia de mensajes intercambiados entre actores, componentes del frontend, backend, servicios y base de datos.
+Cada diagrama muestra el intercambio de mensajes entre la interfaz web, la API REST, los servicios de negocio, el acceso a datos y la base de datos SQL Server.
 
 # DS-001- Acceder al sistema
 ```mermaid
@@ -46,7 +46,7 @@ AuthService->>AuthService: Validar contraseña
 
 alt Credenciales válidas
 
-    AuthService-->>AuthController: JWT + Rol
+    AuthService-->>AuthController: Token JWT
 
     AuthController-->>Login: Inicio de sesión exitoso
 
@@ -63,7 +63,7 @@ else Credenciales inválidas
 end
 ```
 
-# DS-002- Gestión administrativa
+# DS-002- Administración de comunidades y sensores
 ```mermaid
 sequenceDiagram
 
@@ -75,7 +75,7 @@ participant Service
 participant Repository
 participant SQL as SQL Server
 
-Administrador->>Vista: Registrar / Modificar / Eliminar
+Administrador->>Vista: Registrar / Modificar / Activar / Desactivar
 
 Vista->>Controller: Enviar solicitud
 
@@ -100,9 +100,9 @@ Vista-->>Administrador: Mostrar confirmación
 ```mermaid
 sequenceDiagram
 
-actor Operador
+actor Administrador
 
-participant Config as ConfiguracionComponent
+participant Config as UmbralesComponent
 participant Controller as ConfiguracionController
 participant Service as UmbralService
 participant Repository as UmbralRepository
@@ -182,8 +182,8 @@ Dashboard->>Dashboard: Actualizar indicadores
 
 end
 ```
+# DS-005 – Recibir alertas
 
-# DS-005- Recibir alertas
 ```mermaid
 sequenceDiagram
 
@@ -192,189 +192,57 @@ participant Controller as LecturaController
 participant LecturaService
 participant UmbralService
 participant AlertaService
-participant EventoService
 participant Repository
 participant SQL as SQL Server
 participant Hub as SignalR Hub
 actor Usuario
 
 Sensor->>Controller: Enviar lectura
-
 Controller->>LecturaService: registrarLectura()
 
 LecturaService->>Repository: guardarLectura()
-
 Repository->>SQL: INSERT Lectura
-
 SQL-->>Repository: OK
-
 Repository-->>LecturaService: Confirmación
 
 LecturaService->>UmbralService: evaluarLectura()
 
 alt Supera umbral
-
     UmbralService->>AlertaService: generarAlerta()
 
     AlertaService->>Repository: guardarAlerta()
-
     Repository->>SQL: INSERT Alerta
-
     SQL-->>Repository: OK
+    Repository-->>AlertaService: Confirmación
 
-    AlertaService->>EventoService: registrarEvento()
-
-    EventoService->>Repository: guardarEvento()
-
-    Repository->>SQL: INSERT Evento
-
-    SQL-->>Repository: OK
-
-    EventoService->>Hub: Notificar
-
+    AlertaService->>Hub: Notificar alerta
     Hub-->>Usuario: Mostrar alerta
 
 else Lectura normal
-
     UmbralService-->>LecturaService: Sin alerta
-
 end
 ```
 
-# DS-006- Reiniciar el sistema de monitoreo
+# DS-006 - Consultar bitácora
 ```mermaid
 sequenceDiagram
 
 actor Administrador
 
-participant Config as ConfiguracionComponent
-participant Controller as ConfiguracionController
-participant Service as MonitoreoService
-participant Hub as SignalR Hub
-
-Administrador->>Config: Seleccionar "Reiniciar sistema"
-
-Config->>Administrador: Solicitar confirmación
-
-Administrador->>Config: Confirmar reinicio
-
-Config->>Controller: POST /reiniciar
-
-Controller->>Service: reiniciarSistema()
-
-Service->>Service: Reiniciar servicio de monitoreo
-
-alt Reinicio exitoso
-
-    Service->>Hub: Notificar reinicio
-
-    Hub-->>Config: Estado actualizado
-
-    Service-->>Controller: OK
-
-    Controller-->>Config: Confirmación
-
-    Config-->>Administrador: Mostrar mensaje de éxito
-
-else Error durante el reinicio
-
-    Service-->>Controller: Error
-
-    Controller-->>Config: Mostrar error
-
-    Config-->>Administrador: Informar fallo
-
-end
-```
-
-# DS-007- Recuperar contraseña
-```mermaid
-sequenceDiagram
-
-actor Usuario
-
-participant Login as LoginComponent
-participant Controller as AuthController
-participant Service as AuthService
-participant Repository as UsuarioRepository
+participant Vista as BitacoraComponent
+participant Controller as BitacoraController
+participant Service as BitacoraService
+participant Repository as BitacoraRepository
 participant SQL as SQL Server
 
-Usuario->>Login: Seleccionar "¿Olvidó su contraseña?"
-
-Login->>Controller: POST /recuperar
-
-Controller->>Service: recuperarPassword()
-
-Service->>Repository: buscarUsuario()
-
-Repository->>SQL: SELECT Usuario
-
-SQL-->>Repository: Datos
-
-Repository-->>Service: Usuario encontrado
-
-alt Usuario existe
-
-    Service-->>Controller: Recuperación iniciada
-
-    Controller-->>Login: Mostrar confirmación
-
-    Login-->>Usuario: Revisar correo electrónico
-
-else Usuario no existe
-
-    Service-->>Controller: Error
-
-    Controller-->>Login: Usuario no encontrado
-
-    Login-->>Usuario: Mostrar mensaje
-
-end
-```
-
-# DS-008- Restablecer contraseña
-```mermaid
-sequenceDiagram
-
-actor Usuario
-
-participant Login as LoginComponent
-participant Controller as AuthController
-participant Service as AuthService
-participant Repository as UsuarioRepository
-participant SQL as SQL Server
-
-Usuario->>Login: Ingresar nueva contraseña
-
-Login->>Controller: POST /restablecer
-
-Controller->>Service: actualizarPassword()
-
-Service->>Service: Validar contraseña
-
-alt Contraseña válida
-
-    Service->>Repository: actualizarPassword()
-
-    Repository->>SQL: UPDATE Usuario
-
-    SQL-->>Repository: Confirmación
-
-    Repository-->>Service: OK
-
-    Service-->>Controller: Actualización exitosa
-
-    Controller-->>Login: Mostrar confirmación
-
-    Login-->>Usuario: Contraseña actualizada
-
-else Contraseña inválida
-
-    Service-->>Controller: Error
-
-    Controller-->>Login: Mostrar validaciones
-
-    Login-->>Usuario: Corregir contraseña
-
-end
+Administrador->>Vista: Accede al módulo de Bitácora
+Vista->>Controller: GET /bitacora
+Controller->>Service: obtenerRegistros()
+Service->>Repository: consultarBitacora()
+Repository->>SQL: SELECT Bitacora
+SQL-->>Repository: Registros
+Repository-->>Service: Resultado
+Service-->>Controller: Lista de registros
+Controller-->>Vista: Mostrar bitácora
+Vista-->>Administrador: Visualizar registros
 ```

@@ -6,7 +6,7 @@
 | Documento | Modelo de Base de Datos |
 | Código | DOC-10 |
 | Versión | 1.0 |
-| Estado | En desarrollo |
+| Estado | Finalizado |
 
 ---
 
@@ -27,7 +27,6 @@ Para construir el modelo relacional se aplicaron las siguientes reglas:
 - Cada entidad del dominio se transforma en una tabla.
 - Los catálogos se implementan como tablas independientes para facilitar la administración de sus valores.
 - Las relaciones uno a muchos se implementan mediante claves foráneas.
-- Las relaciones uno a uno se implementan mediante claves foráneas con restricción de unicidad.
 - Todas las claves primarias utilizan **INT IDENTITY(1,1)**.
 - Todas las claves foráneas utilizan **INT**.
 
@@ -41,11 +40,10 @@ El sistema utiliza las siguientes tablas catálogo.
 |--------|-------------|
 | Rol | Define los permisos asignados a cada usuario. |
 | TipoSensor | Clasifica los sensores según la variable climática monitoreada. |
-| EstadoSensor | Indica el estado operativo de un sensor. |
-| NivelRiesgo | Clasifica el nivel de gravedad de una alerta. |
-| EstadoAlerta | Representa el estado actual de una alerta. |
-| TipoAlerta | Clasifica el fenómeno climático detectado. |
-| TipoComparacion | Define si el umbral debe evaluarse cuando el valor supera o es inferior al límite configurado. |
+| NivelAlerta | Define los niveles de severidad de las alertas. |
+| TipoFenomeno | Clasifica el fenómeno climático asociado a una alerta. |
+| EstadoSensor | Define los estados operativos de un sensor. |
+| EstadoAlerta | Define el estado de una alerta. |
 
 ---
 
@@ -62,7 +60,6 @@ El sistema está compuesto por las siguientes entidades principales.
 | Lectura | Mediciones registradas por un sensor. |
 | Alerta | Riesgos detectados automáticamente por el sistema. |
 | Notificacion | Notificaciones enviadas a los usuarios. |
-| Evento | Historial de eventos importantes del sistema. |
 | Bitacora | Registro de acciones realizadas por los usuarios. |
 
 ---
@@ -74,218 +71,33 @@ erDiagram
 
 ROL ||--o{ USUARIO : posee
 
-COMUNIDAD o|--o{ SENSOR : monitorea
+COMUNIDAD ||--o{ SENSOR : contiene
 
 TIPO_SENSOR ||--o{ SENSOR : clasifica
 
-ESTADO_SENSOR ||--o{ SENSOR : estado
+TIPO_SENSOR ||--o{ UMBRAL : configura
 
-SENSOR ||--|| UMBRAL : configura
+SENSOR ||--o{ LECTURA : genera
 
-TIPO_COMPARACION ||--o{ UMBRAL : compara
+SENSOR ||--o{ ALERTA : origina
 
-TIPO_ALERTA ||--o{ UMBRAL : genera
+COMUNIDAD ||--o{ ALERTA : afecta
 
-SENSOR ||--o{ LECTURA : registra
+TIPO_FENOMENO ||--o{ ALERTA : clasifica
 
-SENSOR ||--o{ ALERTA : genera
-
-NIVEL_RIESGO ||--o{ ALERTA : clasifica
+NIVEL_ALERTA ||--o{ ALERTA : severidad
 
 ESTADO_ALERTA ||--o{ ALERTA : estado
 
-TIPO_ALERTA ||--o{ ALERTA : identifica
-
-ALERTA ||--o{ NOTIFICACION : genera
-
-USUARIO ||--o{ NOTIFICACION : recibe
-
-ALERTA ||--|| EVENTO : registra
-
-USUARIO ||--o{ BITACORA : realiza
+USUARIO ||--o{ BITACORA : registra
 ```
 
 ---
 
 # 5. Modelo Relacional
+Las relaciones entre las tablas se implementan mediante claves foráneas, conforme al modelo entidad-relación presentado anteriormente.
 
-## Rol
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idRol | INT | Sí |-| No |
-| nombre | VARCHAR(50) |-|-| No |
-| descripcion | VARCHAR(200) |-|-| Sí |
-
----
-
-## Usuario
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idUsuario | INT | Sí |-| No |
-| idRol | INT |-| Sí | No |
-| nombre | VARCHAR(100) |-|-| No |
-| correo | VARCHAR(100) |-|-| No |
-| password | VARCHAR(255) |-|-| No |
-| activo | BIT |-|-| No |
-
----
-
-## Comunidad
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idComunidad | INT | Sí |-| No |
-| nombre | VARCHAR(100) |-|-| No |
-| descripcion | VARCHAR(250) |-|-| Sí |
-
----
-
-## TipoSensor
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idTipoSensor | INT | Sí |-| No |
-| nombre | VARCHAR(50) |-|-| No |
-| unidadMedida | VARCHAR(20) |-|-| No |
-
----
-
-## EstadoSensor
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idEstadoSensor | INT | Sí |-| No |
-| nombre | VARCHAR(50) |-|-| No |
-
----
-
-## Sensor
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idSensor | INT | Sí |-| No |
-| idComunidad | INT |-| Sí | Sí |
-| idTipoSensor | INT |-| Sí | No |
-| idEstadoSensor | INT |-| Sí | No |
-| codigo | VARCHAR(50) |-|-| No |
-| ubicacion | VARCHAR(100) |-|-| No |
-| latitud | DECIMAL(9,6) |-|-| No |
-| longitud | DECIMAL(9,6) |-|-| No |
-| fechaInstalacion | DATETIME2 |-|-| No |
-
----
-
-## Umbral
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idUmbral | INT | Sí |-| No |
-| idSensor | INT |-| Sí | No |
-| valorPrecaucion | DECIMAL(10,2) |-|-| No |
-| valorAlerta | DECIMAL(10,2) |-|-| No |
-| valorEmergencia | DECIMAL(10,2) |-|-| No |
-| idTipoComparacion | INT |-|Sí| No |
-| idTipoAlerta | INT |-|Sí| No |
-
----
-
-## Lectura
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idLectura | INT | Sí |-| No |
-| idSensor | INT |-| Sí | No |
-| valor | DECIMAL(10,2) |-|-| No |
-| fechaHora | DATETIME2 |-|-| No |
-
----
-
-## NivelRiesgo
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idNivelRiesgo | INT | Sí |-| No |
-| nombre | VARCHAR(50) |-|-| No |
-
----
-
-## EstadoAlerta
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idEstadoAlerta | INT | Sí |-| No |
-| nombre | VARCHAR(50) |-|-| No |
-
----
-
-## TipoAlerta
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idTipoAlerta | INT | Sí |-| No |
-| nombre | VARCHAR(100) |-|-| No |
-| descripcion | VARCHAR(250) |-|-| Sí |
-
----
-
-## TipoComparacion
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idTipoComparacion | INT | Sí |-| No |
-| nombre | VARCHAR(20) |-| - | No |
-
----
-
-## Alerta
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idAlerta | INT | Sí |-| No |
-| idSensor | INT |-| Sí | No |
-| idNivelRiesgo | INT |-| Sí | No |
-| idEstadoAlerta | INT |-| Sí | No |
-| idTipoAlerta | INT |-| Sí | No |
-| descripcion | VARCHAR(250) |-|-| No |
-| fechaHora | DATETIME2 |-|-| No |
-
----
-
-## Notificacion
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idNotificacion | INT | Sí |-| No |
-| idUsuario | INT |-| Sí | No |
-| idAlerta | INT |-| Sí | No |
-| fechaEnvio | DATETIME2 |-|-| No |
-| leida | BIT |-|-| No |
-
----
-
-## Evento
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idEvento | INT | Sí |-| No |
-| idAlerta | INT |-| Sí | No |
-| tipo | VARCHAR(100) |-|-| No |
-| descripcion | VARCHAR(250) |-|-| No |
-| fechaHora | DATETIME2 |-|-| No |
-
----
-
-## Bitacora
-
-| Campo | Tipo | PK | FK | Nulo |
-|--------|------|:--:|:--:|:----:|
-| idBitacora | INT | Sí |-| No |
-| idUsuario | INT |-| Sí | No |
-| accion | VARCHAR(150) |-|-| No |
-| fechaHora | DATETIME2 |-|-| No |
-
+La definición completa de las tablas, columnas, tipos de datos, restricciones e índices se encuentra implementada en el script **QueryMain.sql**, el cual constituye la especificación técnica definitiva de la base de datos utilizada por el sistema.
 ---
 
 # 6. Restricciones
@@ -300,17 +112,17 @@ USUARIO ||--o{ BITACORA : realiza
 - Un evento registra la ocurrencia de una alerta.
 - Los registros de los catálogos deberán existir previamente antes de ser utilizados como claves foráneas.
 
-# Observaciones
+# 7. Observaciones
 - Los registros inicial del catálogo NivelRiesgo serán:
     1. NORMAL (VERDE)
     2. PRECAUCIÓN (AMARILLO)
     3. ALERTA (NARANJA)
     4. EMERGENCIA (ROJO)
 
-# Índices recomendados
+# 8. Índices recomendados
 - IX_Lectura_Sensor_Fecha (idSensor, fechaHora)
 
-# Consideraciones de Implementación
+# 9. Consideraciones de Implementación
 
-- Las enumeraciones del modelo de dominio (DOC-09) serán implementadas como tablas catálogo en SQL Server.
+- Los catálogos se implementan como tablas independientes para facilitar su mantenimiento y permitir la modificación de sus valores sin alterar la estructura del sistema.
 - Los niveles de riesgo se calcularán automáticamente comparando el valor 
