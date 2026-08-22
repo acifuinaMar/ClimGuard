@@ -1,0 +1,187 @@
+<header class="cabecera">
+  <h1>Panel de monitoreo</h1>
+  <p class="cabecera__sub">Estado actual de los sensores de la comunidad</p>
+</header>
+
+@if (cargando()) {
+  <div class="estado">
+    <span class="estado__titulo">Conectando con los sensores…</span>
+    <span>Un momento</span>
+  </div>
+}
+
+@else if (error()) {
+  <div class="estado estado--error">
+    <span class="estado__titulo">{{ error() }}</span>
+    <span>Revisa que el servidor esté en línea e intenta recargar.</span>
+  </div>
+}
+
+@else if (total() === 0) {
+  <div class="estado">
+    <span class="estado__titulo">Todavía no hay sensores registrados</span>
+    <span>Cuando se den de alta aparecerán aquí con su estado en tiempo real.</span>
+  </div>
+}
+
+@else {
+  <section class="estado-general">
+
+    <div class="estado-general__texto">
+
+        <span class="estado-general__titulo">
+            Estado general del sistema
+        </span>
+
+        <span
+            class="estado-general__estado"
+            [class]="'estado-general__estado estado-general__estado--' + estadoGeneral().clase">
+
+            {{ estadoGeneral().texto }}
+
+        </span>
+
+    </div>
+
+    <div class="estado-general__fecha">
+
+        <span>Última actualización</span>
+
+        <strong>{{ ultimaActualizacion() }}</strong>
+
+    </div>
+
+</section>
+
+<section class="alertas">
+
+  <h2>Alertas Activas</h2>
+
+  @if (alertas().length === 0) {
+
+    <p>No existen alertas activas.</p>
+
+  } @else {
+
+    <div class="alertas__grid">
+      @for (a of alertas(); track a.alertaId) {
+
+        <article
+          class="alerta"
+          [class.alerta--verde]="colorAlerta(a.nivelAlertaId) === 'verde'"
+          [class.alerta--amarillo]="colorAlerta(a.nivelAlertaId) === 'amarillo'"
+          [class.alerta--naranja]="colorAlerta(a.nivelAlertaId) === 'naranja'"
+          [class.alerta--rojo]="colorAlerta(a.nivelAlertaId) === 'rojo'">
+
+          <h3>
+            {{ tipoFenomeno(a.tipoFenomenoId) }}
+          </h3>
+
+          <p class="alerta__mensaje">
+            {{ a.mensaje }}
+          </p>
+
+          <div class="alerta__info">
+
+            <small>
+              {{ nombreComunidad(a.comunidadId) }}
+            </small>
+
+            <small>
+              {{ a.fechaHora | date:'HH:mm:ss' }}
+            </small>
+
+          </div>
+
+        </article>
+
+    }
+
+    </div>
+
+  }
+
+</section>
+  <!-- ============ INDICADORES ============ -->
+  <section class="indicadores">
+    <article class="tarjeta-ind">
+      <span class="tarjeta-ind__num">{{ total() }}</span>
+      <span class="tarjeta-ind__tit">Sensores</span>
+    </article>
+
+    <article class="tarjeta-ind">
+      <span class="tarjeta-ind__num">{{ activos() }}</span>
+      <span class="tarjeta-ind__tit">Activos</span>
+    </article>
+
+    <article class="tarjeta-ind" [class.tarjeta-ind--aviso]="enRiesgo() > 0">
+      <span class="tarjeta-ind__num">{{ enRiesgo() }}</span>
+      <span class="tarjeta-ind__tit">En riesgo</span>
+    </article>
+
+    <article class="tarjeta-ind" [class.tarjeta-ind--peligro]="emergencia() > 0">
+      <span class="tarjeta-ind__num">{{ emergencia() }}</span>
+      <span class="tarjeta-ind__tit">En emergencia</span>
+    </article>
+  </section>
+
+  <!-- ============ TARJETAS DE SENSORES ============ -->
+  <section class="rejilla">
+    @for (s of ordenados(); track s.sensorId) {
+      <article class="sensor" [class]="'sensor--' + s.nivel">
+
+        <div class="sensor__alto">
+          <span class="sensor__variable">{{ s.variable }}</span>
+          <span class="nivel" [class]="'nivel nivel--' + s.nivel">{{ s.nivelTexto }}</span>
+        </div>
+
+        <h2 class="sensor__nombre">{{ s.nombre }}</h2>
+
+        <div class="sensor__lectura">
+          <span class="sensor__valor">{{ s.valorActual }}</span>
+          <span class="sensor__unidad">{{ s.unidad }}</span>
+        </div>
+
+        <div class="sensor__pie">
+          @if (s.activo) {
+            <span class="sensor__estado sensor__estado--on">En línea</span>
+          } @else {
+            <span class="sensor__estado sensor__estado--off">Fuera de línea</span>
+          }
+          <span class="sensor__id">#{{ s.sensorId }}</span>
+        </div>
+
+      </article>
+    }
+  </section>
+
+  <section class="grafica">
+
+    <h2>Evolución de los sensores</h2>
+
+    @if (ordenados().length > 1) {
+
+      <svg
+        viewBox="0 0 700 220"
+        preserveAspectRatio="none">
+
+        <polyline
+          [attr.points]="grafica()"
+          fill="none"
+          stroke="#0ea5e9"
+          stroke-width="4"/>
+
+      </svg>
+
+    } @else {
+
+      <div class="grafica-vacia">
+
+        Agrega más sensores o lecturas para visualizar la evolución.
+
+      </div>
+
+    }
+
+  </section>
+}

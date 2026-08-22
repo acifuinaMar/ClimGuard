@@ -1,0 +1,81 @@
+.cabecera {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.3rem;
+}
+.cabecera h1 { font-size: 1.55rem; font-weight: 650; }
+.cabecera__sub { color: var(--cg-texto-tenue); font-size: .92rem; margin-top: .15rem; }
+
+.cuenta {
+  font-size: .84rem;
+  color: var(--cg-texto-tenue);
+  background: var(--cg-superficie-2);
+  padding: .3rem .7rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.tabla-caja {
+  overflow-x: auto;
+  background: var(--cg-superficie);
+  border: 1px solid var(--cg-borde);
+  border-radius: var(--cg-radio);
+  box-shadow: var(--cg-sombra);
+}
+.tabla { border-collapse: collapse; width: 100%; font-size: .92rem; }
+.tabla th, .tabla td {
+  text-align: left;
+  padding: .7rem 1rem;
+  border-bottom: 1px solid var(--cg-superficie-2);
+  vertical-align: middle;
+}
+.tabla thead th {
+  background: var(--cg-superficie-2);
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--cg-texto-tenue);
+  font-weight: 600;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--cg-borde);
+}
+.tabla tbody tr:last-child td { border-bottom: none; }
+.tabla tbody tr:hover { background: #fafcfc; }
+
+.persona { display: flex; align-items: center; gap: .65rem; }
+.persona__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--cg-primario);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: .68rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.persona__nombre { font-weight: 600; white-space: nowrap; }
+
+.accion { color: var(--cg-texto-suave); min-width: 16rem; }
+
+/* La insignia de tipo repite el color según la acción, para leerlo de un vistazo. */
+.tipo {
+  font-size: .74rem;
+  font-weight: 700;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  border: 1px solid currentColor;
+}
+.tipo--crear  { color: var(--cg-verde);    background: var(--cg-verde-fondo); }
+.tipo--editar { color: var(--cg-amarillo); background: var(--cg-amarillo-fondo); }
+.tipo--borrar { color: var(--cg-rojo);     background: var(--cg-rojo-fondo); }
+.tipo--otro   { color: var(--cg-texto-tenue); background: var(--cg-superficie-2); border-color: var(--cg-borde); }
+
+.fecha { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.fecha__dia { display: block; font-weight: 500; }
+.fecha__hora { display: block; font-size: .78rem; color: var(--cg-texto-tenue); }

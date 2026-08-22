@@ -1,0 +1,49 @@
+# ---------- Secretos: NUNCA subir ----------
+.env
+*.env
+!.env.example
+appsettings.Local.json
+*.pfx
+*.key
+
+# ---------- .NET ----------
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+.vs/
+TestResults/
+*.trx
+*.coverage
+coverage/
+
+# ---------- Angular / Node ----------
+node_modules/
+dist/
+.angular/
+npm-debug.log*
+yarn-error.log*
+.pnpm-store/
+*.tsbuildinfo
+
+# ---------- Editores ----------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.swp
+
+# ---------- Sistema operativo ----------
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# ---------- Docker ----------
+docker/sqlserver/data/

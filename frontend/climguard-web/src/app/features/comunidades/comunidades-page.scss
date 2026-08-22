@@ -1,0 +1,130 @@
+.cabecera {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.2rem;
+}
+.cabecera h1 { font-size: 1.55rem; font-weight: 650; }
+.cabecera__sub { color: var(--cg-texto-tenue); font-size: .92rem; margin-top: .15rem; }
+.cabecera__acciones { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
+
+.cuenta {
+  font-size: .84rem;
+  color: var(--cg-texto-tenue);
+  background: var(--cg-superficie-2);
+  padding: .3rem .7rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.aviso-ok, .aviso-mal {
+  padding: .65rem .9rem;
+  border-radius: 7px;
+  font-size: .88rem;
+  margin-bottom: .9rem;
+  display: flex;
+  align-items: center;
+  gap: .7rem;
+}
+.aviso-ok  { background: var(--cg-verde-fondo); color: var(--cg-verde); border: 1px solid var(--cg-verde); }
+.aviso-mal { background: var(--cg-rojo-fondo);  color: var(--cg-rojo);  border: 1px solid var(--cg-rojo); }
+.enlace { background: none; border: none; color: inherit; text-decoration: underline; cursor: pointer; font: inherit; padding: 0; margin-left: auto; }
+
+/* ================= REJILLA DE TARJETAS ================= */
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.tarjeta {
+  background: var(--cg-superficie);
+  border: 1px solid var(--cg-borde);
+  border-radius: var(--cg-radio);
+  padding: 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  box-shadow: var(--cg-sombra);
+}
+
+.tarjeta__alto { display: flex; align-items: center; justify-content: space-between; }
+.tarjeta__icono { font-size: 1.4rem; color: var(--cg-primario); }
+.tarjeta__id {
+  font-size: .74rem;
+  color: var(--cg-texto-tenue);
+  font-variant-numeric: tabular-nums;
+  background: var(--cg-superficie-2);
+  padding: .1rem .5rem;
+  border-radius: 999px;
+}
+
+.tarjeta__nombre { font-size: 1.1rem; font-weight: 650; }
+.tarjeta__desc {
+  font-size: .88rem;
+  color: var(--cg-texto-tenue);
+  line-height: 1.45;
+  min-height: 2.5em;
+}
+
+.tarjeta__coords {
+  display: flex;
+  gap: 1rem;
+  font-size: .82rem;
+  color: var(--cg-texto-suave);
+  font-variant-numeric: tabular-nums;
+  padding: .4rem 0;
+  border-top: 1px solid var(--cg-superficie-2);
+  border-bottom: 1px solid var(--cg-superficie-2);
+}
+
+.tarjeta__pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+.tarjeta__fecha { font-size: .74rem; color: var(--cg-texto-tenue); }
+.tarjeta__acciones { display: flex; gap: .35rem; }
+
+/* ================= BOTONES ================= */
+.btn {
+  padding: .5rem 1rem;
+  border-radius: 7px;
+  font-size: .88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.btn:disabled { opacity: .6; cursor: progress; }
+.btn--primario { background: var(--cg-primario); color: #fff; }
+.btn--primario:hover:not(:disabled) { background: var(--cg-primario-oscuro); }
+.btn--claro { background: var(--cg-superficie); border-color: var(--cg-borde); color: var(--cg-texto-suave); }
+.btn--claro:hover:not(:disabled) { background: var(--cg-superficie-2); }
+.btn--chico { padding: .3rem .65rem; font-size: .8rem; background: var(--cg-superficie); border-color: var(--cg-borde); color: var(--cg-texto-suave); }
+.btn--chico:hover:not(:disabled) { background: var(--cg-superficie-2); }
+.btn--peligro { color: var(--cg-rojo); }
+.btn--peligro:hover:not(:disabled) { background: var(--cg-rojo-fondo); border-color: var(--cg-rojo); }
+.btn--peligro-lleno { background: var(--cg-rojo); color: #fff; }
+.btn--peligro-lleno:hover:not(:disabled) { filter: brightness(.92); }
+
+/* ================= CONFIRMACIÓN ================= */
+.fondo { position: fixed; inset: 0; background: rgba(15, 28, 34, .55); display: grid; place-items: center; padding: 1rem; z-index: 100; }
+.confirmar {
+  background: var(--cg-superficie);
+  border-radius: 10px;
+  padding: 1.4rem;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 24px 60px -20px rgba(0, 0, 0, .5);
+  display: flex;
+  flex-direction: column;
+  gap: .7rem;
+}
+.confirmar h2 { font-size: 1.05rem; font-weight: 650; }
+.confirmar p { font-size: .92rem; color: var(--cg-texto-suave); }
+.confirmar__pie { display: flex; justify-content: flex-end; gap: .6rem; margin-top: .4rem; }

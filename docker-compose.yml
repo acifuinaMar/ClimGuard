@@ -1,0 +1,100 @@
+# =====================================================================
+#  ClimGuard — orquestación completa
+# =====================================================================
+#  Levanta TODO el sistema con un solo comando:
+#
+#       docker compose up --build
+#
+#  Tres contenedores que se comunican por su nombre de servicio:
+#
+#       Navegador
+#          │
+#          ▼
+#       frontend (nginx)  ── sirve Angular y reenvía /api ──►  api (.NET)
+#                                                                 │
+#                                                                 ▼
+#                                                            sqlserver
+#
+#  Para apagar:            docker compose down
+#  Para borrar los datos:  docker compose down -v
+# =====================================================================
+
+services:
+
+  # ---------- BASE DE DATOS ----------
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: climguard-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD:?falta MSSQL_SA_PASSWORD en el archivo .env}
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - climguard-sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    restart: unless-stopped
+
+  # ---------- INICIALIZAR LA BASE ----------
+  # Corre una sola vez: espera a que SQL Server esté listo, crea las tablas
+  # con el script del equipo y siembra los usuarios. Luego termina.
+  db-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: climguard-db-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    volumes:
+      - "./ClimGuard Backend/Script para DB/QueryMain.sql:/scripts/01-schema.sql:ro"
+      - "./docker/sqlserver/02-seed-usuarios.sql:/scripts/02-seed.sql:ro"
+    entrypoint: >
+      /bin/bash -c "
+      echo 'Creando esquema...';
+      /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -i /scripts/01-schema.sql;
+      echo 'Sembrando usuarios...';
+      /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -i /scripts/02-seed.sql;
+      echo 'Base de datos lista.';
+      "
+    restart: "no"
+
+  # ---------- API (.NET) ----------
+  api:
+    build:
+      context: "./ClimGuard Backend"
+      dockerfile: Dockerfile
+    container_name: climguard-api
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      # Sobreescribe la cadena de conexión del appsettings para apuntar
+      # al contenedor de la base (no a host.docker.internal).
+      ConnectionStrings__connection: "Server=sqlserver,1433;Database=MonitoreoClimatico;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=Optional;TrustServerCertificate=True;"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  # ---------- FRONTEND (Angular + nginx) ----------
+  frontend:
+    build:
+      context: ./frontend/climguard-web
+      dockerfile: Dockerfile
+    container_name: climguard-frontend
+    depends_on:
+      - api
+    ports:
+      - "4200:80"
+    restart: unless-stopped
+
+volumes:
+  climguard-sqldata:
+    name: climguard-sqldata

@@ -1,0 +1,102 @@
+<h2>Umbrales</h2>
+
+@if (cargando()) {
+  <p>Cargando...</p>
+}
+
+@if (error()) {
+  <p>{{ error() }}</p>
+}
+
+@if (mostrarFormulario()) {
+
+    <app-umbral-form
+        [umbral]="umbralEditando()"
+        (guardar)="guardar($event)"
+        (cancelar)="cancelarEdicion()">
+    </app-umbral-form>
+
+}
+
+<table class="tabla">
+
+  <thead>
+
+    <tr>
+
+      <th>Tipo de Sensor</th>
+
+      <th>Precaución</th>
+
+      <th>Alerta</th>
+
+      <th>Emergencia</th>
+
+      <th class="der">Acciones</th>
+
+    </tr>
+
+  </thead>
+
+  <tbody>
+
+    @for (u of umbrales(); track u.umbralId) {
+
+      <tr>
+
+        <td>
+
+          <strong>{{ nombreTipoSensor(u.tipoSensorId) }}</strong>
+
+        </td>
+
+        <td class="num">
+
+          <strong>{{ u.valorPrecaucion }}</strong>
+
+          <span class="unidad">
+            {{ unidadTipoSensor(u.tipoSensorId) }}
+          </span>
+
+        </td>
+
+        <td class="num">
+
+          <strong>{{ u.valorAlerta }}</strong>
+
+          <span class="unidad">
+            {{ unidadTipoSensor(u.tipoSensorId) }}
+          </span>
+
+        </td>
+
+        <td class="num">
+
+          <strong>{{ u.valorEmergencia }}</strong>
+
+          <span class="unidad">
+            {{ unidadTipoSensor(u.tipoSensorId) }}
+          </span>
+
+        </td>
+
+        <td class="der">
+
+          <button
+            type="button"
+            class="btn btn--chico"
+            (click)="editar(u)">
+
+            Editar
+
+          </button>
+
+        </td>
+
+      </tr>
+
+    }
+
+  </tbody>
+
+</table>

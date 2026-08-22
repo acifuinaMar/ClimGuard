@@ -1,0 +1,40 @@
+<form
+    [formGroup]="formulario"
+    (ngSubmit)="enviar()">
+
+  <h3>Editar Umbral</h3>
+
+  <p>
+    {{ nombreTipoSensor(umbral()!.tipoSensorId) }}
+  </p>
+
+  <p>Precaución</p>
+  <input type="number" formControlName="valorPrecaucion">
+
+  <p>Alerta</p>
+  <input type="number" formControlName="valorAlerta">
+
+  <p>Emergencia</p>
+  <input type="number" formControlName="valorEmergencia">
+<footer class="modal__pie">
+
+  <button
+      type="button"
+      class="btn btn--claro"
+      (click)="cancelar.emit()">
+
+      Cancelar
+
+  </button>
+
+  <button
+      type="submit"
+      class="btn btn--primario">
+
+      Guardar
+
+  </button>
+
+</footer>
+</form>
+
