@@ -177,7 +177,10 @@ export class DashboardPage {
       switchMap(() => this.servicio.simular())
     )
     .subscribe({
-      next: () => this.cargarSensores(),
+      next: () => {
+        this.cargarSensores();
+        this.cargarAlertas();
+    },
       error: (err) => console.error('Error al simular sensores', err)
     });
     /*this.servicio.listar().subscribe({
