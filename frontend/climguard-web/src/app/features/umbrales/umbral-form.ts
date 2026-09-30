@@ -1,5 +1,5 @@
 import { Component, effect, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -12,9 +12,8 @@ import { Umbral } from '../../core/models/umbral.model';
   selector: 'app-umbral-form',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule
-  ],
+],
   templateUrl: './umbral-form.html'
 })
 

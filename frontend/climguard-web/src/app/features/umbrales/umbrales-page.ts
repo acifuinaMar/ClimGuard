@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { UmbralForm } from './umbral-form';
 import { Umbral } from '../../core/models/umbral.model';
 import { UmbralService } from '../../core/services/umbral.service';
@@ -8,9 +8,8 @@ import { UmbralService } from '../../core/services/umbral.service';
   selector: 'app-umbrales-page',
   standalone: true,
   imports: [
-    CommonModule,
     UmbralForm
-    ],
+],
   templateUrl: './umbrales-page.html'
 })
 export class UmbralesPage implements OnInit {
