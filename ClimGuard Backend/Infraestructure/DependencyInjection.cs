@@ -31,6 +31,7 @@ namespace Infraestructure
             service.AddScoped<ILogin, LoginRepository>();
             service.AddScoped<ILecturaSensor, LecturaSensorRepository>();
             service.AddScoped<IBitacora, BitacoraRepository>();
+            service.AddScoped<IEstadoSensor, EstadoSensorRepository>();
             service.AddScoped<TokenService>();
 
             service.AddScoped<ISimuladorLecturas, SimuladorLecturas>();

@@ -24,8 +24,6 @@ public partial class MonitoreoContext : DbContext
 
     public virtual DbSet<EstadoAlerta> EstadoAlerta { get; set; }
 
-    public virtual DbSet<EstadoSensor> EstadoSensors { get; set; }
-
     public virtual DbSet<LecturaSensor> LecturaSensors { get; set; }
 
     public virtual DbSet<NivelAlerta> NivelAlerta { get; set; }
@@ -43,6 +41,8 @@ public partial class MonitoreoContext : DbContext
     public virtual DbSet<ReglaAlerta> ReglaAlertas { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
+
+    public virtual DbSet<EstadoSensor> EstadoSensors { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
 
@@ -177,7 +177,7 @@ public partial class MonitoreoContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Lectura_Usuario");
         });
-        
+
         modelBuilder.Entity<NivelAlerta>(entity =>
         {
             entity.HasKey(e => e.NivelAlertaId).HasName("PK__NivelAle__A4F58C2E94887632");
