@@ -30,7 +30,6 @@ namespace Application.Sensor.Service.Commands
                 request.Descripcion,
                 request.FechaInstalacion,
                 request.FechaUltimaConexion,
-                request.Activo,
                 request.ComunidadId,
                 request.TipoSensorId,
                 request.EstadoSensorId
@@ -55,7 +54,6 @@ namespace Application.Sensor.Service.Commands
                 sensor.Descripcion,
                 sensor.FechaInstalacion,
                 sensor.FechaUltimaConexion,
-                sensor.Activo,
                 sensor.ComunidadId,
                 sensor.TipoSensorId,
                 sensor.EstadoSensorId

@@ -29,9 +29,8 @@ namespace Infraestructure.BackgroudService
         {
             // Obtener sensores activos
             var sensores = await _context.Sensors
-                .Where(x => x.Activo)
+                .Where(x => x.EstadoSensorId == 1)
                 .ToListAsync(cancellationToken);
-                
 
             foreach (var sensor in sensores)
             {
@@ -89,8 +88,8 @@ namespace Infraestructure.BackgroudService
 
             // Si el valor no entra en el rango de la regla,
             // no se genera ninguna alerta.
-            if (valor < reglaAlerta.ValorMin ||
-                valor > reglaAlerta.ValorMax)
+            if (valor >= reglaAlerta.ValorMin &&
+                valor <= reglaAlerta.ValorMax)
             {
                 return;
             }

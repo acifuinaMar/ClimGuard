@@ -231,9 +231,6 @@ public partial class MonitoreoContext : DbContext
             entity.Property(e => e.Descripcion)
                 .HasMaxLength(500);
 
-            entity.Property(e => e.Activo)
-                .HasDefaultValue(true);
-
             entity.Property(e => e.FechaInstalacion)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
@@ -259,6 +256,7 @@ public partial class MonitoreoContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Sensor_EstadoSensor");
         });
+        
         modelBuilder.Entity<TipoFenomeno>(entity =>
         {
             entity.HasKey(e => e.TipoFenomenoId).HasName("PK__TipoFeno__7B7F8DA465FDB4C4");

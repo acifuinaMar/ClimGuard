@@ -19,8 +19,6 @@ public partial class Sensor
 
     public DateTime FechaUltimaConexion { get; set; }
 
-    public bool Activo { get; set; }
-
     public int ComunidadId { get; set; }
 
     public int TipoSensorId { get; set; }

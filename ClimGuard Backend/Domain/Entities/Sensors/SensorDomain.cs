@@ -16,7 +16,6 @@ public partial class SensorDomain
         string descripcion,
         DateTime fechaInstalacion,
         DateTime fechaUltimaConexion,
-        bool activo,
         int comunidadId,
         int tipoSensorId,
         int estadoSensorId)
@@ -28,7 +27,6 @@ public partial class SensorDomain
         Descripcion = descripcion;
         FechaInstalacion = fechaInstalacion;
         FechaUltimaConexion = fechaUltimaConexion;
-        Activo = activo;
         ComunidadId = comunidadId;
         TipoSensorId = tipoSensorId;
         EstadoSensorId = estadoSensorId;
@@ -41,8 +39,6 @@ public partial class SensorDomain
     public int TipoSensorId { get; set; }
 
     public string Nombre { get; set; } = null!;
-
-    public bool Activo { get; set; }
 
     public DateTime FechaInstalacion { get; set; }
 

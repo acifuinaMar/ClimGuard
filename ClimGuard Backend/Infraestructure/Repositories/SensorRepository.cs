@@ -24,7 +24,6 @@ namespace Services.Services{
                     Descripcion = sensor.Descripcion,
                     FechaInstalacion = sensor.FechaInstalacion,
                     FechaUltimaConexion = sensor.FechaUltimaConexion,
-                    Activo = sensor.Activo,
                     EstadoSensorId = sensor.EstadoSensorId
                 };
                 _context.Sensors.Add(obj);
@@ -38,7 +37,6 @@ namespace Services.Services{
                     sensor.Descripcion,
                     sensor.FechaInstalacion,
                     sensor.FechaUltimaConexion,
-                    sensor.Activo,
                     sensor.ComunidadId,
                     sensor.TipoSensorId,
                     sensor.EstadoSensorId
@@ -78,7 +76,6 @@ namespace Services.Services{
                     a.Descripcion,
                     a.FechaInstalacion,
                     a.FechaUltimaConexion,
-                    a.Activo,
                     a.ComunidadId,
                     a.TipoSensorId,
                     a.EstadoSensorId
@@ -105,7 +102,6 @@ namespace Services.Services{
                     obj.Descripcion,
                     obj.FechaInstalacion,
                     obj.FechaUltimaConexion,
-                    obj.Activo,
                     obj.ComunidadId,
                     obj.TipoSensorId,
                     obj.EstadoSensorId
@@ -134,7 +130,6 @@ namespace Services.Services{
                 obj.Descripcion = sensor.Descripcion;
                 obj.FechaInstalacion = sensor.FechaInstalacion;
                 obj.FechaUltimaConexion = sensor.FechaUltimaConexion;
-                obj.Activo = sensor.Activo;
                 obj.ComunidadId = sensor.ComunidadId;
                 obj.TipoSensorId = sensor.TipoSensorId;
                 obj.EstadoSensorId = sensor.EstadoSensorId;
