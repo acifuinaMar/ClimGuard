@@ -16,15 +16,18 @@ namespace Application.Alerta.Service.Queries
 
             return new AlertaResultDto(
                 alerta.AlertaId,
-                alerta.ComunidadId,
-                alerta.SensorId,
-                alerta.TipoFenomenoId,
-                alerta.NivelAlertaId,
-                alerta.Mensaje,
+                alerta.ValorDetectado,
+                alerta.MensajeSnap,
+                alerta.NivelAlertaIdSnap,
+                alerta.TipoFenomenoIdSnap,
                 alerta.FechaHora,
-                alerta.Activa,
-                alerta.FechaResolucion
-                );
+                alerta.Activo,
+                alerta.SensorId,
+                alerta.ComunidadId,
+                alerta.ReglaAlertaId,
+                alerta.EstadoAlertaId,
+                alerta.UsuarioResponsable
+            );
         }
     }
 }

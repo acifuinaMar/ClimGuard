@@ -28,4 +28,6 @@ public partial class ReglaAlerta
     public virtual TipoFenomeno TipoFenomeno { get; set; } = null!;
 
     public virtual NivelAlerta NivelAlerta { get; set; } = null!;
+
+    public virtual ICollection<Alerta> Alerta {get; set;} = new List<Alerta>();
 }

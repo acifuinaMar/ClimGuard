@@ -32,14 +32,17 @@ namespace Application.Alerta.Service.Commands
 
             //  Actualizar propiedades
             alerta.AlertaId = request.alertaId;
-            alerta.ComunidadId = request.comunidadId;
-            alerta.SensorId = request.sensorId;
-            alerta.TipoFenomenoId = request.tipoFenomenoId;
-            alerta.NivelAlertaId = request.nivelAlertaId;
-            alerta.Mensaje = request.mensaje;
+            alerta.ValorDetectado = request.valorDetectado;
+            alerta.MensajeSnap = request.mensajeSnap;
+            alerta.NivelAlertaIdSnap = request.nivelAlertaIdSnap;
+            alerta.TipoFenomenoIdSnap = request.tipoFenomenoIdSnap;
             alerta.FechaHora = request.fechaHora;
-            alerta.Activa = request.activa;
-            alerta.FechaResolucion = request.fechaResolucion;
+            alerta.Activo = request.activo;
+            alerta.SensorId = request.sensorId;
+            alerta.ComunidadId = request.comunidadId;
+            alerta.ReglaAlertaId = request.reglaAlertaId;
+            alerta.EstadoAlertaId = request.estadoAlertaId;
+            alerta.UsuarioResponsable = request.usuarioResponsable;
 
             //Guardado de bitacora
             var bitacora = new BitacoraDomain(
@@ -59,15 +62,18 @@ namespace Application.Alerta.Service.Commands
             // Retornar resultado
             return new AlertaResultDto(
                 alerta.AlertaId,
-                alerta.ComunidadId,
-                alerta.SensorId,
-                alerta.TipoFenomenoId,
-                alerta.NivelAlertaId,
-                alerta.Mensaje,
+                alerta.ValorDetectado,
+                alerta.MensajeSnap,
+                alerta.NivelAlertaIdSnap,
+                alerta.TipoFenomenoIdSnap,
                 alerta.FechaHora,
-                alerta.Activa,
-                alerta.FechaResolucion
-                );
+                alerta.Activo,
+                alerta.SensorId,
+                alerta.ComunidadId,
+                alerta.ReglaAlertaId,
+                alerta.EstadoAlertaId,
+                alerta.UsuarioResponsable
+            );
         }
     }
 }

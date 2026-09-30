@@ -26,4 +26,5 @@ public partial class Usuario
     public DateTime FechaRegistro { get; set; }
 
     public virtual ICollection<Bitacora> Bitacoras { get; set; } = new List<Bitacora>();
+    public virtual ICollection<Alerta> Alerta { get; set; } = new List<Alerta>();
 }
