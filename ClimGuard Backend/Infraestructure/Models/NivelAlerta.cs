@@ -14,4 +14,6 @@ public partial class NivelAlerta
     public int Orden { get; set; }
 
     public virtual ICollection<Alerta> Alerta { get; set; } = new List<Alerta>();
+
+    public virtual ICollection<ReglaAlerta> ReglaAlertas { get; set; } = new List<ReglaAlerta>();
 }

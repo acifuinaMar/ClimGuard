@@ -40,7 +40,7 @@ public partial class MonitoreoContext : DbContext
 
     public virtual DbSet<TipoSensor> TipoSensors { get; set; }
 
-    public virtual DbSet<Umbral> Umbrals { get; set; }
+    public virtual DbSet<ReglaAlerta> ReglaAlertas { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
@@ -228,28 +228,47 @@ public partial class MonitoreoContext : DbContext
             entity.Property(e => e.UnidadMedida).HasMaxLength(20);
         });
 
-        modelBuilder.Entity<Umbral>(entity =>
+        modelBuilder.Entity<ReglaAlerta>(entity =>
         {
-            entity.HasKey(e => e.UmbralId).HasName("PK__Umbral__D40D8721BF012A8B");
+            entity.HasKey(e => e.ReglaAlertaId)
+                .HasName("PK_ReglaAlerta");
 
-            entity.ToTable("Umbral");
+            entity.ToTable("ReglaAlerta");
 
-            entity.Property(e => e.ValorPrecaucion)
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.ValorMin)
                 .HasColumnType("decimal(10, 2)");
 
-            entity.Property(e => e.ValorAlerta)
+            entity.Property(e => e.ValorMax)
                 .HasColumnType("decimal(10, 2)");
 
-            entity.Property(e => e.ValorEmergencia)
-                .HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Mensaje)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
 
             entity.HasOne(d => d.TipoSensor)
-                .WithMany(p => p.Umbrals)
+                .WithMany(p => p.ReglaAlertas)
                 .HasForeignKey(d => d.TipoSensorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Umbral_TipoSensor");
-        });
+                .HasConstraintName("FK_ReglaAlerta_TipoSensor");
 
+            entity.HasOne(d => d.TipoFenomeno)
+                .WithMany(p => p.ReglaAlertas)
+                .HasForeignKey(d => d.TipoFenomenoId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReglaAlerta_TipoFenomeno");
+
+            entity.HasOne(d => d.NivelAlerta)
+                .WithMany(p => p.ReglaAlertas)
+                .HasForeignKey(d => d.NivelAlertaId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReglaAlerta_NivelAlerta");
+        });
+        
         modelBuilder.Entity<Usuario>(entity =>
         {
             entity.HasKey(e => e.UsuarioId).HasName("PK__Usuario__2B3DE7B81F2D97D9");
