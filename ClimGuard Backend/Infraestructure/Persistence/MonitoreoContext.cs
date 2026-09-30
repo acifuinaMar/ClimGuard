@@ -50,35 +50,54 @@ public partial class MonitoreoContext : DbContext
     {
         modelBuilder.Entity<Alerta>(entity =>
         {
-            entity.HasKey(e => e.AlertaId).HasName("PK__Alerta__D9EF47C5336CC85A");
+            entity.HasKey(e => e.AlertaId)
+                .HasName("PK_Alerta");
 
-            entity.Property(e => e.Activa).HasDefaultValue(true);
+            entity.ToTable("Alerta");
+
+            entity.Property(e => e.ValorDetectado)
+                .HasColumnType("decimal(10,2)");
+
+            entity.Property(e => e.MensajeSnap)
+                .HasMaxLength(300);
+
             entity.Property(e => e.FechaHora)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.FechaResolucion).HasColumnType("datetime");
-            entity.Property(e => e.Mensaje).HasMaxLength(300);
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
 
-            entity.HasOne(d => d.Comunidad).WithMany(p => p.Alerta)
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
+
+            entity.HasOne(d => d.Comunidad)
+                .WithMany(p => p.Alerta)
                 .HasForeignKey(d => d.ComunidadId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Alerta_Comunidad");
 
-            entity.HasOne(d => d.NivelAlerta).WithMany(p => p.Alerta)
-                .HasForeignKey(d => d.NivelAlertaId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Alerta_NivelAlerta");
-
-            entity.HasOne(d => d.Sensor).WithMany(p => p.Alerta)
+            entity.HasOne(d => d.Sensor)
+                .WithMany(p => p.Alerta)
                 .HasForeignKey(d => d.SensorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Alerta_Sensor");
 
-            entity.HasOne(d => d.TipoFenomeno).WithMany(p => p.Alerta)
-                .HasForeignKey(d => d.TipoFenomenoId)
+            entity.HasOne(d => d.ReglaAlerta)
+                .WithMany(p => p.Alerta)
+                .HasForeignKey(d => d.ReglaAlertaId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Alerta_TipoFenomeno");
-        });
+                .HasConstraintName("FK_Alerta_ReglaAlerta");
 
+            entity.HasOne(d => d.EstadoAlerta)
+                .WithMany(p => p.Alerta)
+                .HasForeignKey(d => d.EstadoAlertaId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Alerta_EstadoAlerta");
+
+            entity.HasOne(d => d.UsuarioResponsableNavigation)
+                .WithMany(p => p.Alerta)
+                .HasForeignKey(d => d.UsuarioResponsable)
+                .HasConstraintName("FK_Alerta_Usuario");
+        });
+        
         modelBuilder.Entity<Bitacora>(entity =>
         {
             entity.HasKey(e => e.BitacoraId).HasName("PK__Bitacora__7ACF9B3880F5B9C3");
@@ -134,21 +153,31 @@ public partial class MonitoreoContext : DbContext
 
         modelBuilder.Entity<LecturaSensor>(entity =>
         {
-            entity.HasKey(e => e.LecturaId).HasName("PK__LecturaS__B421D4FCF3B0D066");
+            entity.HasKey(e => e.LecturaId)
+                .HasName("PK_Lectura");
 
-            entity.ToTable("LecturaSensor");
+            entity.ToTable("Lectura");
+
+            entity.Property(e => e.Valor)
+                .HasColumnType("decimal(10,2)");
 
             entity.Property(e => e.FechaHora)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Valor).HasColumnType("decimal(10, 2)");
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
 
-            entity.HasOne(d => d.Sensor).WithMany(p => p.LecturaSensors)
+            entity.HasOne(d => d.Sensor)
+                .WithMany(p => p.LecturaSensors)
                 .HasForeignKey(d => d.SensorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Lectura_Sensor");
-        });
 
+            entity.HasOne(d => d.UsuarioIngNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.UsuarioIng)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Lectura_Usuario");
+        });
+        
         modelBuilder.Entity<NivelAlerta>(entity =>
         {
             entity.HasKey(e => e.NivelAlertaId).HasName("PK__NivelAle__A4F58C2E94887632");
