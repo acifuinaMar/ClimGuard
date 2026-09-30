@@ -2,21 +2,36 @@
 using Domain.Entities.Comunity;
 using Domain.Entities.SensorReading;
 using Domain.Entities.SensorType;
+using Domain.Entities.EstadoSensor;
 
 namespace Domain.Entities.Sensors;
 
 public partial class SensorDomain
 {
-    public SensorDomain(int sensorId, int comunidadId, int tipoSensorId, string nombre, decimal valorActual, bool activo, DateTime fechaInstalacion, DateTime ultimaActualizacion)
+    public SensorDomain(
+        int sensorId,
+        string nombre,
+        string codigo,
+        string ubicacion,
+        string descripcion,
+        DateTime fechaInstalacion,
+        DateTime fechaUltimaConexion,
+        bool activo,
+        int comunidadId,
+        int tipoSensorId,
+        int estadoSensorId)
     {
         SensorId = sensorId;
+        Nombre = nombre;
+        Codigo = codigo;
+        Ubicacion = ubicacion;
+        Descripcion = descripcion;
+        FechaInstalacion = fechaInstalacion;
+        FechaUltimaConexion = fechaUltimaConexion;
+        Activo = activo;
         ComunidadId = comunidadId;
         TipoSensorId = tipoSensorId;
-        Nombre = nombre;
-        ValorActual = valorActual;
-        Activo = activo;
-        FechaInstalacion = fechaInstalacion;
-        UltimaActualizacion = ultimaActualizacion;
+        EstadoSensorId = estadoSensorId;
     }
 
     public int SensorId { get; set; }
@@ -27,13 +42,9 @@ public partial class SensorDomain
 
     public string Nombre { get; set; } = null!;
 
-    public decimal ValorActual { get; set; }
-
     public bool Activo { get; set; }
 
     public DateTime FechaInstalacion { get; set; }
-
-    public DateTime UltimaActualizacion { get; set; }
 
     public virtual ICollection<AlertaDomain> Alerta { get; set; } = new List<AlertaDomain>();
 
@@ -42,4 +53,14 @@ public partial class SensorDomain
     public virtual ICollection<LecturaSensorDomain> LecturaSensors { get; set; } = new List<LecturaSensorDomain>();
 
     public virtual TipoSensorDomain TipoSensor { get; set; } = null!;
+    public virtual EstadoSensorDomain EstadoSensor { get; set; } = null!;
+    public string Codigo { get; set; } = null!;
+
+    public string Ubicacion { get; set; } = null!;
+
+    public string Descripcion { get; set; } = null!;
+
+    public DateTime FechaUltimaConexion { get; set; }
+
+    public int EstadoSensorId { get; set; }
 }

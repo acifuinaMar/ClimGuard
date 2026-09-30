@@ -19,24 +19,29 @@ namespace Services.Services{
                     ComunidadId = sensor.ComunidadId,
                     TipoSensorId = sensor.TipoSensorId,
                     Nombre = sensor.Nombre,
-                    ValorActual = sensor.ValorActual,
-                    Activo = sensor.Activo,
+                    Codigo = sensor.Codigo,
+                    Ubicacion = sensor.Ubicacion,
+                    Descripcion = sensor.Descripcion,
                     FechaInstalacion = sensor.FechaInstalacion,
-                    UltimaActualizacion = sensor.UltimaActualizacion
+                    FechaUltimaConexion = sensor.FechaUltimaConexion,
+                    Activo = sensor.Activo,
+                    EstadoSensorId = sensor.EstadoSensorId
                 };
                 _context.Sensors.Add(obj);
                 await _context.SaveChangesAsync();
 
-                return new SensorDomain
-                (
+                return new SensorDomain(
                     sensor.SensorId,
+                    sensor.Nombre,
+                    sensor.Codigo,
+                    sensor.Ubicacion,
+                    sensor.Descripcion,
+                    sensor.FechaInstalacion,
+                    sensor.FechaUltimaConexion,
+                    sensor.Activo,
                     sensor.ComunidadId,
                     sensor.TipoSensorId,
-                    sensor.Nombre,
-                    sensor.ValorActual,
-                    sensor.Activo,
-                    sensor.FechaInstalacion,
-                    sensor.UltimaActualizacion
+                    sensor.EstadoSensorId
                 );
             }
             catch (Exception)
@@ -65,16 +70,18 @@ namespace Services.Services{
             {
                 var obj = await _context.Sensors.ToListAsync();
 
-                return obj.Select(a => new SensorDomain
-                (
+                return obj.Select(a => new SensorDomain(
                     a.SensorId,
+                    a.Nombre,
+                    a.Codigo,
+                    a.Ubicacion,
+                    a.Descripcion,
+                    a.FechaInstalacion,
+                    a.FechaUltimaConexion,
+                    a.Activo,
                     a.ComunidadId,
                     a.TipoSensorId,
-                    a.Nombre,
-                    a.ValorActual,
-                    a.Activo,
-                    a.FechaInstalacion,
-                    a.UltimaActualizacion
+                    a.EstadoSensorId
                 )).ToList();
             }
             catch (Exception)
@@ -90,16 +97,18 @@ namespace Services.Services{
                 var obj = await _context.Sensors
                     .Where(a => a.SensorId == sensor).FirstOrDefaultAsync();
 
-                return new SensorDomain
-                (
+                return new SensorDomain(
                     obj.SensorId,
+                    obj.Nombre,
+                    obj.Codigo,
+                    obj.Ubicacion,
+                    obj.Descripcion,
+                    obj.FechaInstalacion,
+                    obj.FechaUltimaConexion,
+                    obj.Activo,
                     obj.ComunidadId,
                     obj.TipoSensorId,
-                    obj.Nombre,
-                    obj.ValorActual,
-                    obj.Activo,
-                    obj.FechaInstalacion,
-                    obj.UltimaActualizacion
+                    obj.EstadoSensorId
                 );
             }
             catch (Exception)
@@ -119,13 +128,16 @@ namespace Services.Services{
                     return false;
 
                 obj.SensorId = sensor.SensorId;
+                obj.Nombre = sensor.Nombre;
+                obj.Codigo = sensor.Codigo;
+                obj.Ubicacion = sensor.Ubicacion;
+                obj.Descripcion = sensor.Descripcion;
+                obj.FechaInstalacion = sensor.FechaInstalacion;
+                obj.FechaUltimaConexion = sensor.FechaUltimaConexion;
+                obj.Activo = sensor.Activo;
                 obj.ComunidadId = sensor.ComunidadId;
                 obj.TipoSensorId = sensor.TipoSensorId;
-                obj.Nombre = sensor.Nombre;
-                obj.ValorActual = sensor.ValorActual;
-                obj.Activo = sensor.Activo;
-                obj.FechaInstalacion = sensor.FechaInstalacion;
-                obj.UltimaActualizacion = sensor.UltimaActualizacion;
+                obj.EstadoSensorId = sensor.EstadoSensorId;
 
                 await _context.SaveChangesAsync();
 
@@ -137,7 +149,7 @@ namespace Services.Services{
             }
         }
 
-        public async Task<bool> SimularSensores()
+        /*public async Task<bool> SimularSensores()
         {
             var random = new Random();
 
@@ -183,6 +195,12 @@ namespace Services.Services{
 
             return true;
         }
-    }
+    }*/
 
+        public async Task<bool> SimularSensores()
+        {
+            throw new NotImplementedException(
+                "La simulación debe migrarse para generar registros en la tabla Lectura en lugar de actualizar Sensor.");
+        }
+}
 }

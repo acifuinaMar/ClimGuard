@@ -24,13 +24,16 @@ namespace Application.Sensor.Service.Commands
         {
             var sensor = new SensorDomain(
                 0,
+                request.Nombre,
+                request.Codigo,
+                request.Ubicacion,
+                request.Descripcion,
+                request.FechaInstalacion,
+                request.FechaUltimaConexion,
+                request.Activo,
                 request.ComunidadId,
                 request.TipoSensorId,
-                request.Nombre,
-                request.ValorActual,
-                request.Activo,
-                request.FechaInstalacion,
-                request.UltimaActualizacion
+                request.EstadoSensorId
             );
 
             var bitacora = new BitacoraDomain(
@@ -46,14 +49,17 @@ namespace Application.Sensor.Service.Commands
 
             return new SensorResultDto(
                 sensor.SensorId,
+                sensor.Nombre,
+                sensor.Codigo,
+                sensor.Ubicacion,
+                sensor.Descripcion,
+                sensor.FechaInstalacion,
+                sensor.FechaUltimaConexion,
+                sensor.Activo,
                 sensor.ComunidadId,
                 sensor.TipoSensorId,
-                sensor.Nombre,
-                sensor.ValorActual,
-                sensor.Activo,
-                sensor.FechaInstalacion,
-                sensor.UltimaActualizacion
-                );
+                sensor.EstadoSensorId
+            );
         }
     }
 }

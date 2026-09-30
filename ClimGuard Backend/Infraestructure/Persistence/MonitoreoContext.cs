@@ -120,11 +120,16 @@ public partial class MonitoreoContext : DbContext
 
         modelBuilder.Entity<EstadoSensor>(entity =>
         {
-            entity.HasKey(e => e.EstadoSensorId).HasName("PK__EstadoSe__B78B942E257BBCCC");
+            entity.HasKey(e => e.EstadoSensorId)
+                .HasName("PK_EstadoSensor");
 
             entity.ToTable("EstadoSensor");
 
-            entity.Property(e => e.Estado).HasMaxLength(50);
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
         });
 
         modelBuilder.Entity<LecturaSensor>(entity =>
@@ -180,31 +185,51 @@ public partial class MonitoreoContext : DbContext
 
         modelBuilder.Entity<Sensor>(entity =>
         {
-            entity.HasKey(e => e.SensorId).HasName("PK__Sensor__D8099BFA9158CE4B");
+            entity.HasKey(e => e.SensorId)
+                .HasName("PK_Sensor");
 
             entity.ToTable("Sensor");
 
-            entity.Property(e => e.Activo).HasDefaultValue(true);
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Codigo)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Ubicacion)
+                .HasMaxLength(200);
+
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
+
             entity.Property(e => e.FechaInstalacion)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.Nombre).HasMaxLength(100);
-            entity.Property(e => e.UltimaActualizacion)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.ValorActual).HasColumnType("decimal(10, 2)");
 
-            entity.HasOne(d => d.Comunidad).WithMany(p => p.Sensors)
+            entity.Property(e => e.FechaUltimaConexion)
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Comunidad)
+                .WithMany(p => p.Sensors)
                 .HasForeignKey(d => d.ComunidadId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Sensor_Comunidad");
 
-            entity.HasOne(d => d.TipoSensor).WithMany(p => p.Sensors)
+            entity.HasOne(d => d.TipoSensor)
+                .WithMany(p => p.Sensors)
                 .HasForeignKey(d => d.TipoSensorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Sensor_TipoSensor");
-        });
 
+            entity.HasOne(d => d.EstadoSensor)
+                .WithMany(p => p.Sensors)
+                .HasForeignKey(d => d.EstadoSensorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Sensor_EstadoSensor");
+        });
         modelBuilder.Entity<TipoFenomeno>(entity =>
         {
             entity.HasKey(e => e.TipoFenomenoId).HasName("PK__TipoFeno__7B7F8DA465FDB4C4");
