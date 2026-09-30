@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Sensor } from '../../core/models/sensor.model';
 import { SensorService } from '../../core/services/sensor.service';
 import { calcularNivel, textoNivel, unidadDe, variableDe, Nivel } from '../../core/nivel-alerta';
@@ -20,6 +20,7 @@ interface SensorConNivel extends Sensor {
   selector: 'app-dashboard-page',
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [DatePipe]
 })
 export class DashboardPage {

@@ -1,4 +1,4 @@
-import { Component, effect, input, output } from '@angular/core';
+import { Component, effect, input, output, ChangeDetectionStrategy } from '@angular/core';
 
 import {
   FormBuilder,
@@ -14,6 +14,7 @@ import { Umbral } from '../../core/models/umbral.model';
   imports: [
     ReactiveFormsModule
 ],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './umbral-form.html'
 })
 

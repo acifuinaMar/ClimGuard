@@ -1,10 +1,11 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Usuario } from '../../core/models/usuario.model';
 import { UsuarioService } from '../../core/services/usuario.service';
 
 @Component({
   selector: 'app-usuarios-page',
   templateUrl: './usuarios-page.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './usuarios-page.scss'
 })
 export class UsuariosPage {
