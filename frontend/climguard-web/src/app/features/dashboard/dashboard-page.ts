@@ -6,6 +6,7 @@ import { interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { Alerta } from '../../core/models/alerta.model';
 import { AlertaService } from '../../core/services/alerta.service';
+import { RealtimeService } from '../../core/services/realtime.service';
 import { DatePipe } from '@angular/common';
 
 /** Un sensor con su nivel ya calculado, listo para pintar. */
@@ -26,6 +27,11 @@ interface SensorConNivel extends Sensor {
 export class DashboardPage {
   private servicio = inject(SensorService);
   private alertaService = inject(AlertaService);
+  private realtime = inject(RealtimeService);
+
+  /** true cuando el Hub de SignalR está conectado (para el indicador en vivo). */
+  tiempoReal = this.realtime.conectado;
+
   cargando = signal(true);
   error = signal<string | null>(null);
   sensores = signal<SensorConNivel[]>([]);
@@ -170,10 +176,23 @@ export class DashboardPage {
   constructor() {
    this.cargarSensores();
    this.cargarAlertas();
-   // Cada 5 segundos:
-  // 1. Simula nuevos valores
-  // 2. Vuelve a cargar los sensores
-  interval(5000)
+
+   // ===== TIEMPO REAL (SignalR) =====
+   // Abrimos la conexión con el Hub. Cuando el servidor empuje algo,
+   // actualizamos AL INSTANTE, sin esperar al polling.
+   this.realtime.conectar();
+
+   // Si llega una alerta nueva, recargamos las alertas de inmediato.
+   this.realtime.nuevaAlerta$.subscribe(() => this.cargarAlertas());
+
+   // Si llega una lectura nueva o cambia un sensor, recargamos sensores.
+   this.realtime.nuevaLectura$.subscribe(() => this.cargarSensores());
+   this.realtime.sensorActualizado$.subscribe(() => this.cargarSensores());
+
+   // ===== POLLING (plan B) =====
+   // Sigue como respaldo: si SignalR no está disponible, el dashboard igual
+   // se mantiene al día. Además es lo que dispara la simulación de datos.
+   interval(5000)
     .pipe(
       switchMap(() => this.servicio.simular())
     )
