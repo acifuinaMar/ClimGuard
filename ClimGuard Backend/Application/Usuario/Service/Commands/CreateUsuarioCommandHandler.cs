@@ -41,10 +41,13 @@ namespace Application.Usuario.Service.Commands
 
             var bitacora = new BitacoraDomain(
                 0,
-                request.UsuarioLogeado,
-                $"Registro de usuario {request.NombreCompleto}",
-                DateTime.Now
-                );
+                "Usuario",
+                usuario.UsuarioId,
+                "Crear",
+                $"Creación del usuario {usuario.NombreCompleto}",
+                DateTime.Now,
+                request.UsuarioLogeado
+            );
             await _repositoryBitacora.Create(bitacora);
 
             await _repository.Create(usuario);

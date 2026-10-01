@@ -45,13 +45,13 @@ namespace Application.Alerta.Service.Commands
             alerta.UsuarioResponsable = request.usuarioResponsable;
 
             //Guardado de bitacora
-            var bitacora = new BitacoraDomain(
+            /*var bitacora = new BitacoraDomain(
                 0,
                 request.UsuarioLogeado,
                 $"Actualizacion de alerta {request.alertaId}",
                 DateTime.Now
                 );
-            await _repositoryBitacora.Create(bitacora);
+            await _repositoryBitacora.Create(bitacora);*/
 
             //  Actualizar entidad
             await _repository.Update(alerta);

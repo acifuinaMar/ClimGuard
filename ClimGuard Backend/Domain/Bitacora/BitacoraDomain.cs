@@ -2,20 +2,37 @@
 {
     public class BitacoraDomain
     {
-        public BitacoraDomain(int bitacoraId, int usuarioId, string accion, DateTime fechaRegistro)
+        public BitacoraDomain(
+            long bitacoraId,
+            string nombreEntidad,
+            long entidadId,
+            string accion,
+            string descripcion,
+            DateTime fechaHora,
+            int usuarioId
+        )
         {
             BitacoraId = bitacoraId;
-            UsuarioId = usuarioId;
+            NombreEntidad = nombreEntidad;
+            EntidadId = entidadId;
             Accion = accion;
-            FechaRegistro = fechaRegistro;
+            Descripcion = descripcion;
+            FechaHora = fechaHora;
+            UsuarioId = usuarioId;
         }
 
-        public int BitacoraId { get; set; }
+        public long BitacoraId { get; set; }
 
-        public int UsuarioId { get; set; }
+        public string NombreEntidad {get; set;}
+
+        public long EntidadId{get; set;}
 
         public string Accion { get; set; } = string.Empty;
 
-        public DateTime FechaRegistro { get; set; }
+        public string Descripcion{get; set;}
+
+        public DateTime FechaHora { get; set; }
+
+        public int UsuarioId { get; set; }
     }
 }

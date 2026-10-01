@@ -42,9 +42,12 @@ namespace Application.Comunidad.Service.Commands
 
             var bitacora = new BitacoraDomain(
                 0,
-                request.UsuarioLogeado,
-                $"Registro de nueva comunidad {request.NombreComunidad}",
-                DateTime.Now
+                "Comunidad",
+                comunidad.ComunidadId,
+                "Actualizar",
+                $"Creación de comunidad {comunidad.NombreComunidad}",
+                DateTime.Now,
+                request.UsuarioLogeado
                 );
 
             await _repository.Create(comunidad);

@@ -43,10 +43,13 @@ namespace Application.Usuario.Service.Commands
 
             var bitacora = new BitacoraDomain(
                 0,
-                request.UsuarioLogeado,
-                $"Actualización de usuario {usuario.NombreCompleto}",
-                DateTime.Now
-                );
+                "Usuario",
+                usuario.UsuarioId,    
+                "Actualizar",
+                $"Actualización del usuario {usuario.NombreCompleto}",
+                DateTime.Now,
+                request.UsuarioLogeado
+            );
             await _repositoryBitacora.Create(bitacora);
 
             // Actualizar entidad

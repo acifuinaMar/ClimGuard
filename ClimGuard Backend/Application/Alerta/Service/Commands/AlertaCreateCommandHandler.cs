@@ -36,14 +36,17 @@ namespace Application.Alerta.Service.Commands
                 request.estadoAlertaId,
                 request.usuarioResponsable
             );
-
+            /*
             var bitacora = new BitacoraDomain(
                 0,
-                request.UsuarioLogeado,
-                $"Registro de nueva alerta ",
-                DateTime.Now
-                );
-            await _repositoryBitacora.Create(bitacora);
+                "Alerta",
+                Alerta.AlertaId,
+                "Eliminar",
+                $"Creación de la alerta {Alerta.Nombre}",
+                DateTime.Now,
+                request.UsuarioLogeado
+            );
+            await _repositoryBitacora.Create(bitacora);*/
             await _repository.Create(alerta);
             await _unitOfWork.SaveChangeAsync(cancellationToken);
 

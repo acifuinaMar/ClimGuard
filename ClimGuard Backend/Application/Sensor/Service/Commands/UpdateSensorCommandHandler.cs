@@ -46,10 +46,13 @@ namespace Application.Sensor.Service.Commands
 
             var bitacora = new BitacoraDomain(
                 0,
-                request.UsuarioLogeado,
-                $"Actualizacion de sensor {request.Nombre}",
-                DateTime.Now
-                );
+                "Sensor",
+                sensor.SensorId,
+                "Eliminar",
+                $"Actualización del sensor {sensor.Nombre}",
+                DateTime.Now,
+                request.UsuarioLogeado
+            );
             await _repositoryBitacora.Create(bitacora);
 
             //  Actualizar entidad

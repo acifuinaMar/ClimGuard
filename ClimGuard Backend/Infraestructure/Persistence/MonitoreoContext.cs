@@ -100,16 +100,28 @@ public partial class MonitoreoContext : DbContext
         
         modelBuilder.Entity<Bitacora>(entity =>
         {
-            entity.HasKey(e => e.BitacoraId).HasName("PK__Bitacora__7ACF9B3880F5B9C3");
+            entity.HasKey(e => e.BitacoraId)
+                .HasName("PK_Bitacora");
 
             entity.ToTable("Bitacora");
 
-            entity.Property(e => e.Accion).HasMaxLength(500);
-            entity.Property(e => e.FechaRegistro)
-                .HasDefaultValueSql("(getdate())", "DF__Bitacora__FechaR__04E4BC85")
-                .HasColumnType("datetime");
+            entity.Property(e => e.NombreEntidad)
+                .HasMaxLength(100);
 
-            entity.HasOne(d => d.Usuario).WithMany(p => p.Bitacoras)
+            entity.Property(e => e.EntidadId);
+
+            entity.Property(e => e.Accion)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.FechaHora)
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Usuario)
+                .WithMany(p => p.Bitacoras)
                 .HasForeignKey(d => d.UsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Bitacora_Usuario");

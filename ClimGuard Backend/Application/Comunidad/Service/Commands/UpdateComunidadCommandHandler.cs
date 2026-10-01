@@ -46,9 +46,12 @@ namespace Application.Comunidad.Service.Commands
             // Guardado en bitacora
             var bitacora = new BitacoraDomain(
                 0,
-                request.UsuarioLogeado,
-                $"Actualiazción de comunidad {request.NombreComunidad}",
-                DateTime.Now
+                "Comunidad",
+                comunidad.ComunidadId,
+                "Actualizar",
+                $"Actualización de comunidad {comunidad.NombreComunidad}",
+                DateTime.Now,
+                request.UsuarioLogeado
                 );
             await _repositoryBitacora.Create(bitacora);
 

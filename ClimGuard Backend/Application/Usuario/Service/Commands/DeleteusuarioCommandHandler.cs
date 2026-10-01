@@ -30,10 +30,13 @@ namespace Application.Usuario.Service.Commands
             // Guardado de bitacor
             var bitacora = new BitacoraDomain(
                 0,
-                request.UsuarioLogeado,
-                $"Eliminación de usuario {usuario.NombreCompleto}",
-                DateTime.Now
-                );
+                "Usuario",
+                usuario.UsuarioId,
+                "Eliminar",
+                $"Eliminación del usuario {usuario.NombreCompleto}",
+                DateTime.Now,
+                request.UsuarioLogeado
+            );
             await _repositoryBitacora.Create(bitacora);
 
             // Eliminar

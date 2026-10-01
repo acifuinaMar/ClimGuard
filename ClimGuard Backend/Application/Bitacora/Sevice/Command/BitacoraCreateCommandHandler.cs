@@ -19,10 +19,13 @@ namespace Application.Bitacora.Sevice.Command
         public async Task<bool> Handle(BitacoraCommand request, CancellationToken cancellationToken)
         {
             var bitacora = new BitacoraDomain(
-                0, 
-                request.usuarioId, 
-                request.accion, 
-                request.fechaRegistro
+                0,
+                request.NombreEntidad,
+                request.EntidadId,
+                request.Accion,
+                request.Descripcion,
+                request.FechaHora,
+                request.UsuarioId
             );
             await _repository.Create(bitacora);
             await _unitOfWork.SaveChangeAsync(cancellationToken);
