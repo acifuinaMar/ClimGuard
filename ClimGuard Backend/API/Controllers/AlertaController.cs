@@ -1,13 +1,12 @@
 ﻿using Application.Alerta.Service;
 using Application.Alerta.Service.Queries;
-using Application.Sensor.Service;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Operador, Administrador")]
     [Route("api/[controller]")]
     [ApiController]
     public class AlertaController : ControllerBase

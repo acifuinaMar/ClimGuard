@@ -18,6 +18,7 @@ public partial class Sensor
     public DateTime FechaInstalacion { get; set; }
 
     public DateTime FechaUltimaConexion { get; set; }
+    public decimal ValorActual { get; set; }
 
     public int ComunidadId { get; set; }
 

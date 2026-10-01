@@ -25,6 +25,7 @@ namespace Application.Sensor.Service.Queries
                 a.Descripcion,
                 a.FechaInstalacion,
                 a.FechaUltimaConexion,
+                a.ValorActual,
                 a.ComunidadId,
                 a.TipoSensorId,
                 a.EstadoSensorId,

@@ -308,6 +308,9 @@ public partial class MonitoreoContext : DbContext
                 .HasForeignKey(d => d.EstadoSensorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Sensor_EstadoSensor");
+
+            entity.Property(e => e.ValorActual)
+                .HasColumnType("decimal(10, 2)");
         });
         
         modelBuilder.Entity<TipoFenomeno>(entity =>

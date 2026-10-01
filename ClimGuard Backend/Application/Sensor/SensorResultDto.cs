@@ -8,6 +8,7 @@ public record SensorResultDto(
     string Descripcion,
     DateTime FechaInstalacion,
     DateTime FechaUltimaConexion,
+    decimal valorActual,
     int ComunidadId,
     int TipoSensorId,
     int EstadoSensorId,
