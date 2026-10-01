@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { Permiso } from '../core/roles';
 
 /**
  * El MARCO de la aplicación: encabezado arriba, menú a la izquierda,
@@ -27,7 +28,8 @@ export class MainLayout {
   sesion = this.auth.sesion;
 
   nombre = computed(() => this.sesion()?.nombreMostrado ?? 'Invitado');
-  rol = computed(() => this.sesion()?.rol ?? '');
+  /** Rol legible para mostrar en el encabezado (ej: "Usuario de consulta"). */
+  rol = this.auth.rolEtiqueta;
 
   /** Iniciales para el círculo de color. */
   iniciales = computed(() =>
@@ -36,26 +38,27 @@ export class MainLayout {
 
   /**
    * El menú se define como DATOS, no como HTML repetido.
-   * Agregar una sección nueva es añadir una línea a este arreglo,
-   * no copiar y pegar otro bloque de <a> en la plantilla.
-   *
-   * `soloAdmin` marca las secciones que solo ve el Administrador.
+   * Cada sección declara el PERMISO que necesita para aparecer. Así el menú
+   * se arma solo según el rol, usando el mismo sistema de permisos que el
+   * resto de la app (core/roles.ts). Si una sección no tiene `permiso`, la
+   * ve cualquiera que haya iniciado sesión.
    */
-  private todasLasSecciones = [
-    { ruta: '/panel',       icono: '◉', texto: 'Panel',       soloAdmin: false },
-    { ruta: '/sensores',    icono: '▤', texto: 'Sensores',    soloAdmin: false },
-    { ruta: '/umbrales',    icono: '⚙', texto: 'Umbrales',    soloAdmin: false },
-    { ruta: '/comunidades', icono: '◈', texto: 'Comunidades', soloAdmin: false },
-    { ruta: '/usuarios',    icono: '◇', texto: 'Usuarios',    soloAdmin: false },
-    { ruta: '/bitacora',    icono: '❑', texto: 'Bitácora',    soloAdmin: true }
+  private todasLasSecciones: { ruta: string; icono: string; texto: string; permiso?: Permiso }[] = [
+    { ruta: '/panel',       icono: '◉', texto: 'Panel',       permiso: 'dashboard.ver' },
+    { ruta: '/sensores',    icono: '▤', texto: 'Sensores',    permiso: 'sensores.gestionar' },
+    { ruta: '/umbrales',    icono: '⚙', texto: 'Reglas de alerta', permiso: 'reglas.gestionar' },
+    { ruta: '/comunidades', icono: '◈', texto: 'Comunidades', permiso: 'comunidades.gestionar' },
+    { ruta: '/usuarios',    icono: '◇', texto: 'Usuarios',    permiso: 'usuarios.gestionar' },
+    { ruta: '/bitacora',    icono: '❑', texto: 'Bitácora',    permiso: 'bitacora.ver' }
   ];
 
   /**
-   * El menú que se muestra: oculta las secciones de administrador si el
-   * usuario no lo es. La bitácora solo aparece para el Administrador (RN-019).
+   * El menú que se muestra: solo las secciones cuyo permiso tiene el usuario.
+   * Un Operador no verá "Usuarios" ni "Bitácora"; un Usuario de consulta solo
+   * verá el Panel.
    */
   secciones = computed(() =>
-    this.todasLasSecciones.filter(s => !s.soloAdmin || this.auth.esAdministrador())
+    this.todasLasSecciones.filter(s => !s.permiso || this.auth.puede(s.permiso))
   );
 
   alternarMenu() {
