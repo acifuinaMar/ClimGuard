@@ -17,14 +17,17 @@ namespace Application.Alerta.Service.Queries
             return alertas.Select(a => new AlertaResultDto
             (
                 a.AlertaId,
-                a.ComunidadId,
-                a.SensorId,
-                a.TipoFenomenoId,
-                a.NivelAlertaId,
-                a.Mensaje,
+                a.ValorDetectado,
+                a.MensajeSnap,
+                a.NivelAlertaIdSnap,
+                a.TipoFenomenoIdSnap,
                 a.FechaHora,
-                a.Activa,
-                a.FechaResolucion
+                a.Activo,
+                a.SensorId,
+                a.ComunidadId,
+                a.ReglaAlertaId,
+                a.EstadoAlertaId,
+                a.UsuarioResponsable
             )).ToList();
         }
     }

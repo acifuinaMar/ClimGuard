@@ -12,26 +12,25 @@ namespace Infraestructure.BackgroudService
     {
         private readonly MonitoreoContext _context;
         private readonly IRealtimeNotifier _notifier;
-        private readonly IUmbral _umbralRepository;
+        private readonly IReglaAlerta _reglaAlertaRepository;
         private readonly Random _random = new();
 
         public SimuladorLecturas(
     MonitoreoContext context,
     IRealtimeNotifier notifier,
-    IUmbral umbralRepository)
+    IReglaAlerta umbralRepository)
         {
             _context = context;
             _notifier = notifier;
-            _umbralRepository = umbralRepository;
+            _reglaAlertaRepository = umbralRepository;
         }
 
         public async Task GenerarLecturasAsync(CancellationToken cancellationToken)
         {
             // Obtener sensores activos
             var sensores = await _context.Sensors
-                .Where(x => x.Activo)
+                .Where(x => x.EstadoSensorId == 1)
                 .ToListAsync(cancellationToken);
-                
 
             foreach (var sensor in sensores)
             {
@@ -85,67 +84,35 @@ namespace Infraestructure.BackgroudService
     decimal valor,
     CancellationToken cancellationToken)
         {
-            // Obtener los umbrales configurados para este tipo de sensor
-            var umbral = await _umbralRepository.GetByTipoSensor(sensor.TipoSensorId);
+            var reglaAlerta = await _reglaAlertaRepository.GetByTipoSensor(sensor.TipoSensorId);
 
-            // Determinar el nivel según los umbrales configurados
-            int nivelAlertaId;
-
-            if (valor >= umbral.ValorEmergencia)
+            // Si el valor no entra en el rango de la regla,
+            // no se genera ninguna alerta.
+            if (valor >= reglaAlerta.ValorMin &&
+                valor <= reglaAlerta.ValorMax)
             {
-                nivelAlertaId = 4; // Rojo
-            }
-            else if (valor >= umbral.ValorAlerta)
-            {
-                nivelAlertaId = 3; // Naranja
-            }
-            else if (valor >= umbral.ValorPrecaucion)
-            {
-                nivelAlertaId = 2; // Amarillo
-            }
-            else
-            {
-                // No supera el umbral de precaución
                 return;
             }
 
-            // Determinar el fenómeno asociado al tipo de sensor
-            int tipoFenomenoId = sensor.TipoSensorId switch
-            {
-                1 => 5, // Temperatura -> Incendio Forestal
-                2 => 2, // Humedad -> Sequía
-                3 => 3, // Viento -> Tormenta
-                4 => 1, // Lluvia -> Inundación
-                5 => 1, // Nivel del Río -> Inundación
-                _ => 1
-            };
-
-            // Construir un mensaje descriptivo
-            string mensaje = sensor.TipoSensorId switch
-            {
-                1 => $"Temperatura de {valor:F2} °C. Existe riesgo de incendio forestal.",
-
-                2 => $"Humedad de {valor:F2} %. Existe riesgo de sequía.",
-
-                3 => $"Velocidad del viento de {valor:F2} km/h. Existe riesgo de tormenta.",
-
-                4 => $"Lluvia acumulada de {valor:F2} mm. Existe riesgo de inundación.",
-
-                5 => $"Nivel del río de {valor:F2} m. Existe riesgo de desbordamiento.",
-
-                _ => $"Valor crítico detectado: {valor:F2}"
-            };
+            // El nivel ya viene configurado en la regla
+            int nivelAlertaId = reglaAlerta.NivelAlertaId;
+            int tipoFenomenoId = reglaAlerta.TipoFenomenoId;
+            string mensaje = reglaAlerta.Mensaje;
 
             // Crear la alerta
             var alerta = new Alerta
             {
-                ComunidadId = sensor.ComunidadId,
-                SensorId = sensor.SensorId,
-                TipoFenomenoId = tipoFenomenoId,
-                NivelAlertaId = nivelAlertaId,
-                Mensaje = mensaje,
+                ValorDetectado = valor,
+                MensajeSnap = mensaje,
+                NivelAlertaIdSnap = nivelAlertaId,
+                TipoFenomenoIdSnap = tipoFenomenoId,
                 FechaHora = DateTime.Now,
-                Activa = true
+                Activo = true,
+                SensorId = sensor.SensorId,
+                ComunidadId = sensor.ComunidadId,
+                ReglaAlertaId = reglaAlerta.ReglaAlertaId,
+                EstadoAlertaId = 1,
+                UsuarioResponsable = null
             };
 
             _context.Alerta.Add(alerta);
@@ -158,11 +125,11 @@ namespace Infraestructure.BackgroudService
                 AlertaId = alerta.AlertaId,
                 ComunidadId = alerta.ComunidadId,
                 SensorId = alerta.SensorId,
-                TipoFenomenoId = alerta.TipoFenomenoId,
-                NivelAlertaId = alerta.NivelAlertaId,
-                Mensaje = alerta.Mensaje,
+                TipoFenomenoId = alerta.TipoFenomenoIdSnap,
+                NivelAlertaId = alerta.NivelAlertaIdSnap,
+                Mensaje = alerta.MensajeSnap,
                 FechaHora = alerta.FechaHora,
-                Activa = alerta.Activa
+                Activa = alerta.Activo
             };
 
             await _notifier.EnviarAlertaNuevaAsync(

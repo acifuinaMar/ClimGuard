@@ -17,11 +17,18 @@ namespace Application.Comunidad.Service.Queries
 
             return new ComunidadResultDto(
                 comunidad.ComunidadId,
-                comunidad.Nombre,
+                comunidad.NombreComunidad,
+                comunidad.Descripcion,
+                comunidad.Pais,
+                comunidad.Departamento,
+                comunidad.Municipio,
                 comunidad.Latitud,
                 comunidad.Longitud,
-                comunidad.Descripcion,
-                comunidad.FechaRegistro
+                comunidad.Activo,
+                comunidad.UsuarioIng,
+                comunidad.FechaIng,
+                comunidad.UsuarioAct,
+                comunidad.FechaAct
                 );
         }
     }

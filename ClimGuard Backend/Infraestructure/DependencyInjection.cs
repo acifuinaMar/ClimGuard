@@ -27,10 +27,12 @@ namespace Infraestructure
             service.AddScoped<ISensor, SensorRepository>();
             service.AddScoped<IComunidad, ComunidadRepository>();
             service.AddScoped<IAlerta, AlertaRespository>();
-            service.AddScoped<IUmbral, UmbralRepository>();
+            service.AddScoped<IReglaAlerta, ReglaAlertaRepository>();
             service.AddScoped<ILogin, LoginRepository>();
             service.AddScoped<ILecturaSensor, LecturaSensorRepository>();
             service.AddScoped<IBitacora, BitacoraRepository>();
+            service.AddScoped<IEstadoSensor, EstadoSensorRepository>();
+            service.AddScoped<ITipoFenomeno, TipoFenomenoRepository>();
             service.AddScoped<TokenService>();
 
             service.AddScoped<ISimuladorLecturas, SimuladorLecturas>();

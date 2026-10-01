@@ -2,37 +2,51 @@
 
 public partial class UsuarioDomain
 {
-    public UsuarioDomain(int usuarioId, string apellido2, string apellido1, string nombre2, string nombre1, string nombreUsuario, string passwordHash, string rol, bool activo, DateTime fechaRegistro)
+    public UsuarioDomain(
+        int usuarioId,
+        string nombreCompleto,
+        string nombreUsuario,
+        string passwordHash,
+        DateTime? ultimoAcceso,
+        bool activo,
+        int rolId,
+        int usuarioIng,
+        DateTime fechaIng,
+        int? usuarioAct,
+        DateTime? fechaAct)
     {
         UsuarioId = usuarioId;
-        Apellido2 = apellido2;
-        Apellido1 = apellido1;
-        Nombre2 = nombre2;
-        Nombre1 = nombre1;
+        NombreCompleto = nombreCompleto;
         NombreUsuario = nombreUsuario;
         PasswordHash = passwordHash;
-        Rol = rol;
+        UltimoAcceso = ultimoAcceso;
         Activo = activo;
-        FechaRegistro = fechaRegistro;
+        RolId = rolId;
+        UsuarioIng = usuarioIng;
+        FechaIng = fechaIng;
+        UsuarioAct = usuarioAct;
+        FechaAct = fechaAct;
     }
 
     public int UsuarioId { get; set; }
 
-    public string Apellido2 { get; set; } = null!;
-
-    public string Apellido1 { get; set; } = null!;
-
-    public string Nombre2 { get; set; } = null!;
-
-    public string Nombre1 { get; set; } = null!;
+    public string NombreCompleto { get; set; } = null!;
 
     public string NombreUsuario { get; set; } = null!;
 
     public string PasswordHash { get; set; } = null!;
 
-    public string Rol { get; set; } = null!;
+    public DateTime? UltimoAcceso { get; set; }
 
     public bool Activo { get; set; }
 
-    public DateTime FechaRegistro { get; set; }
+    public int RolId { get; set; }
+
+    public int UsuarioIng { get; set; }
+
+    public DateTime FechaIng { get; set; }
+
+    public int? UsuarioAct { get; set; }
+
+    public DateTime? FechaAct { get; set; }
 }

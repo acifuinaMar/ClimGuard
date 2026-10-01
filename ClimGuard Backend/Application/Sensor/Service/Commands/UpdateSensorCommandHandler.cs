@@ -32,22 +32,27 @@ namespace Application.Sensor.Service.Commands
 
             //  Actualizar propiedades
             //sensor.SensorId = sensorId;
+            sensor.Nombre = request.Nombre;
+            sensor.Codigo = request.Codigo;
+            sensor.Ubicacion = request.Ubicacion;
+            sensor.Descripcion = request.Descripcion;
+            sensor.FechaInstalacion = request.FechaInstalacion;
+            sensor.FechaUltimaConexion = request.FechaUltimaConexion;
             sensor.ComunidadId = request.ComunidadId;
             sensor.TipoSensorId = request.TipoSensorId;
-            sensor.Nombre = request.Nombre;
-            sensor.ValorActual = request.ValorActual;
-            sensor.Activo = request.Activo;
-            sensor.FechaInstalacion = request.FechaInstalacion;
-            sensor.UltimaActualizacion = request.UltimaActualizacion;
+            sensor.EstadoSensorId = request.EstadoSensorId;
 
 
 
             var bitacora = new BitacoraDomain(
                 0,
-                request.UsuarioLogeado,
-                $"Actualizacion de sensor {request.Nombre}",
-                DateTime.Now
-                );
+                "Sensor",
+                sensor.SensorId,
+                "Eliminar",
+                $"Actualización del sensor {sensor.Nombre}",
+                DateTime.Now,
+                request.UsuarioLogeado
+            );
             await _repositoryBitacora.Create(bitacora);
 
             //  Actualizar entidad
@@ -59,14 +64,20 @@ namespace Application.Sensor.Service.Commands
             //  Retornar resultado
             return new SensorResultDto(
                 sensor.SensorId,
+                sensor.Nombre,
+                sensor.Codigo,
+                sensor.Ubicacion,
+                sensor.Descripcion,
+                sensor.FechaInstalacion,
+                sensor.FechaUltimaConexion,
                 sensor.ComunidadId,
                 sensor.TipoSensorId,
-                sensor.Nombre,
-                sensor.ValorActual,
-                sensor.Activo,
-                sensor.FechaInstalacion,
-                sensor.UltimaActualizacion
-                );
+                sensor.EstadoSensorId,
+                sensor.UsuarioIng,
+                sensor.FechaIng,
+                sensor.UsuarioAct,
+                sensor.FechaAct
+            );
         }
     }
 }

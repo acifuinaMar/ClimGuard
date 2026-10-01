@@ -11,7 +11,7 @@ namespace Application.LecturaSensor.Service
         int sensorId, 
         decimal valor, 
         DateTime fechaHora,
-        int UsuarioLogeado
+        int usuarioIng
     ) : IRequest<LecturaSensorResultDto>;
 
 
