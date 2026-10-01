@@ -27,7 +27,11 @@ namespace Application.Sensor.Service.Queries
                 a.FechaUltimaConexion,
                 a.ComunidadId,
                 a.TipoSensorId,
-                a.EstadoSensorId
+                a.EstadoSensorId,
+                a.UsuarioIng,
+                a.FechaIng,
+                a.UsuarioAct,
+                a.FechaAct
             )).ToList();
         }
     }

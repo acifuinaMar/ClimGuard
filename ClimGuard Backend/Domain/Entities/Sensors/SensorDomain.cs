@@ -18,7 +18,12 @@ public partial class SensorDomain
         DateTime fechaUltimaConexion,
         int comunidadId,
         int tipoSensorId,
-        int estadoSensorId)
+        int estadoSensorId,
+        int usuarioIng,
+        DateTime fechaIng,
+        int? usuarioAct,
+        DateTime? fechaAct
+        )
     {
         SensorId = sensorId;
         Nombre = nombre;
@@ -30,6 +35,10 @@ public partial class SensorDomain
         ComunidadId = comunidadId;
         TipoSensorId = tipoSensorId;
         EstadoSensorId = estadoSensorId;
+        UsuarioIng = usuarioIng;
+        FechaIng = fechaIng;
+        UsuarioAct = usuarioAct;
+        FechaAct = fechaAct;
     }
 
     public int SensorId { get; set; }
@@ -59,4 +68,12 @@ public partial class SensorDomain
     public DateTime FechaUltimaConexion { get; set; }
 
     public int EstadoSensorId { get; set; }
+
+    public int UsuarioIng { get; set; }
+
+    public DateTime FechaIng { get; set; }
+
+    public int? UsuarioAct { get; set; }
+
+    public DateTime? FechaAct { get; set; }
 }

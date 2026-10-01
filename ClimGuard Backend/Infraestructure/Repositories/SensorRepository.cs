@@ -24,7 +24,11 @@ namespace Services.Services{
                     Descripcion = sensor.Descripcion,
                     FechaInstalacion = sensor.FechaInstalacion,
                     FechaUltimaConexion = sensor.FechaUltimaConexion,
-                    EstadoSensorId = sensor.EstadoSensorId
+                    EstadoSensorId = sensor.EstadoSensorId,
+                    UsuarioIng = sensor.UsuarioIng,
+                    FechaIng = sensor.FechaIng,
+                    UsuarioAct = sensor.UsuarioAct,
+                    FechaAct = sensor.FechaAct
                 };
                 _context.Sensors.Add(obj);
                 await _context.SaveChangesAsync();
@@ -39,7 +43,11 @@ namespace Services.Services{
                     sensor.FechaUltimaConexion,
                     sensor.ComunidadId,
                     sensor.TipoSensorId,
-                    sensor.EstadoSensorId
+                    sensor.EstadoSensorId,
+                    sensor.UsuarioIng,
+                    sensor.FechaIng,
+                    sensor.UsuarioAct,
+                    sensor.FechaAct
                 );
             }
             catch (Exception)
@@ -78,7 +86,11 @@ namespace Services.Services{
                     a.FechaUltimaConexion,
                     a.ComunidadId,
                     a.TipoSensorId,
-                    a.EstadoSensorId
+                    a.EstadoSensorId,
+                    a.UsuarioIng,
+                    a.FechaIng,
+                    a.UsuarioAct,
+                    a.FechaAct
                 )).ToList();
             }
             catch (Exception)
@@ -104,7 +116,11 @@ namespace Services.Services{
                     obj.FechaUltimaConexion,
                     obj.ComunidadId,
                     obj.TipoSensorId,
-                    obj.EstadoSensorId
+                    obj.EstadoSensorId,
+                    obj.UsuarioIng,
+                    obj.FechaIng,
+                    obj.UsuarioAct,
+                    obj.FechaAct
                 );
             }
             catch (Exception)
@@ -133,6 +149,10 @@ namespace Services.Services{
                 obj.ComunidadId = sensor.ComunidadId;
                 obj.TipoSensorId = sensor.TipoSensorId;
                 obj.EstadoSensorId = sensor.EstadoSensorId;
+                obj.UsuarioIng = sensor.UsuarioIng;
+                obj.FechaIng = sensor.FechaIng;
+                obj.UsuarioAct = sensor.UsuarioAct;
+                obj.FechaAct = sensor.FechaAct;
 
                 await _context.SaveChangesAsync();
 

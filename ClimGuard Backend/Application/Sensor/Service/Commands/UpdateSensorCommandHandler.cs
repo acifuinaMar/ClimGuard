@@ -72,7 +72,11 @@ namespace Application.Sensor.Service.Commands
                 sensor.FechaUltimaConexion,
                 sensor.ComunidadId,
                 sensor.TipoSensorId,
-                sensor.EstadoSensorId
+                sensor.EstadoSensorId,
+                sensor.UsuarioIng,
+                sensor.FechaIng,
+                sensor.UsuarioAct,
+                sensor.FechaAct
             );
         }
     }

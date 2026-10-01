@@ -32,14 +32,18 @@ namespace Application.Sensor.Service.Commands
                 request.FechaUltimaConexion,
                 request.ComunidadId,
                 request.TipoSensorId,
-                request.EstadoSensorId
+                request.EstadoSensorId,
+                request.UsuarioLogeado,      // UsuarioIng
+                DateTime.Now,                // FechaIng
+                null,                        // UsuarioAct
+                null                         // FechaAct
             );
 
             var bitacora = new BitacoraDomain(
                 0,
                 "Sensor",
                 sensor.SensorId,
-                "Eliminar",
+                "Crear",
                 $"Registro del sensor {sensor.Nombre}",
                 DateTime.Now,
                 request.UsuarioLogeado
@@ -59,7 +63,11 @@ namespace Application.Sensor.Service.Commands
                 sensor.FechaUltimaConexion,
                 sensor.ComunidadId,
                 sensor.TipoSensorId,
-                sensor.EstadoSensorId
+                sensor.EstadoSensorId,
+                sensor.UsuarioIng,
+                sensor.FechaIng,
+                sensor.UsuarioAct,
+                sensor.FechaAct
             );
         }
     }

@@ -10,5 +10,9 @@ public record SensorResultDto(
     DateTime FechaUltimaConexion,
     int ComunidadId,
     int TipoSensorId,
-    int EstadoSensorId
+    int EstadoSensorId,
+    int UsuarioIng,
+    DateTime FechaIng,
+    int? UsuarioAct,
+    DateTime? FechaAct
 );

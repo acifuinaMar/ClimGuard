@@ -24,6 +24,13 @@ public partial class Sensor
     public int TipoSensorId { get; set; }
 
     public int EstadoSensorId { get; set; }
+    public int UsuarioIng { get; set; }
+
+    public DateTime FechaIng { get; set; }
+
+    public int? UsuarioAct { get; set; }
+
+    public DateTime? FechaAct { get; set; }
 
     public virtual ICollection<Alerta> Alerta { get; set; } = new List<Alerta>();
 
