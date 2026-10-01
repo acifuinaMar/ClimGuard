@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
+import { AlarmaService } from '../core/services/alarma.service';
 import { Permiso } from '../core/roles';
 
 /**
@@ -20,6 +21,8 @@ import { Permiso } from '../core/roles';
 })
 export class MainLayout {
   private auth = inject(AuthService);
+  /** Público para que el HTML muestre el aviso de emergencia. */
+  alarma = inject(AlarmaService);
 
   /** Controla si el menú lateral está visible (importante en móvil). */
   menuAbierto = signal(true);

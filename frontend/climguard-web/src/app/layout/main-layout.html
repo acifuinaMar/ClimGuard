@@ -1,3 +1,13 @@
+<!-- ===== AVISO DE EMERGENCIA (visual + sonoro) ===== -->
+<!-- Aparece sobre todo lo demás cuando entra una alerta de nivel rojo. -->
+@if (alarma.activa()) {
+  <div class="alarma" role="alert">
+    <span class="alarma__icono">⚠</span>
+    <span class="alarma__texto">{{ alarma.mensaje() }}</span>
+    <button type="button" class="alarma__cerrar" (click)="alarma.silenciar()">Entendido</button>
+  </div>
+}
+
 <div class="disposicion" [class.disposicion--cerrado]="!menuAbierto()">
 
   <!-- ================= MENÚ LATERAL ================= -->
