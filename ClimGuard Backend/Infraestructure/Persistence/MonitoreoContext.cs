@@ -117,19 +117,53 @@ public partial class MonitoreoContext : DbContext
 
         modelBuilder.Entity<Comunidad>(entity =>
         {
-            entity.HasKey(e => e.ComunidadId).HasName("PK__Comunida__BE3D371B10DA9CE9");
+            entity.HasKey(e => e.ComunidadId)
+                .HasName("PK_Comunidad");
 
             entity.ToTable("Comunidad");
 
-            entity.Property(e => e.Descripcion).HasMaxLength(255);
-            entity.Property(e => e.FechaRegistro)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Latitud).HasColumnType("decimal(9, 6)");
-            entity.Property(e => e.Longitud).HasColumnType("decimal(9, 6)");
-            entity.Property(e => e.Nombre).HasMaxLength(100);
-        });
+            entity.Property(e => e.NombreComunidad)
+                .HasMaxLength(150);
 
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.Pais)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Departamento)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Municipio)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Latitud)
+                .HasColumnType("decimal(9,6)");
+
+            entity.Property(e => e.Longitud)
+                .HasColumnType("decimal(9,6)");
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.FechaIng)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime2");
+
+            entity.Property(e => e.FechaAct)
+                .HasColumnType("datetime2");
+
+            entity.HasOne(d => d.UsuarioIngNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.UsuarioIng)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Comunidad_UsuarioIng");
+
+            entity.HasOne(d => d.UsuarioActNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.UsuarioAct)
+                .HasConstraintName("FK_Comunidad_UsuarioAct");
+        });
         modelBuilder.Entity<EstadoAlerta>(entity =>
         {
             entity.HasKey(e => e.EstadoAlertaId).HasName("PK__EstadoAl__C73CE723D9883744");
