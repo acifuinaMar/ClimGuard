@@ -2,7 +2,6 @@
 using Domain.Bitacora;
 using Domain.Interfaces;
 using MediatR;
-using Services.Services.Interfaces;
 using tickets.Application.Common.UnitOfWork;
 
 namespace Application.Usuario.Service.Commands
@@ -23,11 +22,6 @@ namespace Application.Usuario.Service.Commands
         }
         public async Task<UsuarioResultDto> Handle(UpdateUsuarioCommand request, CancellationToken cancellationToken)
         {
-
-            var nombreUsuario = !string.IsNullOrWhiteSpace(request.Nombre1) && !string.IsNullOrWhiteSpace(request.Apellido1)
-                ? $"{char.ToUpper(request.Nombre1.Trim()[0])}{request.Apellido1.Trim()}"
-                : "" ?? string.Empty;
-
             //  Buscar usuario
             var usuario = await _repository.GetById(request.UsuarioId);
 
@@ -38,21 +32,19 @@ namespace Application.Usuario.Service.Commands
             }
 
             // 2. Actualizar propiedades
-            usuario.UsuarioId = request.UsuarioId;
-            usuario.Apellido2 = request.Apellido2;
-            usuario.Apellido1 = request.Apellido1;
-            usuario.Nombre2 = request.Nombre2;
-            usuario.Nombre1 = request.Nombre1;
-            usuario.NombreUsuario = nombreUsuario.ToLower();
+            usuario.NombreCompleto = request.NombreCompleto;
+            usuario.NombreUsuario = request.NombreUsuario;
             usuario.PasswordHash = _encrypt.encryptSHA256(request.PasswordHash);
-            usuario.Rol = request.Rol;
             usuario.Activo = request.Activo;
+            usuario.RolId = request.RolId;
+            usuario.UsuarioAct = request.UsuarioLogeado;
+            usuario.FechaAct = DateTime.Now;
 
 
             var bitacora = new BitacoraDomain(
                 0,
                 request.UsuarioLogeado,
-                $"Actualiza de usuario {request.UsuarioId}",
+                $"Actualización de usuario {usuario.NombreCompleto}",
                 DateTime.Now
                 );
             await _repositoryBitacora.Create(bitacora);
@@ -66,15 +58,16 @@ namespace Application.Usuario.Service.Commands
             //  Retornar resultado
             return new UsuarioResultDto(
                 usuario.UsuarioId,
-                usuario.Apellido2,
-                usuario.Apellido1,
-                usuario.Nombre2,
-                usuario.Nombre1,
+                usuario.NombreCompleto,
                 usuario.NombreUsuario,
-                usuario.Rol,
+                usuario.UltimoAcceso,
                 usuario.Activo,
-                usuario.FechaRegistro
-                );
+                usuario.RolId,
+                usuario.UsuarioIng,
+                usuario.FechaIng,
+                usuario.UsuarioAct,
+                usuario.FechaAct
+            );
         }
     }
 }

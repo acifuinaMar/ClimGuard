@@ -93,7 +93,7 @@ public partial class MonitoreoContext : DbContext
                 .HasConstraintName("FK_Alerta_EstadoAlerta");
 
             entity.HasOne(d => d.UsuarioResponsableNavigation)
-                .WithMany(p => p.Alerta)
+                .WithMany(p => p.Alertas)
                 .HasForeignKey(d => d.UsuarioResponsable)
                 .HasConstraintName("FK_Alerta_Usuario");
         });
@@ -206,10 +206,17 @@ public partial class MonitoreoContext : DbContext
 
             entity.ToTable("Rol");
 
-            entity.Property(e => e.Descripcion).HasMaxLength(100);
-            entity.Property(e => e.Rol1)
-                .HasMaxLength(50)
-                .HasColumnName("Rol");
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.FechaIng)
+                .HasColumnType("datetime2");
+
+            entity.Property(e => e.FechaAct)
+                .HasColumnType("datetime2");
         });
 
         modelBuilder.Entity<Sensor>(entity =>
@@ -323,25 +330,40 @@ public partial class MonitoreoContext : DbContext
         
         modelBuilder.Entity<Usuario>(entity =>
         {
-            entity.HasKey(e => e.UsuarioId).HasName("PK__Usuario__2B3DE7B81F2D97D9");
+            entity.HasKey(e => e.UsuarioId);
 
             entity.ToTable("Usuario");
 
-            entity.HasIndex(e => e.NombreUsuario, "UQ__Usuario__6B0F5AE085D0F510").IsUnique();
+            entity.HasIndex(e => e.NombreUsuario)
+                .IsUnique();
 
-            entity.Property(e => e.Activo).HasDefaultValue(true, "DF__Usuario__Activo__6B24EA82");
-            entity.Property(e => e.Apellido1).HasMaxLength(100);
-            entity.Property(e => e.Apellido2).HasMaxLength(100);
-            entity.Property(e => e.FechaRegistro)
-                .HasDefaultValueSql("(getdate())", "DF__Usuario__FechaRe__6C190EBB")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Nombre1).HasMaxLength(100);
-            entity.Property(e => e.Nombre2).HasMaxLength(100);
-            entity.Property(e => e.NombreUsuario).HasMaxLength(50);
-            entity.Property(e => e.PasswordHash).HasMaxLength(255);
-            entity.Property(e => e.Rol)
-                .HasMaxLength(20)
-                .HasDefaultValue("Administrador", "DF__Usuario__Rol__6A30C649");
+            entity.Property(e => e.NombreCompleto)
+                .HasMaxLength(200);
+
+            entity.Property(e => e.NombreUsuario)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(255);
+
+            entity.Property(e => e.UltimoAcceso)
+                .HasColumnType("datetime2");
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.FechaIng)
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.Property(e => e.FechaAct)
+                .HasColumnType("datetime2");
+
+            entity.HasOne(d => d.Rol)
+                .WithMany(p => p.Usuarios)
+                .HasForeignKey(d => d.RolId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Usuario_Rol");
         });
 
         OnModelCreatingPartial(modelBuilder);
