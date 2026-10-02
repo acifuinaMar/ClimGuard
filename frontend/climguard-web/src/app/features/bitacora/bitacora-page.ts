@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { BitacoraService, BitacoraVista } from '../../core/services/bitacora.service';
 
 /** Un registro con su tipo de acción ya clasificado, para el color. */
@@ -12,7 +12,6 @@ interface RegistroVista extends BitacoraVista {
 @Component({
   selector: 'app-bitacora-page',
   templateUrl: './bitacora-page.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './bitacora-page.scss'
 })
 export class BitacoraPage {

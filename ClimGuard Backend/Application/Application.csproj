@@ -11,6 +11,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="NivelAlerta\" />
+    <Folder Include="TipoFenomeno\" />
     <Folder Include="TipoSensor\" />
   </ItemGroup>
 

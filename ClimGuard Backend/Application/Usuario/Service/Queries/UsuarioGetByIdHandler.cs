@@ -1,5 +1,5 @@
 ﻿using MediatR;
-using Domain.Interfaces;
+using Services.Services.Interfaces;
 
 namespace Application.Usuario.Service.Queries
 {
@@ -18,16 +18,15 @@ namespace Application.Usuario.Service.Queries
 
             return new UsuarioResultDto(
                 usuario.UsuarioId,
-                usuario.NombreCompleto,
+                usuario.Apellido2,
+                usuario.Apellido1,
+                usuario.Nombre2,
+                usuario.Nombre1,
                 usuario.NombreUsuario,
-                usuario.UltimoAcceso,
+                usuario.Rol,
                 usuario.Activo,
-                usuario.RolId,
-                usuario.UsuarioIng,
-                usuario.FechaIng,
-                usuario.UsuarioAct,
-                usuario.FechaAct
-            );
+                usuario.FechaRegistro
+                );
         }
     }
 }

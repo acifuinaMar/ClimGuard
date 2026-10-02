@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { Sensor } from '../../core/models/sensor.model';
 import { SensorService } from '../../core/services/sensor.service';
 import { calcularNivel, textoNivel, unidadDe, variableDe, Nivel } from '../../core/nivel-alerta';
@@ -15,7 +15,6 @@ interface SensorVista extends Sensor {
   selector: 'app-sensores-page',
   imports: [SensorForm],
   templateUrl: './sensores-page.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sensores-page.scss'
 })
 export class SensoresPage {

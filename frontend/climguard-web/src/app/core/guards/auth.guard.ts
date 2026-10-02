@@ -1,7 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { Permiso } from '../roles';
 
 /**
  * Portero de las rutas privadas.
@@ -40,27 +39,5 @@ export const adminGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (auth.esAdministrador()) return true;
-  return router.createUrlTree(['/panel']);
-};
-
-/**
- * Guardián por PERMISO. Protege una ruta exigiendo un permiso concreto,
- * que se declara en la propia ruta con `data: { permiso: '...' }`.
- *
- * Ejemplo en app.routes.ts:
- *   { path: 'usuarios', component: UsuariosPage,
- *     canActivate: [permisoGuard], data: { permiso: 'usuarios.gestionar' } }
- *
- * Si el rol del usuario no tiene ese permiso, lo manda al panel.
- * Es el mismo criterio que usa la interfaz (auth.puede), aplicado a rutas:
- * una sola fuente de verdad para "quién puede qué".
- */
-export const permisoGuard: CanActivateFn = (ruta) => {
-  const auth = inject(AuthService);
-  const router = inject(Router);
-
-  const permiso = ruta.data?.['permiso'] as Permiso | undefined;
-  if (!permiso || auth.puede(permiso)) return true;
-
   return router.createUrlTree(['/panel']);
 };

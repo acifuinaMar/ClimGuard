@@ -33,11 +33,10 @@ namespace Infraestructure.Repositories
 
             // 2. Buscar usuario
             var usuario = await _context.Usuarios
-            .Include(u => u.Rol)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u =>
-                u.NombreUsuario == Usuario.Trim());
-            
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u =>
+                    u.NombreUsuario == Usuario.Trim());
+
             // 3. Validar usuario
             if (usuario == null)
             {
@@ -80,7 +79,7 @@ namespace Infraestructure.Repositories
                 usuario.UsuarioId,
                 "Autenticación exitosa.",
                 usuario.NombreUsuario,
-                usuario.Rol.Nombre
+                usuario.Rol
             );
         }
     }

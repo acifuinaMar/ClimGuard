@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Sensor } from '../../core/models/sensor.model';
 
@@ -15,7 +15,6 @@ import { Sensor } from '../../core/models/sensor.model';
   selector: 'app-sensor-form',
   imports: [ReactiveFormsModule],
   templateUrl: './sensor-form.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sensor-form.scss'
 })
 export class SensorForm {

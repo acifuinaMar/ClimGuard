@@ -32,26 +32,18 @@ namespace Application.Comunidad.Service.Commands
 
             //  Actualizar propiedades
             comunidad.ComunidadId = request.ComunidadId;
-            comunidad.NombreComunidad = request.NombreComunidad;
-            comunidad.Descripcion = request.Descripcion;
-            comunidad.Pais = request.Pais;
-            comunidad.Departamento = request.Departamento;
-            comunidad.Municipio = request.Municipio;
+            comunidad.Nombre = request.Nombre;
             comunidad.Latitud = request.Latitud;
             comunidad.Longitud = request.Longitud;
-            comunidad.Activo = request.Activo;
-            comunidad.UsuarioAct = request.UsuarioAct;
-            comunidad.FechaAct = request.FechaAct;
+            comunidad.Descripcion = request.Descripcion;
+            comunidad.FechaRegistro = request.FechaRegistro;
 
             // Guardado en bitacora
             var bitacora = new BitacoraDomain(
                 0,
-                "Comunidad",
-                comunidad.ComunidadId,
-                "Actualizar",
-                $"Actualización de comunidad {comunidad.NombreComunidad}",
-                DateTime.Now,
-                request.UsuarioLogeado
+                request.UsuarioLogeado,
+                $"Actualiazción de comunidad {request.ComunidadId}",
+                DateTime.Now
                 );
             await _repositoryBitacora.Create(bitacora);
 
@@ -64,18 +56,11 @@ namespace Application.Comunidad.Service.Commands
             //  Retornar resultado
             return new ComunidadResultDto(
                 comunidad.ComunidadId,
-                comunidad.NombreComunidad,
-                comunidad.Descripcion,
-                comunidad.Pais,
-                comunidad.Departamento,
-                comunidad.Municipio,
+                comunidad.Nombre,
                 comunidad.Latitud,
                 comunidad.Longitud,
-                comunidad.Activo,
-                comunidad.UsuarioIng,
-                comunidad.FechaIng,
-                comunidad.UsuarioAct,
-                comunidad.FechaAct
+                comunidad.Descripcion,
+                comunidad.FechaRegistro
                 );
         }
 

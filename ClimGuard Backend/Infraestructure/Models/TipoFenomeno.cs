@@ -8,14 +8,6 @@ public partial class TipoFenomeno
     public int TipoFenomenoId { get; set; }
 
     public string Nombre { get; set; } = null!;
-    public bool Activo { get; set; }
 
-    public int UsuarioIng { get; set; }
-    public DateTime FechaIng { get; set; }
-
-    public int? UsuarioAct { get; set; }
-
-    public DateTime? FechaAct { get; set; }
-
-    public virtual ICollection<ReglaAlerta> ReglaAlertas { get; set; } = new List<ReglaAlerta>();
+    public virtual ICollection<Alerta> Alerta { get; set; } = new List<Alerta>();
 }

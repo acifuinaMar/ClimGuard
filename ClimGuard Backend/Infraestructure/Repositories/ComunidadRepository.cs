@@ -16,36 +16,24 @@ namespace Services.Services
             {
                 var obj = new Comunidad
                 {
-                    NombreComunidad = comunidad.NombreComunidad,
-                    Descripcion = comunidad.Descripcion,
-                    Pais = comunidad.Pais,
-                    Departamento = comunidad.Departamento,
-                    Municipio = comunidad.Municipio,
+                    ComunidadId = comunidad.ComunidadId,
+                    Nombre = comunidad.Nombre,
                     Latitud = comunidad.Latitud,
                     Longitud = comunidad.Longitud,
-                    Activo = comunidad.Activo,
-                    UsuarioIng = comunidad.UsuarioIng,
-                    FechaIng = comunidad.FechaIng,
-                    UsuarioAct = comunidad.UsuarioAct,
-                    FechaAct = comunidad.FechaAct
+                    Descripcion = comunidad.Descripcion,
+                    FechaRegistro = comunidad.FechaRegistro.ToDateTime(TimeOnly.MinValue)
                 };
                 _context.Comunidads.Add(obj);
                 await _context.SaveChangesAsync();
 
-                return new ComunidadDomain(
-                    obj.ComunidadId,
-                    obj.NombreComunidad,
-                    obj.Descripcion,
-                    obj.Pais,
-                    obj.Departamento,
-                    obj.Municipio,
-                    obj.Latitud,
-                    obj.Longitud,
-                    obj.Activo,
-                    obj.UsuarioIng,
-                    obj.FechaIng,
-                    obj.UsuarioAct,
-                    obj.FechaAct
+                return new ComunidadDomain
+                (
+                    comunidad.ComunidadId,
+                    comunidad.Nombre,
+                    comunidad.Latitud,
+                    comunidad.Longitud,
+                    comunidad.Descripcion,
+                    comunidad.FechaRegistro
                 );
             }
             catch (Exception)
@@ -74,20 +62,14 @@ namespace Services.Services
             {
                 var comunidad = await _context.Comunidads.ToListAsync();
 
-                return comunidad.Select(a => new ComunidadDomain(
+                return comunidad.Select(a => new ComunidadDomain
+                (
                     a.ComunidadId,
-                    a.NombreComunidad,
-                    a.Descripcion,
-                    a.Pais,
-                    a.Departamento,
-                    a.Municipio,
+                    a.Nombre,
                     a.Latitud,
                     a.Longitud,
-                    a.Activo,
-                    a.UsuarioIng,
-                    a.FechaIng,
-                    a.UsuarioAct,
-                    a.FechaAct
+                    a.Descripcion,
+                    DateOnly.FromDateTime(a.FechaRegistro)
                 )).ToList();
             }
             catch (Exception)
@@ -103,20 +85,14 @@ namespace Services.Services
                 var obj = await _context.Comunidads
                     .Where(a => a.ComunidadId == comunidadId).FirstOrDefaultAsync();
 
-                return new ComunidadDomain(
+                return new ComunidadDomain
+                (
                     obj.ComunidadId,
-                    obj.NombreComunidad,
-                    obj.Descripcion,
-                    obj.Pais,
-                    obj.Departamento,
-                    obj.Municipio,
+                    obj.Nombre,
                     obj.Latitud,
                     obj.Longitud,
-                    obj.Activo,
-                    obj.UsuarioIng,
-                    obj.FechaIng,
-                    obj.UsuarioAct,
-                    obj.FechaAct
+                    obj.Descripcion,
+                    DateOnly.FromDateTime(obj.FechaRegistro)
                 );
             }
             catch (Exception)
@@ -135,16 +111,13 @@ namespace Services.Services
                 if (obj == null)
                     return false;
 
-                obj.NombreComunidad = comunidad.NombreComunidad;
-                obj.Descripcion = comunidad.Descripcion;
-                obj.Pais = comunidad.Pais;
-                obj.Departamento = comunidad.Departamento;
-                obj.Municipio = comunidad.Municipio;
+                obj.ComunidadId = comunidad.ComunidadId;
+                obj.Nombre = comunidad.Nombre;
                 obj.Latitud = comunidad.Latitud;
                 obj.Longitud = comunidad.Longitud;
-                obj.Activo = comunidad.Activo;
-                obj.UsuarioAct = comunidad.UsuarioAct;
-                obj.FechaAct = comunidad.FechaAct;
+                obj.Descripcion = comunidad.Descripcion;
+                obj.FechaRegistro = comunidad.FechaRegistro.ToDateTime(TimeOnly.MinValue);
+
                 await _context.SaveChangesAsync();
 
                 return true;

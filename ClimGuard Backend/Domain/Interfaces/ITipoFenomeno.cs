@@ -1,16 +1,13 @@
 ﻿using Domain.Entities.PhenomenonType;
 
-namespace Domain.Interfaces;
-
-public interface ITipoFenomeno
+namespace Services.Services.Interfaces
 {
-    Task<TipoFenomenoDomain> Create(TipoFenomenoDomain tipoFenomeno);
-
-    Task<IReadOnlyList<TipoFenomenoDomain>> GetAll();
-
-    Task<TipoFenomenoDomain> GetById(int tipoFenomenoId);
-
-    Task<bool> Update(TipoFenomenoDomain tipoFenomeno);
-
-    Task<bool> Delete(TipoFenomenoDomain tipoFenomeno);
+    public interface ITipoFenomeno
+    {
+        Task<IReadOnlyList<TipoFenomenoDomain>> GetAll();
+        Task<TipoFenomenoDomain> GetById(int fenomeno);
+        Task<TipoFenomenoDomain> Create(TipoFenomenoDomain fenomeno);
+        Task<bool> Update(TipoFenomenoDomain fenomeno);
+        Task Delete(TipoFenomenoDomain fenomeno);
+    }
 }

@@ -23,31 +23,21 @@ namespace Application.Comunidad.Service.Commands
 
         public async Task<ComunidadResultDto> Handle(CreateComunidadCommand request, CancellationToken cancellationToken)
         {
-            var comunidad = new ComunidadDomain(
+            var comunidad = new ComunidadDomain (
                 0,
-                request.NombreComunidad,
-                request.Descripcion,
-                request.Pais,
-                request.Departamento,
-                request.Municipio,
+                request.Nombre,
                 request.Latitud,
                 request.Longitud,
-                request.Activo,
-                request.UsuarioIng,
-                request.FechaIng,
-                request.UsuarioAct,
-                request.FechaAct
+                request.Descripcion,
+                request.FechaRegistro
             );
 
 
             var bitacora = new BitacoraDomain(
                 0,
-                "Comunidad",
-                comunidad.ComunidadId,
-                "Actualizar",
-                $"Creación de comunidad {comunidad.NombreComunidad}",
-                DateTime.Now,
-                request.UsuarioLogeado
+                request.UsuarioLogeado,
+                $"Registro de nueva comunidad {request.Nombre}",
+                DateTime.Now
                 );
 
             await _repository.Create(comunidad);
@@ -56,18 +46,11 @@ namespace Application.Comunidad.Service.Commands
 
             return new ComunidadResultDto(
                 comunidad.ComunidadId,
-                comunidad.NombreComunidad,
-                comunidad.Descripcion,
-                comunidad.Pais,
-                comunidad.Departamento,
-                comunidad.Municipio,
+                comunidad.Nombre,
                 comunidad.Latitud,
                 comunidad.Longitud,
-                comunidad.Activo,
-                comunidad.UsuarioIng,
-                comunidad.FechaIng,
-                comunidad.UsuarioAct,
-                comunidad.FechaAct
+                comunidad.Descripcion,
+                comunidad.FechaRegistro
                 );
         }
     }

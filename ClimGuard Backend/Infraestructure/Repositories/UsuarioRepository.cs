@@ -1,62 +1,65 @@
 ﻿using Domain.Entities.User;
-using Domain.Interfaces;
 using Infraestructure.Models;
 using Infraestructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Services.Services.Interfaces;
 
-namespace Infraestructure.Repositories
+namespace Services.Services
 {
     public class UsuarioRepository : IUsuario
     {
         private readonly MonitoreoContext _context;
+        public UsuarioRepository(MonitoreoContext context) => _context = context;
 
-        public UsuarioRepository(MonitoreoContext context)
-            => _context = context;
-
-        public async Task<UsuarioDomain> Create(UsuarioDomain usuario)
+        public async Task<UsuarioDomain> Create(UsuarioDomain Usuario)
         {
-            var obj = new Usuario
+            try
             {
-                UsuarioId = usuario.UsuarioId,
-                NombreCompleto = usuario.NombreCompleto,
-                NombreUsuario = usuario.NombreUsuario,
-                PasswordHash = usuario.PasswordHash,
-                UltimoAcceso = usuario.UltimoAcceso,
-                Activo = usuario.Activo,
-                RolId = usuario.RolId,
-                UsuarioIng = usuario.UsuarioIng,
-                FechaIng = usuario.FechaIng,
-                UsuarioAct = usuario.UsuarioAct,
-                FechaAct = usuario.FechaAct
-            };
+                var usuario = new Usuario
+                {
+                    UsuarioId = Usuario.UsuarioId,
+                    Nombre1 = Usuario.Nombre1,
+                    Nombre2 = Usuario.Nombre2,
+                    Apellido1 = Usuario.Apellido1,
+                    Apellido2 = Usuario.Apellido2,
+                    NombreUsuario = Usuario.NombreUsuario,
+                    PasswordHash = Usuario.PasswordHash,
+                    Rol = Usuario.Rol,
+                    Activo = Usuario.Activo,
+                    FechaRegistro = Usuario.FechaRegistro
+                };
+                _context.Usuarios.Add(usuario);
+                await _context.SaveChangesAsync();
 
-            _context.Usuarios.Add(obj);
-            await _context.SaveChangesAsync();
-
-            return new UsuarioDomain(
-                obj.UsuarioId,
-                obj.NombreCompleto,
-                obj.NombreUsuario,
-                obj.PasswordHash,
-                obj.UltimoAcceso,
-                obj.Activo,
-                obj.RolId,
-                obj.UsuarioIng,
-                obj.FechaIng,
-                obj.UsuarioAct,
-                obj.FechaAct
-            );
+                return new UsuarioDomain
+                (
+                    usuario.UsuarioId,
+                    usuario.Nombre1,
+                    usuario.Nombre2,
+                    usuario.Apellido1,
+                    usuario.Apellido2,
+                    usuario.NombreUsuario,
+                    usuario.PasswordHash,
+                    usuario.Rol,
+                    usuario.Activo,
+                    usuario.FechaRegistro
+                );
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
-        public async Task<bool> Delete(UsuarioDomain usuario)
+        public async Task<bool> Delete(UsuarioDomain UsuarioDomain)
         {
-            var obj = await _context.Usuarios
-                .FirstOrDefaultAsync(x => x.UsuarioId == usuario.UsuarioId);
+            var usuario = await _context.Usuarios
+                .FirstOrDefaultAsync(a => a.UsuarioId == UsuarioDomain.UsuarioId);
 
-            if (obj == null)
+            if (usuario == null)
                 return false;
 
-            _context.Usuarios.Remove(obj);
+            _context.Usuarios.Remove(usuario);
             await _context.SaveChangesAsync();
 
             return true;
@@ -64,74 +67,85 @@ namespace Infraestructure.Repositories
 
         public async Task<IReadOnlyList<UsuarioDomain>> GetAll()
         {
-            var usuarios = await _context.Usuarios.ToListAsync();
-
-            return usuarios.Select(x => new UsuarioDomain(
-                x.UsuarioId,
-                x.NombreCompleto,
-                x.NombreUsuario,
-                x.PasswordHash,
-                x.UltimoAcceso,
-                x.Activo,
-                x.RolId,
-                x.UsuarioIng,
-                x.FechaIng,
-                x.UsuarioAct,
-                x.FechaAct
-            )).ToList();
-        }
-
-        public async Task<UsuarioDomain> GetById(int id)
-        {
-            var obj = await _context.Usuarios
-                .FirstOrDefaultAsync(x => x.UsuarioId == id);
-
-            Console.WriteLine("========== GetById ==========");
-            Console.WriteLine($"Id solicitado : {id}");
-            Console.WriteLine($"Encontró?     : {obj != null}");
-
-            if (obj != null)
+            try
             {
-                Console.WriteLine($"UsuarioId     : {obj.UsuarioId}");
-                Console.WriteLine($"Nombre        : {obj.NombreUsuario}");
+                var usuario = await _context.Usuarios.ToListAsync();
+
+                return usuario.Select(a => new UsuarioDomain
+                (
+                    a.UsuarioId,
+                    a.Nombre1,
+                    a.Nombre2,
+                    a.Apellido1,
+                    a.Apellido2,
+                    a.NombreUsuario,
+                    a.PasswordHash,
+                    a.Rol,
+                    a.Activo,
+                    a.FechaRegistro
+                )).ToList();
             }
-            return new UsuarioDomain(
-                obj.UsuarioId,
-                obj.NombreCompleto,
-                obj.NombreUsuario,
-                obj.PasswordHash,
-                obj.UltimoAcceso,
-                obj.Activo,
-                obj.RolId,
-                obj.UsuarioIng,
-                obj.FechaIng,
-                obj.UsuarioAct,
-                obj.FechaAct
-            );
+            catch (Exception)
+            {
+                throw;
+            }
         }
 
-        public async Task<bool> Update(UsuarioDomain usuario)
+        public async Task<UsuarioDomain> GetById(int UsuarioId)
         {
-            var obj = await _context.Usuarios
-                .FirstOrDefaultAsync(x => x.UsuarioId == usuario.UsuarioId);
+            try
+            {
+                var usuario = await _context.Usuarios
+                    .Where(a => a.UsuarioId == UsuarioId).FirstOrDefaultAsync();
 
-            if (obj == null)
-                return false;
+                return new UsuarioDomain
+                (
+                    usuario.UsuarioId,
+                    usuario.Nombre1,
+                    usuario.Nombre2,
+                    usuario.Apellido1,
+                    usuario.Apellido2,
+                    usuario.NombreUsuario,
+                    usuario.PasswordHash,
+                    usuario.Rol,
+                    usuario.Activo,
+                    usuario.FechaRegistro
+                );
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
 
-            obj.NombreCompleto = usuario.NombreCompleto;
-            obj.NombreUsuario = usuario.NombreUsuario;
-            obj.PasswordHash = usuario.PasswordHash;
-            obj.UltimoAcceso = usuario.UltimoAcceso;
-            obj.Activo = usuario.Activo;
-            obj.RolId = usuario.RolId;
-            obj.UsuarioIng = usuario.UsuarioIng;
-            obj.FechaIng = usuario.FechaIng;
-            obj.UsuarioAct = usuario.UsuarioAct;
-            obj.FechaAct = usuario.FechaAct;
+        public async Task<bool> Update(UsuarioDomain UsuarioDomain)
+        {
+            try
+            {
+                var usuario = await _context.Usuarios
+                    .FirstOrDefaultAsync(a => a.UsuarioId == UsuarioDomain.UsuarioId);
 
-            await _context.SaveChangesAsync();
+                if (usuario == null)
+                    return false;
 
-            return true;
+                usuario.Nombre1 = UsuarioDomain.Nombre1;
+                usuario.Nombre2 = UsuarioDomain.Nombre2;
+                usuario.Apellido1 = UsuarioDomain.Apellido1;
+                usuario.Apellido2 = UsuarioDomain.Apellido2;
+                usuario.NombreUsuario = UsuarioDomain.NombreUsuario;
+                usuario.PasswordHash = UsuarioDomain.PasswordHash;
+                usuario.Rol = UsuarioDomain.Rol;
+                usuario.Activo = UsuarioDomain.Activo;
+                usuario.FechaRegistro = UsuarioDomain.FechaRegistro;
+
+                await _context.SaveChangesAsync();
+
+                return true;
+            }
+            catch
+            {
+                throw;
+            }
         }
     }
 }

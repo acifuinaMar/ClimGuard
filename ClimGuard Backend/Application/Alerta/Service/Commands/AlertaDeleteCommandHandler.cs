@@ -29,13 +29,13 @@ namespace Application.Alerta.Service.Commands
             }
 
 
-            /*var bitacora = new BitacoraDomain(
+            var bitacora = new BitacoraDomain(
                 0,
                 request.UsuarioLogeado,
                 $"Eliminacion de alerta {request.alertaId}",
                 DateTime.Now
                 );
-            await _repositoryBitacora.Create(bitacora);*/
+            await _repositoryBitacora.Create(bitacora);
             // Eliminar
             await _repository.Delete(alerta);
 

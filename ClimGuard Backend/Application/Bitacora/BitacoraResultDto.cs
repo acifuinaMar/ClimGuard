@@ -1,12 +1,9 @@
 ﻿namespace Application.Bitacora
 {
     public record BitacoraResultDto(
-    long BitacoraId,
-    string NombreEntidad,
-    long EntidadId,
-    string Accion,
-    string Descripcion,
-    DateTime FechaHora,
-    int UsuarioId
-);
+        int bitacoraId, 
+        int usuarioId, 
+        string accion, 
+        DateTime fechaRegistro
+        );
 }
