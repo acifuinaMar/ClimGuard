@@ -1,5 +1,5 @@
-import { Component, effect, input, output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, effect, input, output, ChangeDetectionStrategy } from '@angular/core';
+
 import {
   FormBuilder,
   ReactiveFormsModule,
@@ -12,9 +12,9 @@ import { Umbral } from '../../core/models/umbral.model';
   selector: 'app-umbral-form',
   standalone: true,
   imports: [
-    CommonModule,
     ReactiveFormsModule
-  ],
+],
+  changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './umbral-form.html'
 })
 
