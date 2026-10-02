@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    [Authorize(Roles = "Operador, Administrador, Consulta")]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class LecturaSensorController : ControllerBase

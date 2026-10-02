@@ -16,35 +16,31 @@ namespace Infraestructure.Repositories
             {
                 var obj = new Alerta
                 {
+
                     AlertaId = alerta.AlertaId,
-                    ValorDetectado = alerta.ValorDetectado,
-                    MensajeSnap = alerta.MensajeSnap,
-                    NivelAlertaIdSnap = alerta.NivelAlertaIdSnap,
-                    TipoFenomenoIdSnap = alerta.TipoFenomenoIdSnap,
-                    FechaHora = alerta.FechaHora,
-                    Activo = alerta.Activo,
-                    SensorId = alerta.SensorId,
                     ComunidadId = alerta.ComunidadId,
-                    ReglaAlertaId = alerta.ReglaAlertaId,
-                    EstadoAlertaId = alerta.EstadoAlertaId,
-                    UsuarioResponsable = alerta.UsuarioResponsable
+                    SensorId = alerta.SensorId,
+                    TipoFenomenoId = alerta.TipoFenomenoId,
+                    NivelAlertaId = alerta.NivelAlertaId,
+                    Mensaje = alerta.Mensaje,
+                    FechaHora = alerta.FechaHora,
+                    Activa = alerta.Activa,
+                    FechaResolucion = alerta.FechaResolucion
                 };
                 _context.Alerta.Add(obj);
                 await _context.SaveChangesAsync();
 
-                return new AlertaDomain(
+                return new AlertaDomain
+                (
                     alerta.AlertaId,
-                    alerta.ValorDetectado,
-                    alerta.MensajeSnap,
-                    alerta.NivelAlertaIdSnap,
-                    alerta.TipoFenomenoIdSnap,
-                    alerta.FechaHora,
-                    alerta.Activo,
-                    alerta.SensorId,
                     alerta.ComunidadId,
-                    alerta.ReglaAlertaId,
-                    alerta.EstadoAlertaId,
-                    alerta.UsuarioResponsable
+                    alerta.SensorId,
+                    alerta.TipoFenomenoId,
+                    alerta.NivelAlertaId,
+                    alerta.Mensaje,
+                    alerta.FechaHora,
+                    alerta.Activa,
+                    alerta.FechaResolucion
                 );
             }
             catch (Exception)
@@ -76,17 +72,14 @@ namespace Infraestructure.Repositories
                 return list.Select(a => new AlertaDomain
                 (
                     Convert.ToInt32(a.AlertaId),
-                    a.ValorDetectado,
-                    a.MensajeSnap,
-                    a.NivelAlertaIdSnap,
-                    a.TipoFenomenoIdSnap,
-                    a.FechaHora,
-                    a.Activo,
-                    a.SensorId,
                     a.ComunidadId,
-                    a.ReglaAlertaId,
-                    a.EstadoAlertaId,
-                    a.UsuarioResponsable
+                    a.SensorId,
+                    a.TipoFenomenoId,
+                    a.NivelAlertaId,
+                    a.Mensaje,
+                    a.FechaHora,
+                    a.Activa,
+                    a.FechaResolucion
                 )).ToList();
             }
             catch (Exception)
@@ -105,17 +98,14 @@ namespace Infraestructure.Repositories
                 return new AlertaDomain
                 (
                     Convert.ToInt32(obj.AlertaId),
-                    obj.ValorDetectado,
-                    obj.MensajeSnap,
-                    obj.NivelAlertaIdSnap,
-                    obj.TipoFenomenoIdSnap,
-                    obj.FechaHora,
-                    obj.Activo,
-                    obj.SensorId,
                     obj.ComunidadId,
-                    obj.ReglaAlertaId,
-                    obj.EstadoAlertaId,
-                    obj.UsuarioResponsable
+                    obj.SensorId,
+                    obj.TipoFenomenoId,
+                    obj.NivelAlertaId,
+                    obj.Mensaje,
+                    obj.FechaHora,
+                    obj.Activa,
+                    obj.FechaResolucion
                 );
             }
             catch (Exception)
@@ -136,17 +126,14 @@ namespace Infraestructure.Repositories
 
 
                 //obj.AlertaId = alerta.AlertaId;
-                obj.ValorDetectado = alerta.ValorDetectado;
-                obj.MensajeSnap = alerta.MensajeSnap;
-                obj.NivelAlertaIdSnap = alerta.NivelAlertaIdSnap;
-                obj.TipoFenomenoIdSnap = alerta.TipoFenomenoIdSnap;
-                obj.FechaHora = alerta.FechaHora;
-                obj.Activo = alerta.Activo;
-                obj.SensorId = alerta.SensorId;
                 obj.ComunidadId = alerta.ComunidadId;
-                obj.ReglaAlertaId = alerta.ReglaAlertaId;
-                obj.EstadoAlertaId = alerta.EstadoAlertaId;
-                obj.UsuarioResponsable = alerta.UsuarioResponsable;
+                obj.SensorId = alerta.SensorId;
+                obj.TipoFenomenoId = alerta.TipoFenomenoId;
+                obj.NivelAlertaId = alerta.NivelAlertaId;
+                obj.Mensaje = alerta.Mensaje;
+                obj.FechaHora = alerta.FechaHora;
+                obj.Activa = alerta.Activa;
+                obj.FechaResolucion = alerta.FechaResolucion;
 
                 await _context.SaveChangesAsync();
 

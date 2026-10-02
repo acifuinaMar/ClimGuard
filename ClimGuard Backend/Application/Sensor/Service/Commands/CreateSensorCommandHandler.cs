@@ -24,31 +24,21 @@ namespace Application.Sensor.Service.Commands
         {
             var sensor = new SensorDomain(
                 0,
-                request.Nombre,
-                request.Codigo,
-                request.Ubicacion,
-                request.Descripcion,
-                request.FechaInstalacion,
-                request.FechaUltimaConexion,
-                request.ValorActual,
                 request.ComunidadId,
                 request.TipoSensorId,
-                request.EstadoSensorId,
-                request.UsuarioLogeado,      // UsuarioIng
-                DateTime.Now,                // FechaIng
-                null,                        // UsuarioAct
-                null                         // FechaAct
+                request.Nombre,
+                request.ValorActual,
+                request.Activo,
+                request.FechaInstalacion,
+                request.UltimaActualizacion
             );
 
             var bitacora = new BitacoraDomain(
                 0,
-                "Sensor",
-                sensor.SensorId,
-                "Crear",
-                $"Registro del sensor {sensor.Nombre}",
-                DateTime.Now,
-                request.UsuarioLogeado
-            );
+                request.UsuarioLogeado,
+                $"Registro de nuevo sensor {request.Nombre}",
+                DateTime.Now
+                );
             await _repositoryBitacora.Create(bitacora);
 
             await _repository.Create(sensor);
@@ -56,21 +46,14 @@ namespace Application.Sensor.Service.Commands
 
             return new SensorResultDto(
                 sensor.SensorId,
-                sensor.Nombre,
-                sensor.Codigo,
-                sensor.Ubicacion,
-                sensor.Descripcion,
-                sensor.FechaInstalacion,
-                sensor.FechaUltimaConexion,
-                sensor.ValorActual,
                 sensor.ComunidadId,
                 sensor.TipoSensorId,
-                sensor.EstadoSensorId,
-                sensor.UsuarioIng,
-                sensor.FechaIng,
-                sensor.UsuarioAct,
-                sensor.FechaAct
-            );
+                sensor.Nombre,
+                sensor.ValorActual,
+                sensor.Activo,
+                sensor.FechaInstalacion,
+                sensor.UltimaActualizacion
+                );
         }
     }
 }

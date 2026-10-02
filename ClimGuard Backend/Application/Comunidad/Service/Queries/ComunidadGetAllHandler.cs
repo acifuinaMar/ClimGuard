@@ -19,18 +19,11 @@ namespace Application.Comunidad.Service.Queries
             return comunidades.Select(a => new ComunidadResultDto
             (
                 a.ComunidadId,
-                a.NombreComunidad,
-                a.Descripcion,
-                a.Pais,
-                a.Departamento,
-                a.Municipio,
+                a.Nombre,
                 a.Latitud,
                 a.Longitud,
-                a.Activo,
-                a.UsuarioIng,
-                a.FechaIng,
-                a.UsuarioAct,
-                a.FechaAct
+                a.Descripcion,
+                a.FechaRegistro
             )).ToList();
         }
     }

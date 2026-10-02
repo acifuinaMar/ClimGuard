@@ -31,12 +31,9 @@ namespace Application.Comunidad.Service.Commands
 
             var bitacora = new BitacoraDomain(
                 0,
-                "Comunidad",
-                comunidad.ComunidadId,
-                "Actualizar",
-                $"Eliminación de comunidad {comunidad.NombreComunidad}",
-                DateTime.Now,
-                request.UsuarioLogeado
+                request.UsuarioLogeado,
+                $"Eliminacion de comunidad {request.ComunidadId}",
+                DateTime.Now
                 );
             await _repositoryBitacora.Create(bitacora);
             // Eliminar

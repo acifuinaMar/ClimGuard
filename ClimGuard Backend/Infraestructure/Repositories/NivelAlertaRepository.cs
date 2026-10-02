@@ -16,14 +16,11 @@ namespace Infraestructure.Repositories
             {
                 var obj = new NivelAlerta
                 {
+
                     NivelAlertaId = nivel.NivelAlertaId,
                     Nombre = nivel.Nombre,
                     ColorHex = nivel.ColorHex,
-                    Activo = nivel.Activo,
-                    UsuarioIng = nivel.UsuarioIng,
-                    FechaIng = nivel.FechaIng,
-                    UsuarioAct = nivel.UsuarioAct,
-                    FechaAct = nivel.FechaAct,
+                    Orden = nivel.Orden
                 };
                 _context.NivelAlerta.Add(obj);
                 await _context.SaveChangesAsync();
@@ -33,11 +30,7 @@ namespace Infraestructure.Repositories
                     nivel.NivelAlertaId,
                     nivel.Nombre,
                     nivel.ColorHex,
-                    nivel.Activo,
-                    nivel.UsuarioIng,
-                    nivel.FechaIng,
-                    nivel.UsuarioAct,
-                    nivel.FechaAct
+                    nivel.Orden
                 );
             }
             catch (Exception)
@@ -71,11 +64,7 @@ namespace Infraestructure.Repositories
                     a.NivelAlertaId,
                     a.Nombre,
                     a.ColorHex,
-                    a.Activo,
-                    a.UsuarioIng,
-                    a.FechaIng,
-                    a.UsuarioAct,
-                    a.FechaAct
+                    a.Orden
                 )).ToList();
             }
             catch (Exception)
@@ -96,11 +85,7 @@ namespace Infraestructure.Repositories
                     obj.NivelAlertaId,
                     obj.Nombre,
                     obj.ColorHex,
-                    obj.Activo,
-                    obj.UsuarioIng,
-                    obj.FechaIng,
-                    obj.UsuarioAct,
-                    obj.FechaAct
+                    obj.Orden
                 );
             }
             catch (Exception)
@@ -119,14 +104,11 @@ namespace Infraestructure.Repositories
                 if (obj == null)
                     return false;
 
+
                 //obj.NivelAlertaId = nivel.NivelAlertaId;
                 obj.Nombre = nivel.Nombre;
                 obj.ColorHex = nivel.ColorHex;
-                obj.Activo = nivel.Activo;
-                obj.UsuarioIng = nivel.UsuarioIng;
-                obj.FechaIng = nivel.FechaIng;
-                obj.UsuarioAct = nivel.UsuarioAct;
-                obj.FechaAct = nivel.FechaAct;
+                obj.Orden = nivel.Orden;
 
                 await _context.SaveChangesAsync();
                 return true;

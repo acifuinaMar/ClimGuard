@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Comunidad } from '../../core/models/comunidad.model';
 import { ComunidadService } from '../../core/services/comunidad.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -8,7 +8,6 @@ import { ComunidadForm } from './comunidad-form';
   selector: 'app-comunidades-page',
   imports: [ComunidadForm],
   templateUrl: './comunidades-page.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './comunidades-page.scss'
 })
 export class ComunidadesPage {

@@ -13,9 +13,5 @@ public partial class LecturaSensor
 
     public DateTime FechaHora { get; set; }
 
-    public int UsuarioIng { get; set; }
-
     public virtual Sensor Sensor { get; set; } = null!;
-
-    public virtual Usuario UsuarioIngNavigation { get; set; } = null!;
 }

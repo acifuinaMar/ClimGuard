@@ -21,8 +21,7 @@ namespace Application.LecturaSensor.Service.Commands
                 0,
                 request.sensorId,
                 request.valor,
-                request.fechaHora,
-                request.usuarioIng
+                request.fechaHora
             );
             await _repository.Create(obj);
             await _unitOfWork.SaveChangeAsync(cancellationToken);

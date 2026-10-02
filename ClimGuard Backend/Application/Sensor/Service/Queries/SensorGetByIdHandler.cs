@@ -18,21 +18,14 @@ namespace Application.Sensor.Service.Queries
 
             return new SensorResultDto(
                 sensor.SensorId,
-                sensor.Nombre,
-                sensor.Codigo,
-                sensor.Ubicacion,
-                sensor.Descripcion,
-                sensor.FechaInstalacion,
-                sensor.FechaUltimaConexion,
-                sensor.ValorActual,
                 sensor.ComunidadId,
                 sensor.TipoSensorId,
-                sensor.EstadoSensorId,
-                sensor.UsuarioIng,
-                sensor.FechaIng,
-                sensor.UsuarioAct,
-                sensor.FechaAct
-            );
+                sensor.Nombre,
+                sensor.ValorActual,
+                sensor.Activo,
+                sensor.FechaInstalacion,
+                sensor.UltimaActualizacion
+                );
         }
     }
 }

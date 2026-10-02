@@ -24,46 +24,37 @@ namespace Application.Alerta.Service.Commands
         {
             var alerta = new AlertaDomain(
                 0,
-                request.valorDetectado,
-                request.mensajeSnap,
-                request.nivelAlertaIdSnap,
-                request.tipoFenomenoIdSnap,
-                request.fechaHora,
-                request.activo,
-                request.sensorId,
                 request.comunidadId,
-                request.reglaAlertaId,
-                request.estadoAlertaId,
-                request.usuarioResponsable
+                request.sensorId,
+                request.tipoFenomenoId,
+                request.nivelAlertaId,
+                request.mensaje,
+                request.fechaHora,
+                request.activa,
+                request.fechaResolucion
             );
-            /*
+
             var bitacora = new BitacoraDomain(
                 0,
-                "Alerta",
-                Alerta.AlertaId,
-                "Eliminar",
-                $"Creación de la alerta {Alerta.Nombre}",
-                DateTime.Now,
-                request.UsuarioLogeado
-            );
-            await _repositoryBitacora.Create(bitacora);*/
+                request.UsuarioLogeado,
+                $"Registro de nueva alerta ",
+                DateTime.Now
+                );
+            await _repositoryBitacora.Create(bitacora);
             await _repository.Create(alerta);
             await _unitOfWork.SaveChangeAsync(cancellationToken);
 
             return new AlertaResultDto(
                 alerta.AlertaId,
-                alerta.ValorDetectado,
-                alerta.MensajeSnap,
-                alerta.NivelAlertaIdSnap,
-                alerta.TipoFenomenoIdSnap,
-                alerta.FechaHora,
-                alerta.Activo,
-                alerta.SensorId,
                 alerta.ComunidadId,
-                alerta.ReglaAlertaId,
-                alerta.EstadoAlertaId,
-                alerta.UsuarioResponsable
-            );
+                alerta.SensorId,
+                alerta.TipoFenomenoId,
+                alerta.NivelAlertaId,
+                alerta.Mensaje,
+                alerta.FechaHora,
+                alerta.Activa,
+                alerta.FechaResolucion
+                );
         }
     }
 }
