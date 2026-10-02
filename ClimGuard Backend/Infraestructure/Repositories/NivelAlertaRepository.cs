@@ -1,4 +1,4 @@
-﻿using Domain.Entities.AlertLevel;
+using Domain.Entities.AlertLevel;
 using Infraestructure.Models;
 using Infraestructure.Persistence;
 using Microsoft.EntityFrameworkCore;

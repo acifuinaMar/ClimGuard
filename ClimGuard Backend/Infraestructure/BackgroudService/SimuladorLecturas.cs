@@ -27,10 +27,12 @@ namespace Infraestructure.BackgroudService
 
         public async Task GenerarLecturasAsync(CancellationToken cancellationToken)
         {
+            Console.WriteLine("Entré a GenerarLecturasAsync");
             // Obtener sensores activos
             var sensores = await _context.Sensors
                 .Where(x => x.EstadoSensorId == 1)
                 .ToListAsync(cancellationToken);
+            Console.WriteLine($"Sensores encontrados: {sensores.Count}");
 
             foreach (var sensor in sensores)
             {
@@ -40,15 +42,17 @@ namespace Infraestructure.BackgroudService
                 // Crear lectura
                 var lectura = new LecturaSensor
                 {
-                    SensorId = sensor.SensorId,
+                     SensorId = sensor.SensorId,
                     Valor = valor,
-                    FechaHora = DateTime.Now
+                    FechaHora = DateTime.Now,
+
+                    UsuarioIng = 1,
                 };
 
                 _context.LecturaSensors.Add(lectura);
-
+                Console.WriteLine("Voy a guardar lectura...");
                 await _context.SaveChangesAsync(cancellationToken);
-
+                Console.WriteLine("Lectura guardada");
                 // DTO para Angular
                 var lecturaDto = new LecturaNuevaDto
                 {
@@ -112,7 +116,12 @@ namespace Infraestructure.BackgroudService
                 ComunidadId = sensor.ComunidadId,
                 ReglaAlertaId = reglaAlerta.ReglaAlertaId,
                 EstadoAlertaId = 1,
-                UsuarioResponsable = null
+                UsuarioResponsableId = null,
+
+                UsuarioIng = 1,
+                FechaIng = DateTime.Now,
+                UsuarioAct = null,
+                FechaAct = null
             };
 
             _context.Alerta.Add(alerta);
@@ -125,11 +134,11 @@ namespace Infraestructure.BackgroudService
                 AlertaId = alerta.AlertaId,
                 ComunidadId = alerta.ComunidadId,
                 SensorId = alerta.SensorId,
-                TipoFenomenoId = alerta.TipoFenomenoIdSnap,
-                NivelAlertaId = alerta.NivelAlertaIdSnap,
-                Mensaje = alerta.MensajeSnap,
+                TipoFenomenoIdSnap = alerta.TipoFenomenoIdSnap,
+                NivelAlertaIdSnap = alerta.NivelAlertaIdSnap,
+                MensajeSnap = alerta.MensajeSnap,
                 FechaHora = alerta.FechaHora,
-                Activa = alerta.Activo
+                Activo = alerta.Activo
             };
 
             await _notifier.EnviarAlertaNuevaAsync(

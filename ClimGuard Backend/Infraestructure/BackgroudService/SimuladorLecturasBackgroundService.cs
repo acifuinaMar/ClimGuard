@@ -33,8 +33,7 @@ namespace Infraestructure.BackgroudService
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(
-                        $"Error simulando lecturas: {ex.Message}");
+                   Console.WriteLine(ex.ToString());
                 }
 
                 await Task.Delay(

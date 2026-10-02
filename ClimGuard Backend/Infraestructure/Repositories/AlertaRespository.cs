@@ -27,7 +27,11 @@ namespace Infraestructure.Repositories
                     ComunidadId = alerta.ComunidadId,
                     ReglaAlertaId = alerta.ReglaAlertaId,
                     EstadoAlertaId = alerta.EstadoAlertaId,
-                    UsuarioResponsable = alerta.UsuarioResponsable
+                    UsuarioResponsableId = alerta.UsuarioResponsableId,
+                    UsuarioIng = alerta.UsuarioIng,
+                    FechaIng = alerta.FechaIng,
+                    UsuarioAct = alerta.UsuarioAct,
+                    FechaAct = alerta.FechaAct
                 };
                 _context.Alerta.Add(obj);
                 await _context.SaveChangesAsync();
@@ -44,7 +48,11 @@ namespace Infraestructure.Repositories
                     alerta.ComunidadId,
                     alerta.ReglaAlertaId,
                     alerta.EstadoAlertaId,
-                    alerta.UsuarioResponsable
+                    alerta.UsuarioResponsableId,
+                    alerta.UsuarioIng,
+                    alerta.FechaIng,
+                    alerta.UsuarioAct,
+                    alerta.FechaAct
                 );
             }
             catch (Exception)
@@ -69,10 +77,24 @@ namespace Infraestructure.Repositories
 
         public async Task<IReadOnlyList<AlertaDomain>> GetAll()
         {
+            /*var query = _context.Alerta;
+
+            Console.WriteLine("========== SQL ==========");
+            foreach (var p in _context.Model.FindEntityType(typeof(Infraestructure.Models.Alerta))!.GetProperties())
+            {
+                Console.WriteLine(p.Name);
+            }
+            Console.WriteLine(query.ToQueryString());
+            Console.WriteLine("=========================");
+
+            throw new Exception("FIN");*/
             try
             {
-                var list = await _context.Alerta.ToListAsync();
+                var query = _context.Alerta;
 
+                Console.WriteLine(query.ToQueryString());
+
+                var list = await query.ToListAsync();
                 return list.Select(a => new AlertaDomain
                 (
                     Convert.ToInt32(a.AlertaId),
@@ -86,7 +108,11 @@ namespace Infraestructure.Repositories
                     a.ComunidadId,
                     a.ReglaAlertaId,
                     a.EstadoAlertaId,
-                    a.UsuarioResponsable
+                    a.UsuarioResponsableId,
+                    a.UsuarioIng,
+                    a.FechaIng,
+                    a.UsuarioAct,
+                    a.FechaAct
                 )).ToList();
             }
             catch (Exception)
@@ -115,7 +141,11 @@ namespace Infraestructure.Repositories
                     obj.ComunidadId,
                     obj.ReglaAlertaId,
                     obj.EstadoAlertaId,
-                    obj.UsuarioResponsable
+                    obj.UsuarioResponsableId,
+                    obj.UsuarioIng,
+                    obj.FechaIng,
+                    obj.UsuarioAct,
+                    obj.FechaAct
                 );
             }
             catch (Exception)
@@ -146,7 +176,7 @@ namespace Infraestructure.Repositories
                 obj.ComunidadId = alerta.ComunidadId;
                 obj.ReglaAlertaId = alerta.ReglaAlertaId;
                 obj.EstadoAlertaId = alerta.EstadoAlertaId;
-                obj.UsuarioResponsable = alerta.UsuarioResponsable;
+                obj.UsuarioResponsableId = alerta.UsuarioResponsableId;
 
                 await _context.SaveChangesAsync();
 

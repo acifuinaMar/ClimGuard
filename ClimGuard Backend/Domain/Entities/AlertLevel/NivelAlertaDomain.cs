@@ -1,4 +1,4 @@
-﻿namespace Domain.Entities.AlertLevel;
+namespace Domain.Entities.AlertLevel;
 
 public partial class NivelAlertaDomain
 {
@@ -23,4 +23,6 @@ public partial class NivelAlertaDomain
     public DateTime FechaIng { get; set; }
     public int? UsuarioAct { get; set; }
     public DateTime? FechaAct { get; set; }
+
+    public virtual ICollection<AlertaDomain> Alerta { get; set; } = new List<AlertaDomain>();
 }

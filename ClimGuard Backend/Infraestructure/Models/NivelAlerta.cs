@@ -1,4 +1,5 @@
-﻿using System;
+
+using System;
 using System.Collections.Generic;
 
 namespace Infraestructure.Models;
@@ -10,6 +11,7 @@ public partial class NivelAlerta
     public string Nombre { get; set; } = string.Empty;
 
     public string ColorHex { get; set; } = string.Empty;
+
     public bool Activo { get; set; }
 
     public int UsuarioIng { get; set; }

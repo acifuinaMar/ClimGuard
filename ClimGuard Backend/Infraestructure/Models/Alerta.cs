@@ -27,8 +27,17 @@ public partial class Alerta
 
     public int EstadoAlertaId { get; set; }
 
-    public int? UsuarioResponsable { get; set; }
+    public int? UsuarioResponsableId { get; set; }
 
+
+    public int UsuarioIng { get; set;}
+
+    public DateTime FechaIng { get; set; }
+
+    public int? UsuarioAct { get; set; }
+
+    public DateTime? FechaAct { get; set; }
+    
     public virtual Comunidad Comunidad { get; set; } = null!;
 
     public virtual Sensor Sensor { get; set; } = null!;
