@@ -9,6 +9,5 @@ public partial class TipoFenomeno
 
     public string Nombre { get; set; } = null!;
 
-    public virtual ICollection<Alerta> Alerta { get; set; } = new List<Alerta>();
     public virtual ICollection<ReglaAlerta> ReglaAlertas { get; set; } = new List<ReglaAlerta>();
 }

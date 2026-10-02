@@ -27,7 +27,11 @@ namespace Application.Alerta.Service.Queries
                 a.ComunidadId,
                 a.ReglaAlertaId,
                 a.EstadoAlertaId,
-                a.UsuarioResponsable
+                a.UsuarioResponsableId,
+                a.UsuarioIng,
+                a.FechaIng,
+                a.UsuarioAct,
+                a.FechaAct
             )).ToList();
         }
     }

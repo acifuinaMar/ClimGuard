@@ -112,7 +112,12 @@ namespace Infraestructure.BackgroudService
                 ComunidadId = sensor.ComunidadId,
                 ReglaAlertaId = reglaAlerta.ReglaAlertaId,
                 EstadoAlertaId = 1,
-                UsuarioResponsable = null
+                UsuarioResponsableId = null,
+
+                UsuarioIng = 1,
+                FechaIng = DateTime.Now,
+                UsuarioAct = null,
+                FechaAct = null
             };
 
             _context.Alerta.Add(alerta);
@@ -125,11 +130,11 @@ namespace Infraestructure.BackgroudService
                 AlertaId = alerta.AlertaId,
                 ComunidadId = alerta.ComunidadId,
                 SensorId = alerta.SensorId,
-                TipoFenomenoId = alerta.TipoFenomenoIdSnap,
-                NivelAlertaId = alerta.NivelAlertaIdSnap,
-                Mensaje = alerta.MensajeSnap,
+                TipoFenomenoIdSnap = alerta.TipoFenomenoIdSnap,
+                NivelAlertaIdSnap = alerta.NivelAlertaIdSnap,
+                MensajeSnap = alerta.MensajeSnap,
                 FechaHora = alerta.FechaHora,
-                Activa = alerta.Activo
+                Activo = alerta.Activo
             };
 
             await _notifier.EnviarAlertaNuevaAsync(

@@ -13,8 +13,11 @@ namespace Application.Alerta.Service
         int comunidadId,
         int reglaAlertaId,
         int estadoAlertaId,
-        int? usuarioResponsable,
-        int UsuarioLogeado
+        int? usuarioResponsableId,
+        int usuarioIng,
+        DateTime fechaIng,
+        int? usuarioAct,
+        DateTime? fechaAct
     ) : IRequest<AlertaResultDto>;
 
     public record AlertUpdateCommand(
@@ -29,12 +32,15 @@ namespace Application.Alerta.Service
         int comunidadId,
         int reglaAlertaId,
         int estadoAlertaId,
-        int? usuarioResponsable,
-        int UsuarioLogeado
+        int? usuarioResponsableId,
+        int usuarioIng,
+        DateTime fechaIng,
+        int usuarioAct,
+        DateTime fechaAct
     ) : IRequest<AlertaResultDto>;
 
     public record AlertDeleteCommand(
         int alertaId,
-        int UsuarioLogeado
+        int usuarioIng
     ) : IRequest<bool>;
 }

@@ -59,14 +59,18 @@ public partial class MonitoreoContext : DbContext
                 .HasColumnType("decimal(10,2)");
 
             entity.Property(e => e.MensajeSnap)
-                .HasMaxLength(300);
+                .HasMaxLength(500);
 
             entity.Property(e => e.FechaHora)
-                .HasColumnType("datetime")
+                .HasColumnType("datetime2")
                 .HasDefaultValueSql("(getdate())");
 
             entity.Property(e => e.Activo)
                 .HasDefaultValue(true);
+
+            entity.Property(e => e.FechaIng)
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("(getdate())");
 
             entity.HasOne(d => d.Comunidad)
                 .WithMany(p => p.Alerta)
@@ -84,18 +88,18 @@ public partial class MonitoreoContext : DbContext
                 .WithMany(p => p.Alerta)
                 .HasForeignKey(d => d.ReglaAlertaId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Alerta_ReglaAlerta");
+                .HasConstraintName("FK_Alerta_Regla");
 
             entity.HasOne(d => d.EstadoAlerta)
                 .WithMany(p => p.Alerta)
                 .HasForeignKey(d => d.EstadoAlertaId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Alerta_EstadoAlerta");
+                .HasConstraintName("FK_Alerta_Estado");
 
             entity.HasOne(d => d.UsuarioResponsableNavigation)
                 .WithMany(p => p.Alertas)
-                .HasForeignKey(d => d.UsuarioResponsable)
-                .HasConstraintName("FK_Alerta_Usuario");
+                .HasForeignKey(d => d.UsuarioResponsableId)
+                .HasConstraintName("FK_Alerta_Responsable");
         });
         
         modelBuilder.Entity<Bitacora>(entity =>
@@ -229,9 +233,14 @@ public partial class MonitoreoContext : DbContext
             entity.HasKey(e => e.NivelAlertaId).HasName("PK__NivelAle__A4F58C2E94887632");
 
             entity.HasIndex(e => e.Nombre, "UQ__NivelAle__75E3EFCF38AAE5BB").IsUnique();
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
 
+            entity.Property(e => e.FechaIng)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime2");
             entity.Property(e => e.ColorHex).HasMaxLength(7);
-            entity.Property(e => e.Nombre).HasMaxLength(20);
+            entity.Property(e => e.Nombre).HasMaxLength(50);
         });
 
         modelBuilder.Entity<Notificacion>(entity =>

@@ -20,7 +20,11 @@ namespace Infraestructure.Repositories
                     NivelAlertaId = nivel.NivelAlertaId,
                     Nombre = nivel.Nombre,
                     ColorHex = nivel.ColorHex,
-                    Orden = nivel.Orden
+                    Activo = nivel.Activo,
+                    UsuarioIng = nivel.UsuarioIng,
+                    FechaIng = nivel.FechaIng,
+                    UsuarioAct = nivel.UsuarioAct,
+                    FechaAct = nivel.FechaAct
                 };
                 _context.NivelAlerta.Add(obj);
                 await _context.SaveChangesAsync();
@@ -30,7 +34,11 @@ namespace Infraestructure.Repositories
                     nivel.NivelAlertaId,
                     nivel.Nombre,
                     nivel.ColorHex,
-                    nivel.Orden
+                    nivel.Activo,
+                    nivel.UsuarioIng,
+                    nivel.FechaIng,
+                    nivel.UsuarioAct,
+                    nivel.FechaAct
                 );
             }
             catch (Exception)
@@ -64,7 +72,11 @@ namespace Infraestructure.Repositories
                     a.NivelAlertaId,
                     a.Nombre,
                     a.ColorHex,
-                    a.Orden
+                    a.Activo,
+                    a.UsuarioIng,
+                    a.FechaIng,
+                    a.UsuarioAct,
+                    a.FechaAct
                 )).ToList();
             }
             catch (Exception)
@@ -85,7 +97,11 @@ namespace Infraestructure.Repositories
                     obj.NivelAlertaId,
                     obj.Nombre,
                     obj.ColorHex,
-                    obj.Orden
+                    obj.Activo,
+                    obj.UsuarioIng,
+                    obj.FechaIng,
+                    obj.UsuarioAct,
+                    obj.FechaAct
                 );
             }
             catch (Exception)
@@ -108,7 +124,10 @@ namespace Infraestructure.Repositories
                 //obj.NivelAlertaId = nivel.NivelAlertaId;
                 obj.Nombre = nivel.Nombre;
                 obj.ColorHex = nivel.ColorHex;
-                obj.Orden = nivel.Orden;
+                obj.Activo = nivel.Activo;
+                obj.UsuarioIng = nivel.UsuarioIng;
+                obj.FechaIng = nivel.FechaIng;
+                obj.UsuarioAct = nivel.UsuarioAct;
 
                 await _context.SaveChangesAsync();
                 return true;

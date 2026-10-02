@@ -42,7 +42,11 @@ namespace Application.Alerta.Service.Commands
             alerta.ComunidadId = request.comunidadId;
             alerta.ReglaAlertaId = request.reglaAlertaId;
             alerta.EstadoAlertaId = request.estadoAlertaId;
-            alerta.UsuarioResponsable = request.usuarioResponsable;
+            alerta.UsuarioResponsableId = request.usuarioResponsableId;
+            alerta.UsuarioIng = request.usuarioIng;
+            alerta.FechaIng = request.fechaIng;
+            alerta.UsuarioAct = request.usuarioAct;
+            alerta.FechaAct = request.fechaAct;
 
             //Guardado de bitacora
             /*var bitacora = new BitacoraDomain(
@@ -72,7 +76,11 @@ namespace Application.Alerta.Service.Commands
                 alerta.ComunidadId,
                 alerta.ReglaAlertaId,
                 alerta.EstadoAlertaId,
-                alerta.UsuarioResponsable
+                alerta.UsuarioResponsableId,
+                alerta.UsuarioIng,
+                alerta.FechaIng,
+                alerta.UsuarioAct,
+                alerta.FechaAct
             );
         }
     }

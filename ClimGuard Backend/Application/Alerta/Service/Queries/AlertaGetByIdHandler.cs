@@ -26,7 +26,11 @@ namespace Application.Alerta.Service.Queries
                 alerta.ComunidadId,
                 alerta.ReglaAlertaId,
                 alerta.EstadoAlertaId,
-                alerta.UsuarioResponsable
+                alerta.UsuarioResponsableId,
+                alerta.UsuarioIng,
+                alerta.FechaIng,
+                alerta.UsuarioAct,
+                alerta.FechaAct
             );
         }
     }

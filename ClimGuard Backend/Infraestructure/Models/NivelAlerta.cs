@@ -11,9 +11,15 @@ public partial class NivelAlerta
 
     public string ColorHex { get; set; } = null!;
 
-    public int Orden { get; set; }
+    public bool Activo { get; set; }
 
-    public virtual ICollection<Alerta> Alerta { get; set; } = new List<Alerta>();
+    public int UsuarioIng { get; set; }
+
+    public DateTime FechaIng { get; set; }
+
+    public int? UsuarioAct { get; set; }
+
+    public DateTime? FechaAct { get; set; }
 
     public virtual ICollection<ReglaAlerta> ReglaAlertas { get; set; } = new List<ReglaAlerta>();
 }
