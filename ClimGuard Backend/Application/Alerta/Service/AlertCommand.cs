@@ -3,27 +3,33 @@
 namespace Application.Alerta.Service
 {
     public record AlertCreateCommand(
-        int comunidadId, 
-        int sensorId, 
-        int tipoFenomenoId, 
-        int nivelAlertaId, 
-        string mensaje, 
-        DateTime fechaHora, 
-        bool activa, 
-        DateTime fechaResolucion,
+        decimal valorDetectado,
+        string mensajeSnap,
+        int nivelAlertaIdSnap,
+        int tipoFenomenoIdSnap,
+        DateTime fechaHora,
+        bool activo,
+        int sensorId,
+        int comunidadId,
+        int reglaAlertaId,
+        int estadoAlertaId,
+        int? usuarioResponsable,
         int UsuarioLogeado
-        ) : IRequest<AlertaResultDto>;
+    ) : IRequest<AlertaResultDto>;
 
     public record AlertUpdateCommand(
         int alertaId,
-        int comunidadId,
-        int sensorId,
-        int tipoFenomenoId,
-        int nivelAlertaId,
-        string mensaje,
+        decimal valorDetectado,
+        string mensajeSnap,
+        int nivelAlertaIdSnap,
+        int tipoFenomenoIdSnap,
         DateTime fechaHora,
-        bool activa,
-        DateTime fechaResolucion,
+        bool activo,
+        int sensorId,
+        int comunidadId,
+        int reglaAlertaId,
+        int estadoAlertaId,
+        int? usuarioResponsable,
         int UsuarioLogeado
     ) : IRequest<AlertaResultDto>;
 

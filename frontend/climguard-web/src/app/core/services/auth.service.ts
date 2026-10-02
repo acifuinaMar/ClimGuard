@@ -5,6 +5,7 @@ import { map, Observable, switchMap, of, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CredencialesLogin, RespuestaLogin, Sesion } from '../models/sesion.model';
 import { Usuario } from '../models/usuario.model';
+import { Rol, Permiso, normalizarRol, rolTienePermiso, etiquetaRol } from '../roles';
 
 const CLAVE_ALMACEN = 'climguard.sesion';
 
@@ -18,9 +19,26 @@ export class AuthService {
 
   /** Atajos que las pantallas y las guardas consultan. */
   autenticado = computed(() => this.sesion() !== null);
-  esAdministrador = computed(() =>
-    (this.sesion()?.rol ?? '').toLowerCase() === 'administrador'
-  );
+
+  /** El rol actual, ya normalizado a uno de los tres (Administrador/Operador/Consulta). */
+  rol = computed<Rol>(() => normalizarRol(this.sesion()?.rol));
+
+  /** Etiqueta para mostrar (ej: "Usuario de consulta"). */
+  rolEtiqueta = computed(() => etiquetaRol(this.rol()));
+
+  /** Atajos por rol. */
+  esAdministrador = computed(() => this.rol() === 'Administrador');
+  esOperador      = computed(() => this.rol() === 'Operador');
+  esConsulta      = computed(() => this.rol() === 'Consulta');
+
+  /**
+   * LA PREGUNTA CLAVE que usa toda la app: "¿el usuario puede hacer esto?"
+   * En vez de preguntar por el rol, se pregunta por el permiso. El mapa de
+   * quién puede qué vive en core/roles.ts, en un solo lugar.
+   */
+  puede(permiso: Permiso): boolean {
+    return rolTienePermiso(this.rol(), permiso);
+  }
 
   /** El token, para que el interceptor lo pegue a cada petición. */
   token = computed(() => this.sesion()?.token ?? null);

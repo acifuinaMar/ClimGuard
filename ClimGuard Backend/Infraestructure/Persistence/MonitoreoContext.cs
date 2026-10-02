@@ -24,8 +24,6 @@ public partial class MonitoreoContext : DbContext
 
     public virtual DbSet<EstadoAlerta> EstadoAlerta { get; set; }
 
-    public virtual DbSet<EstadoSensor> EstadoSensors { get; set; }
-
     public virtual DbSet<LecturaSensor> LecturaSensors { get; set; }
 
     public virtual DbSet<NivelAlerta> NivelAlerta { get; set; }
@@ -40,9 +38,11 @@ public partial class MonitoreoContext : DbContext
 
     public virtual DbSet<TipoSensor> TipoSensors { get; set; }
 
-    public virtual DbSet<Umbral> Umbrals { get; set; }
+    public virtual DbSet<ReglaAlerta> ReglaAlertas { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
+
+    public virtual DbSet<EstadoSensor> EstadoSensors { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) { }
 
@@ -50,47 +50,78 @@ public partial class MonitoreoContext : DbContext
     {
         modelBuilder.Entity<Alerta>(entity =>
         {
-            entity.HasKey(e => e.AlertaId).HasName("PK__Alerta__D9EF47C5336CC85A");
+            entity.HasKey(e => e.AlertaId)
+                .HasName("PK_Alerta");
 
-            entity.Property(e => e.Activa).HasDefaultValue(true);
+            entity.ToTable("Alerta");
+
+            entity.Property(e => e.ValorDetectado)
+                .HasColumnType("decimal(10,2)");
+
+            entity.Property(e => e.MensajeSnap)
+                .HasMaxLength(300);
+
             entity.Property(e => e.FechaHora)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.FechaResolucion).HasColumnType("datetime");
-            entity.Property(e => e.Mensaje).HasMaxLength(300);
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
 
-            entity.HasOne(d => d.Comunidad).WithMany(p => p.Alerta)
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
+
+            entity.HasOne(d => d.Comunidad)
+                .WithMany(p => p.Alerta)
                 .HasForeignKey(d => d.ComunidadId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Alerta_Comunidad");
 
-            entity.HasOne(d => d.NivelAlerta).WithMany(p => p.Alerta)
-                .HasForeignKey(d => d.NivelAlertaId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Alerta_NivelAlerta");
-
-            entity.HasOne(d => d.Sensor).WithMany(p => p.Alerta)
+            entity.HasOne(d => d.Sensor)
+                .WithMany(p => p.Alerta)
                 .HasForeignKey(d => d.SensorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Alerta_Sensor");
 
-            entity.HasOne(d => d.TipoFenomeno).WithMany(p => p.Alerta)
-                .HasForeignKey(d => d.TipoFenomenoId)
+            entity.HasOne(d => d.ReglaAlerta)
+                .WithMany(p => p.Alerta)
+                .HasForeignKey(d => d.ReglaAlertaId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Alerta_TipoFenomeno");
-        });
+                .HasConstraintName("FK_Alerta_ReglaAlerta");
 
+            entity.HasOne(d => d.EstadoAlerta)
+                .WithMany(p => p.Alerta)
+                .HasForeignKey(d => d.EstadoAlertaId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Alerta_EstadoAlerta");
+
+            entity.HasOne(d => d.UsuarioResponsableNavigation)
+                .WithMany(p => p.Alertas)
+                .HasForeignKey(d => d.UsuarioResponsable)
+                .HasConstraintName("FK_Alerta_Usuario");
+        });
+        
         modelBuilder.Entity<Bitacora>(entity =>
         {
-            entity.HasKey(e => e.BitacoraId).HasName("PK__Bitacora__7ACF9B3880F5B9C3");
+            entity.HasKey(e => e.BitacoraId)
+                .HasName("PK_Bitacora");
 
             entity.ToTable("Bitacora");
 
-            entity.Property(e => e.Accion).HasMaxLength(500);
-            entity.Property(e => e.FechaRegistro)
-                .HasDefaultValueSql("(getdate())", "DF__Bitacora__FechaR__04E4BC85")
-                .HasColumnType("datetime");
+            entity.Property(e => e.NombreEntidad)
+                .HasMaxLength(100);
 
-            entity.HasOne(d => d.Usuario).WithMany(p => p.Bitacoras)
+            entity.Property(e => e.EntidadId);
+
+            entity.Property(e => e.Accion)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.FechaHora)
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.HasOne(d => d.Usuario)
+                .WithMany(p => p.Bitacoras)
                 .HasForeignKey(d => d.UsuarioId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Bitacora_Usuario");
@@ -98,19 +129,53 @@ public partial class MonitoreoContext : DbContext
 
         modelBuilder.Entity<Comunidad>(entity =>
         {
-            entity.HasKey(e => e.ComunidadId).HasName("PK__Comunida__BE3D371B10DA9CE9");
+            entity.HasKey(e => e.ComunidadId)
+                .HasName("PK_Comunidad");
 
             entity.ToTable("Comunidad");
 
-            entity.Property(e => e.Descripcion).HasMaxLength(255);
-            entity.Property(e => e.FechaRegistro)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Latitud).HasColumnType("decimal(9, 6)");
-            entity.Property(e => e.Longitud).HasColumnType("decimal(9, 6)");
-            entity.Property(e => e.Nombre).HasMaxLength(100);
-        });
+            entity.Property(e => e.NombreComunidad)
+                .HasMaxLength(150);
 
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.Pais)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Departamento)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Municipio)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Latitud)
+                .HasColumnType("decimal(9,6)");
+
+            entity.Property(e => e.Longitud)
+                .HasColumnType("decimal(9,6)");
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.FechaIng)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime2");
+
+            entity.Property(e => e.FechaAct)
+                .HasColumnType("datetime2");
+
+            entity.HasOne(d => d.UsuarioIngNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.UsuarioIng)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Comunidad_UsuarioIng");
+
+            entity.HasOne(d => d.UsuarioActNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.UsuarioAct)
+                .HasConstraintName("FK_Comunidad_UsuarioAct");
+        });
         modelBuilder.Entity<EstadoAlerta>(entity =>
         {
             entity.HasKey(e => e.EstadoAlertaId).HasName("PK__EstadoAl__C73CE723D9883744");
@@ -120,28 +185,43 @@ public partial class MonitoreoContext : DbContext
 
         modelBuilder.Entity<EstadoSensor>(entity =>
         {
-            entity.HasKey(e => e.EstadoSensorId).HasName("PK__EstadoSe__B78B942E257BBCCC");
+            entity.HasKey(e => e.EstadoSensorId)
+                .HasName("PK_EstadoSensor");
 
             entity.ToTable("EstadoSensor");
 
-            entity.Property(e => e.Estado).HasMaxLength(50);
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
         });
 
         modelBuilder.Entity<LecturaSensor>(entity =>
         {
-            entity.HasKey(e => e.LecturaId).HasName("PK__LecturaS__B421D4FCF3B0D066");
+            entity.HasKey(e => e.LecturaId)
+                .HasName("PK_Lectura");
 
-            entity.ToTable("LecturaSensor");
+            entity.ToTable("Lectura");
+
+            entity.Property(e => e.Valor)
+                .HasColumnType("decimal(10,2)");
 
             entity.Property(e => e.FechaHora)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Valor).HasColumnType("decimal(10, 2)");
+                .HasColumnType("datetime")
+                .HasDefaultValueSql("(getdate())");
 
-            entity.HasOne(d => d.Sensor).WithMany(p => p.LecturaSensors)
+            entity.HasOne(d => d.Sensor)
+                .WithMany(p => p.LecturaSensors)
                 .HasForeignKey(d => d.SensorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Lectura_Sensor");
+
+            entity.HasOne(d => d.UsuarioIngNavigation)
+                .WithMany()
+                .HasForeignKey(d => d.UsuarioIng)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Lectura_Usuario");
         });
 
         modelBuilder.Entity<NivelAlerta>(entity =>
@@ -172,39 +252,67 @@ public partial class MonitoreoContext : DbContext
 
             entity.ToTable("Rol");
 
-            entity.Property(e => e.Descripcion).HasMaxLength(100);
-            entity.Property(e => e.Rol1)
-                .HasMaxLength(50)
-                .HasColumnName("Rol");
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.FechaIng)
+                .HasColumnType("datetime2");
+
+            entity.Property(e => e.FechaAct)
+                .HasColumnType("datetime2");
         });
 
         modelBuilder.Entity<Sensor>(entity =>
         {
-            entity.HasKey(e => e.SensorId).HasName("PK__Sensor__D8099BFA9158CE4B");
+            entity.HasKey(e => e.SensorId)
+                .HasName("PK_Sensor");
 
             entity.ToTable("Sensor");
 
-            entity.Property(e => e.Activo).HasDefaultValue(true);
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.Codigo)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Ubicacion)
+                .HasMaxLength(200);
+
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(500);
+
             entity.Property(e => e.FechaInstalacion)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
-            entity.Property(e => e.Nombre).HasMaxLength(100);
-            entity.Property(e => e.UltimaActualizacion)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-            entity.Property(e => e.ValorActual).HasColumnType("decimal(10, 2)");
 
-            entity.HasOne(d => d.Comunidad).WithMany(p => p.Sensors)
+            entity.Property(e => e.FechaUltimaConexion)
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Comunidad)
+                .WithMany(p => p.Sensors)
                 .HasForeignKey(d => d.ComunidadId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Sensor_Comunidad");
 
-            entity.HasOne(d => d.TipoSensor).WithMany(p => p.Sensors)
+            entity.HasOne(d => d.TipoSensor)
+                .WithMany(p => p.Sensors)
                 .HasForeignKey(d => d.TipoSensorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Sensor_TipoSensor");
-        });
 
+            entity.HasOne(d => d.EstadoSensor)
+                .WithMany(p => p.Sensors)
+                .HasForeignKey(d => d.EstadoSensorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Sensor_EstadoSensor");
+
+            entity.Property(e => e.ValorActual)
+                .HasColumnType("decimal(10, 2)");
+        });
+        
         modelBuilder.Entity<TipoFenomeno>(entity =>
         {
             entity.HasKey(e => e.TipoFenomenoId).HasName("PK__TipoFeno__7B7F8DA465FDB4C4");
@@ -228,49 +336,83 @@ public partial class MonitoreoContext : DbContext
             entity.Property(e => e.UnidadMedida).HasMaxLength(20);
         });
 
-        modelBuilder.Entity<Umbral>(entity =>
+        modelBuilder.Entity<ReglaAlerta>(entity =>
         {
-            entity.HasKey(e => e.UmbralId).HasName("PK__Umbral__D40D8721BF012A8B");
+            entity.HasKey(e => e.ReglaAlertaId)
+                .HasName("PK_ReglaAlerta");
 
-            entity.ToTable("Umbral");
+            entity.ToTable("ReglaAlerta");
 
-            entity.Property(e => e.ValorPrecaucion)
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(100);
+
+            entity.Property(e => e.ValorMin)
                 .HasColumnType("decimal(10, 2)");
 
-            entity.Property(e => e.ValorAlerta)
+            entity.Property(e => e.ValorMax)
                 .HasColumnType("decimal(10, 2)");
 
-            entity.Property(e => e.ValorEmergencia)
-                .HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Mensaje)
+                .HasMaxLength(500);
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
 
             entity.HasOne(d => d.TipoSensor)
-                .WithMany(p => p.Umbrals)
+                .WithMany(p => p.ReglaAlertas)
                 .HasForeignKey(d => d.TipoSensorId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Umbral_TipoSensor");
-        });
+                .HasConstraintName("FK_ReglaAlerta_TipoSensor");
 
+            entity.HasOne(d => d.TipoFenomeno)
+                .WithMany(p => p.ReglaAlertas)
+                .HasForeignKey(d => d.TipoFenomenoId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReglaAlerta_TipoFenomeno");
+
+            entity.HasOne(d => d.NivelAlerta)
+                .WithMany(p => p.ReglaAlertas)
+                .HasForeignKey(d => d.NivelAlertaId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_ReglaAlerta_NivelAlerta");
+        });
+        
         modelBuilder.Entity<Usuario>(entity =>
         {
-            entity.HasKey(e => e.UsuarioId).HasName("PK__Usuario__2B3DE7B81F2D97D9");
+            entity.HasKey(e => e.UsuarioId);
 
             entity.ToTable("Usuario");
 
-            entity.HasIndex(e => e.NombreUsuario, "UQ__Usuario__6B0F5AE085D0F510").IsUnique();
+            entity.HasIndex(e => e.NombreUsuario)
+                .IsUnique();
 
-            entity.Property(e => e.Activo).HasDefaultValue(true, "DF__Usuario__Activo__6B24EA82");
-            entity.Property(e => e.Apellido1).HasMaxLength(100);
-            entity.Property(e => e.Apellido2).HasMaxLength(100);
-            entity.Property(e => e.FechaRegistro)
-                .HasDefaultValueSql("(getdate())", "DF__Usuario__FechaRe__6C190EBB")
-                .HasColumnType("datetime");
-            entity.Property(e => e.Nombre1).HasMaxLength(100);
-            entity.Property(e => e.Nombre2).HasMaxLength(100);
-            entity.Property(e => e.NombreUsuario).HasMaxLength(50);
-            entity.Property(e => e.PasswordHash).HasMaxLength(255);
-            entity.Property(e => e.Rol)
-                .HasMaxLength(20)
-                .HasDefaultValue("Administrador", "DF__Usuario__Rol__6A30C649");
+            entity.Property(e => e.NombreCompleto)
+                .HasMaxLength(200);
+
+            entity.Property(e => e.NombreUsuario)
+                .HasMaxLength(50);
+
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(255);
+
+            entity.Property(e => e.UltimoAcceso)
+                .HasColumnType("datetime2");
+
+            entity.Property(e => e.Activo)
+                .HasDefaultValue(true);
+
+            entity.Property(e => e.FechaIng)
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("(getdate())");
+
+            entity.Property(e => e.FechaAct)
+                .HasColumnType("datetime2");
+
+            entity.HasOne(d => d.Rol)
+                .WithMany(p => p.Usuarios)
+                .HasForeignKey(d => d.RolId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Usuario_Rol");
         });
 
         OnModelCreatingPartial(modelBuilder);

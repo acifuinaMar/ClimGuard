@@ -21,10 +21,12 @@ namespace Infraestructure.Repositories
             {
                 var obj = new Bitacora
                 {
-                    BitacoraId = bitacora.BitacoraId,
-                    UsuarioId = bitacora.UsuarioId,
+                    NombreEntidad = bitacora.NombreEntidad,
+                    EntidadId = bitacora.EntidadId,
                     Accion = bitacora.Accion,
-                    FechaRegistro = bitacora.FechaRegistro
+                    Descripcion = bitacora.Descripcion,
+                    FechaHora = bitacora.FechaHora,
+                    UsuarioId = bitacora.UsuarioId
                 };
                 _context.Bitacoras.Add(obj);
                 await _context.SaveChangesAsync();
@@ -46,9 +48,12 @@ namespace Infraestructure.Repositories
                 return obj.Select(a => new BitacoraDomain
                 (
                     a.BitacoraId,
-                    a.UsuarioId,
+                    a.NombreEntidad,
+                    a.EntidadId,
                     a.Accion,
-                    a.FechaRegistro
+                    a.Descripcion,
+                    a.FechaHora,
+                    a.UsuarioId
                 )).ToList();
             }
             catch (Exception)

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, output } from '@angular/core';
+import { Component, computed, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Comunidad } from '../../core/models/comunidad.model';
 
@@ -11,6 +11,7 @@ import { Comunidad } from '../../core/models/comunidad.model';
   selector: 'app-comunidad-form',
   imports: [ReactiveFormsModule],
   templateUrl: './comunidad-form.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './comunidad-form.scss'
 })
 export class ComunidadForm {

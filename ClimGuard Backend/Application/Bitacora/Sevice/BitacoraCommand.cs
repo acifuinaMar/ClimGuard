@@ -3,9 +3,11 @@
 namespace Application.Bitacora.Sevice
 {
     public record BitacoraCommand(
-        int bitacoraId, 
-        int usuarioId, 
-        string accion, 
-        DateTime fechaRegistro
-        ) : IRequest<bool>;
+    string NombreEntidad,
+    long EntidadId,
+    string Accion,
+    string Descripcion,
+    DateTime FechaHora,
+    int UsuarioId
+) : IRequest<bool>;
 }

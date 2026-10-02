@@ -3,26 +3,34 @@
 namespace Application.Sensor.Service
 {
     public record CreateSensorCommand(
-            int SensorId,
-            int ComunidadId,
-            int TipoSensorId,
-            string Nombre,
-            decimal ValorActual,
-            bool Activo,
-            DateTime FechaInstalacion,
-            DateTime UltimaActualizacion,
-            int UsuarioLogeado
-        ) : IRequest<SensorResultDto>;
+        int SensorId,
+        string Nombre,
+        string Codigo,
+        string Ubicacion,
+        string Descripcion,
+        DateTime FechaInstalacion,
+        DateTime FechaUltimaConexion,
+        decimal ValorActual,
+        bool Activo,
+        int ComunidadId,
+        int TipoSensorId,
+        int EstadoSensorId,
+        int UsuarioLogeado
+    ) : IRequest<SensorResultDto>;
 
     public record UpdateSensorCommand(
         int SensorId,
-        int ComunidadId,
-        int TipoSensorId,
         string Nombre,
+        string Codigo,
+        string Ubicacion,
+        string Descripcion,
+        DateTime FechaInstalacion,
+        DateTime FechaUltimaConexion,
         decimal ValorActual,
         bool Activo,
-        DateTime FechaInstalacion,
-        DateTime UltimaActualizacion,
+        int ComunidadId,
+        int TipoSensorId,
+        int EstadoSensorId,
         int UsuarioLogeado
     ) : IRequest<SensorResultDto>;
 

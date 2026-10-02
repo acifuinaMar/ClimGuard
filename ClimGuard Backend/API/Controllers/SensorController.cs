@@ -1,5 +1,4 @@
-﻿using Application.Comunidad.Service;
-using Application.Sensor.Service;
+﻿using Application.Sensor.Service;
 using Application.Sensor.Service.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Operador, Administrador, Consulta")]
     [Route("api/[controller]")]
     [ApiController]
     public class SensorController : ControllerBase
@@ -58,8 +57,8 @@ namespace API.Controllers
             return Ok(result);
         }
 
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateSensorCommand command)
+        [HttpPut]
+        public async Task<IActionResult> Update([FromBody] UpdateSensorCommand command)
         {
             var result = await _mediator.Send(command);
 
