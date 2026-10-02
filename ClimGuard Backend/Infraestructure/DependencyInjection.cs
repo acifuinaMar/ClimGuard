@@ -33,6 +33,7 @@ namespace Infraestructure
             service.AddScoped<IBitacora, BitacoraRepository>();
             service.AddScoped<IEstadoSensor, EstadoSensorRepository>();
             service.AddScoped<ITipoFenomeno, TipoFenomenoRepository>();
+            service.AddScoped<INivelAlerta, NivelAlertaRepository>();
             service.AddScoped<TokenService>();
 
             service.AddScoped<ISimuladorLecturas, SimuladorLecturas>();

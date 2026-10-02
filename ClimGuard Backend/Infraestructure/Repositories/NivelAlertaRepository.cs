@@ -1,4 +1,4 @@
-﻿using Domain.Entities.AlertLevel;
+using Domain.Entities.AlertLevel;
 using Infraestructure.Models;
 using Infraestructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +16,6 @@ namespace Infraestructure.Repositories
             {
                 var obj = new NivelAlerta
                 {
-
                     NivelAlertaId = nivel.NivelAlertaId,
                     Nombre = nivel.Nombre,
                     ColorHex = nivel.ColorHex,
@@ -24,7 +23,7 @@ namespace Infraestructure.Repositories
                     UsuarioIng = nivel.UsuarioIng,
                     FechaIng = nivel.FechaIng,
                     UsuarioAct = nivel.UsuarioAct,
-                    FechaAct = nivel.FechaAct
+                    FechaAct = nivel.FechaAct,
                 };
                 _context.NivelAlerta.Add(obj);
                 await _context.SaveChangesAsync();
@@ -120,7 +119,6 @@ namespace Infraestructure.Repositories
                 if (obj == null)
                     return false;
 
-
                 //obj.NivelAlertaId = nivel.NivelAlertaId;
                 obj.Nombre = nivel.Nombre;
                 obj.ColorHex = nivel.ColorHex;
@@ -128,6 +126,7 @@ namespace Infraestructure.Repositories
                 obj.UsuarioIng = nivel.UsuarioIng;
                 obj.FechaIng = nivel.FechaIng;
                 obj.UsuarioAct = nivel.UsuarioAct;
+                obj.FechaAct = nivel.FechaAct;
 
                 await _context.SaveChangesAsync();
                 return true;
