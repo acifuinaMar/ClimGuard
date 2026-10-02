@@ -16,6 +16,7 @@ public partial class SensorDomain
         string descripcion,
         DateTime fechaInstalacion,
         DateTime fechaUltimaConexion,
+        decimal valorActual,
         int comunidadId,
         int tipoSensorId,
         int estadoSensorId,
@@ -32,6 +33,7 @@ public partial class SensorDomain
         Descripcion = descripcion;
         FechaInstalacion = fechaInstalacion;
         FechaUltimaConexion = fechaUltimaConexion;
+        ValorActual = valorActual;
         ComunidadId = comunidadId;
         TipoSensorId = tipoSensorId;
         EstadoSensorId = estadoSensorId;
@@ -48,6 +50,7 @@ public partial class SensorDomain
     public int TipoSensorId { get; set; }
 
     public string Nombre { get; set; } = null!;
+    public decimal ValorActual { get; set; }
 
     public DateTime FechaInstalacion { get; set; }
 

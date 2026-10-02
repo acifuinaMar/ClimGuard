@@ -1,19 +1,19 @@
-﻿using Application.Alerta.Service;
-using Application.Alerta.Service.Queries;
+﻿using Application.TipoFenomeno.Service;
+using Application.TipoFenomeno.Service.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    [Authorize(Roles = "Operador, Administrador")]
+    [Authorize(Roles = "Administrado,Operador")]
     [Route("api/[controller]")]
     [ApiController]
-    public class AlertaController : ControllerBase
+    public class TipoFenomenoController : ControllerBase
     {
         private readonly IMediator _mediator;
 
-        public AlertaController(IMediator mediator)
+        public TipoFenomenoController(IMediator mediator)
         {
             _mediator = mediator;
         }
@@ -21,7 +21,7 @@ namespace API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var result = await _mediator.Send(new AlertaGetAllQuery());
+            var result = await _mediator.Send(new TipoFenomenoGetAllQuery());
 
             return Ok(result);
         }
@@ -30,39 +30,39 @@ namespace API.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _mediator.Send(
-                new AlertaGetByIdQuery(id)
+                new TipoFenomenoGetByIdQuery(id)
             );
 
             return Ok(result);
         }
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] AlertCreateCommand command)
+        public async Task<IActionResult> Create([FromBody] CreateTipoFenomenoCommand command)
         {
             var result = await _mediator.Send(command);
 
             return CreatedAtAction(
                 nameof(GetById),
-                new { id = result.alertaId },
+                new { id = result.TipoFenomenoId },
                 result
             );
         }
 
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] AlertUpdateCommand command)
+        [HttpPut]
+        public async Task<IActionResult> Update([FromBody] UpdateTipoFenomenoCommand command)
         {
             var result = await _mediator.Send(command);
 
             return Ok(result);
         }
 
-        //localhost:5093/api/alerta/2?usuarioLogeado=1
-        //alerta/2 = el id del alerta a eliminar
+        //localhost:5093/api/comunidad/2?usuarioLogeado=1
+        //comunidad/2 = el id de la comunidad a eliminar
         //?usuarioLogeado=1 = id del usuario quien inicio sesion
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id, [FromQuery] int usuarioLogeado)
         {
             await _mediator.Send(
-                new AlertDeleteCommand(id, usuarioLogeado)
+                new DeleteTipoFenomenoCommand(id, usuarioLogeado)
                 );
             return NoContent();
         }
@@ -71,10 +71,11 @@ namespace API.Controllers
         //public async Task<IActionResult> Delete(int id, int usuarioLogeado)
         //{
         //    await _mediator.Send(
-        //        new AlertDeleteCommand(id, usuarioLogeado)
+        //        new DeleteComunidadCommand(id, usuarioLogeado)
         //    );
 
         //    return NoContent();
         //}
+
     }
 }

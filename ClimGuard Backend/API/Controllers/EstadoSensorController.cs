@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Operador, Administrador, Consulta")]
     [Route("api/[controller]")]
     [ApiController]
     public class EstadoSensorController : ControllerBase
