@@ -31,6 +31,7 @@ namespace API.Controllers
             return Ok(regla);
         }
 
+        [Authorize(Roles = "Administrador")]
         [HttpPut("{reglaAlertaId}")]
         public async Task<IActionResult> Update(
             int reglaAlertaId,

@@ -35,6 +35,8 @@ namespace API.Controllers
 
             return Ok(result);
         }
+
+        [Authorize(Roles = "Administrador")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateSensorCommand command)
         {
@@ -57,6 +59,7 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Administrador")]
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] UpdateSensorCommand command)
         {
@@ -68,6 +71,7 @@ namespace API.Controllers
         //localhost:5093/api/sensor/2?usuarioLogeado=1
         //sensor/2 = el id del sensor a eliminar
         //?usuarioLogeado=1 = id del usuario quien inicio sesion
+        [Authorize(Roles = "Administrador")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id, [FromQuery] int usuarioLogeado)
         {
