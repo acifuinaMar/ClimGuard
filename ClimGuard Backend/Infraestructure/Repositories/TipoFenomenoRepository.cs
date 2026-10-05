@@ -1,8 +1,9 @@
 using Domain.Entities.PhenomenonType;
+using Domain.Interfaces;
 using Infraestructure.Models;
 using Infraestructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Domain.Interfaces;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Infraestructure.Repositories
 {
@@ -25,8 +26,13 @@ namespace Infraestructure.Repositories
 
                 return new TipoFenomenoDomain
                 (
-                    tipo.TipoFenomenoId,
-                    tipo.Nombre
+                      tipo.TipoFenomenoId,
+                      tipo.Nombre,
+                      tipo.Activo,
+                      tipo.UsuarioIng,
+                      tipo.FechaIng,
+                      tipo.UsuarioAct,
+                      tipo.FechaAct
                 );
             }
             catch (Exception)
@@ -56,8 +62,13 @@ namespace Infraestructure.Repositories
                 var tipos = await _context.TipoFenomenos.ToListAsync();
 
                 return tipos.Select(a => new TipoFenomenoDomain(
-                a.TipoFenomenoId,
-                a.Nombre
+                    a.TipoFenomenoId,
+                    a.Nombre,
+                    a.Activo,
+                    a.UsuarioIng,
+                    a.FechaIng,
+                    a.UsuarioAct,
+                    a.FechaAct
             )).ToList();
             }
             catch (Exception)
@@ -75,8 +86,13 @@ namespace Infraestructure.Repositories
 
                 return new TipoFenomenoDomain
                 (
-                    obj.TipoFenomenoId,
-                    obj.Nombre
+                      obj.TipoFenomenoId,
+                      obj.Nombre,
+                      obj.Activo,
+                      obj.UsuarioIng,
+                      obj.FechaIng,
+                      obj.UsuarioAct,
+                      obj.FechaAct
                 );
             }
             catch (Exception)

@@ -34,7 +34,11 @@ namespace Application.Alerta.Service.Commands
                 request.comunidadId,
                 request.reglaAlertaId,
                 request.estadoAlertaId,
-                request.usuarioResponsable
+                request.usuarioResponsableId,
+                request.usuarioIng,
+                request.fechaIng,
+                request.usuarioAct,
+                request.fechaAct
             );
             /*
             var bitacora = new BitacoraDomain(
@@ -62,7 +66,11 @@ namespace Application.Alerta.Service.Commands
                 alerta.ComunidadId,
                 alerta.ReglaAlertaId,
                 alerta.EstadoAlertaId,
-                alerta.UsuarioResponsable
+                alerta.UsuarioResponsableId,
+                alerta.UsuarioIng,
+                alerta.FechaIng,
+                alerta.UsuarioAct,
+                alerta.FechaAct
             );
         }
     }

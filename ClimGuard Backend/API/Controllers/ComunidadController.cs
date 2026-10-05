@@ -1,6 +1,5 @@
 ﻿using Application.Comunidad.Service;
 using Application.Comunidad.Service.Queries;
-using Application.Usuario.Service;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Operador, Administrador, Consulta")]
     [Route("api/[controller]")]
     [ApiController]
     public class ComunidadController : ControllerBase
@@ -49,8 +48,8 @@ namespace API.Controllers
             );
         }
 
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id,[FromBody] UpdateComunidadCommand command)
+        [HttpPut]
+        public async Task<IActionResult> Update([FromBody] UpdateComunidadCommand command)
         {
             var result = await _mediator.Send(command);
 

@@ -1,9 +1,11 @@
 ﻿using Domain.Entities.ReglaAlerta;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
+    [Authorize(Roles = "Operador, Administrador, Consulta")]
     [Route("api/[controller]")]
     [ApiController]
     public class ReglaAlertaController : ControllerBase

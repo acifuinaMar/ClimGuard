@@ -19,7 +19,11 @@ public partial class AlertaDomain
         int comunidadId,
         int reglaAlertaId,
         int estadoAlertaId,
-        int? usuarioResponsable)
+        int? usuarioResponsableId,
+        int usuarioIng,
+        DateTime fechaIng,
+        int? usuarioAct,
+        DateTime? fechaAct)
     {
         AlertaId = alertaId;
         ValorDetectado = valorDetectado;
@@ -32,7 +36,11 @@ public partial class AlertaDomain
         ComunidadId = comunidadId;
         ReglaAlertaId = reglaAlertaId;
         EstadoAlertaId = estadoAlertaId;
-        UsuarioResponsable = usuarioResponsable;
+        UsuarioResponsableId = usuarioResponsableId;
+        UsuarioIng = usuarioIng;
+        FechaIng = fechaIng;
+        UsuarioAct = usuarioAct;
+        FechaAct = fechaAct;
     }
 
     public int AlertaId { get; set; }
@@ -40,10 +48,6 @@ public partial class AlertaDomain
     public int ComunidadId { get; set; }
 
     public int SensorId { get; set; }
-
-    public int TipoFenomenoId { get; set; }
-
-    public int NivelAlertaId { get; set; }
 
     public DateTime FechaHora { get; set; }
 
@@ -65,5 +69,11 @@ public partial class AlertaDomain
 
     public int EstadoAlertaId { get; set; }
 
-    public int? UsuarioResponsable { get; set; }
+    public int? UsuarioResponsableId { get; set; }
+
+    public int UsuarioIng { get; set;}
+
+    public DateTime FechaIng {get; set;}
+    public int? UsuarioAct{get; set;}
+    public DateTime? FechaAct {get; set;}
 }
