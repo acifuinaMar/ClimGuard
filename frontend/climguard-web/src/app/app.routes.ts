@@ -24,6 +24,9 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'panel', pathMatch: 'full' },
       { path: 'panel', component: DashboardPage },
+      // Carga diferida: el mapa y su librería (Leaflet) solo se descargan
+      // cuando el usuario entra a /mapa, para no pesar en la carga inicial.
+      { path: 'mapa', loadComponent: () => import('./features/mapa/mapa-page').then(m => m.MapaPage), canActivate: [permisoGuard], data: { permiso: 'dashboard.ver' } },
 
       // Cada pantalla exige su permiso. El guard usa el MISMO criterio que el
       // menú y los botones (auth.puede), así nadie entra por URL directa a algo

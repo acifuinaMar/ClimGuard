@@ -48,6 +48,7 @@ export class MainLayout {
    */
   private todasLasSecciones: { ruta: string; icono: string; texto: string; permiso?: Permiso }[] = [
     { ruta: '/panel',       icono: '◉', texto: 'Panel',       permiso: 'dashboard.ver' },
+    { ruta: '/mapa',        icono: '◎', texto: 'Mapa',        permiso: 'dashboard.ver' },
     { ruta: '/sensores',    icono: '▤', texto: 'Sensores',    permiso: 'sensores.ver' },
     { ruta: '/umbrales',    icono: '⚙', texto: 'Reglas de alerta', permiso: 'reglas.ver' },
     { ruta: '/comunidades', icono: '◈', texto: 'Comunidades', permiso: 'comunidades.ver' },

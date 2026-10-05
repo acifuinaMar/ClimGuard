@@ -125,3 +125,22 @@ p { margin: 0; }
 }
 .estado__titulo { font-weight: 600; color: var(--cg-texto-suave); }
 .estado--error .estado__titulo { color: var(--cg-rojo); }
+
+/* ============================================================
+   Mapa (Leaflet): los marcadores y los popups se dibujan FUERA
+   de Angular, por eso sus estilos van aquí, en el global, y no
+   en el .scss del componente (que está encapsulado).
+   ============================================================ */
+.marcador__punto {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .45);
+}
+.pop h4 { margin: 0 0 .4rem; font-size: .95rem; }
+.pop ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: .3rem; }
+.pop li { font-size: .82rem; display: flex; align-items: center; gap: .4rem; }
+.pop li em { color: var(--cg-texto-tenue); font-style: normal; }
+.pop__punto { width: .6rem; height: .6rem; border-radius: 50%; display: inline-block; flex: none; }
