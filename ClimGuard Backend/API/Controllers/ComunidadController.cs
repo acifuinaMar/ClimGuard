@@ -36,6 +36,8 @@ namespace API.Controllers
 
             return Ok(result);
         }
+
+        [Authorize(Roles = "Administrador")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateComunidadCommand command)
         {
@@ -48,6 +50,7 @@ namespace API.Controllers
             );
         }
 
+        [Authorize(Roles = "Administrador")]
         [HttpPut]
         public async Task<IActionResult> Update([FromBody] UpdateComunidadCommand command)
         {
@@ -56,10 +59,10 @@ namespace API.Controllers
             return Ok(result);
         }
 
-
         //localhost:5093/api/comunidad/2?usuarioLogeado=1
         //comunidad/2 = el id de la comunidad a eliminar
         //?usuarioLogeado=1 = id del usuario quien inicio sesion
+        [Authorize(Roles = "Administrador")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete(int id, [FromQuery] int usuarioLogeado)
         {
@@ -68,17 +71,5 @@ namespace API.Controllers
                 );
             return NoContent();
         }
-
-        //[HttpDelete("{id:int}")]
-        //public async Task<IActionResult> Delete(int id, int usuarioLogeado)
-        //{
-        //    await _mediator.Send(
-        //        new DeleteComunidadCommand(id, usuarioLogeado)
-        //    );
-
-        //    return NoContent();
-        //}
-
-
     }
 }
