@@ -12,5 +12,9 @@ public record AlertaResultDto(
     int comunidadId,
     int reglaAlertaId,
     int estadoAlertaId,
-    int? usuarioResponsable
+    int? usuarioResponsableId,
+    int usuarioIng,
+    DateTime fechaIng,
+    int? usuarioAct,
+    DateTime? fechaAct
 );
