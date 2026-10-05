@@ -41,9 +41,16 @@ export class ComunidadService {
     });
   }
 
+  /**
+   * PUT /api/Comunidad — SIN id en la dirección.
+   * El backend (validación de Mahuerk) ahora lee el id DENTRO del body, en
+   * `comunidadId`, y exige que sea distinto de 0. Por eso lo fijamos aquí
+   * de forma explícita, aunque también venga en `comunidad`.
+   */
   actualizar(id: number, comunidad: Comunidad): Observable<Comunidad> {
-    return this.http.put<Comunidad>(`${this.base}/${id}`, {
+    return this.http.put<Comunidad>(this.base, {
       ...comunidad,
+      comunidadId: id,
       usuarioLogeado: this.usuario
     });
   }

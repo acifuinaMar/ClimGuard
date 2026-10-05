@@ -40,10 +40,16 @@ export class SensorService {
     });
   }
 
-  /** PUT — reemplaza el registro completo. */
+  /**
+   * PUT /api/Sensor — SIN id en la dirección.
+   * El backend (validación de Mahuerk) ahora lee el id DENTRO del body, en
+   * `sensorId`, y exige que sea distinto de 0. Por eso lo fijamos aquí de
+   * forma explícita, aunque también venga en `sensor`.
+   */
   actualizar(id: number, sensor: Sensor): Observable<Sensor> {
-    return this.http.put<Sensor>(`${this.base}/${id}`, {
+    return this.http.put<Sensor>(this.base, {
       ...sensor,
+      sensorId: id,
       usuarioLogeado: this.auth.sesion()?.usuarioId ?? 0
     });
   }
