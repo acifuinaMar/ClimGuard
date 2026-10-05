@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, ChangeDetectionStrategy } from '@angular/core';
 
 import { UmbralForm } from './umbral-form';
+import { SiPermisoDirective } from '../../shared/si-permiso.directive';
 import { Umbral } from '../../core/models/umbral.model';
 import { UmbralService } from '../../core/services/umbral.service';
 
@@ -8,7 +9,8 @@ import { UmbralService } from '../../core/services/umbral.service';
   selector: 'app-umbrales-page',
   standalone: true,
   imports: [
-    UmbralForm
+    UmbralForm,
+    SiPermisoDirective
 ],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './umbrales-page.html'

@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, adminGuard } from './core/guards/auth.guard';
+import { authGuard, adminGuard, permisoGuard } from './core/guards/auth.guard';
 import { MainLayout } from './layout/main-layout';
 import { DashboardPage } from './features/dashboard/dashboard-page';
 import { LoginPage } from './features/auth/login-page';
@@ -24,10 +24,14 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'panel', pathMatch: 'full' },
       { path: 'panel', component: DashboardPage },
-      { path: 'sensores', component: SensoresPage },
-      { path: 'comunidades', component: ComunidadesPage },
-      { path: 'usuarios', component: UsuariosPage },
-      { path: 'umbrales', component: UmbralesPage },
+
+      // Cada pantalla exige su permiso. El guard usa el MISMO criterio que el
+      // menú y los botones (auth.puede), así nadie entra por URL directa a algo
+      // que su rol no permite. (Recordatorio: el candado real es la API.)
+      { path: 'sensores', component: SensoresPage, canActivate: [permisoGuard], data: { permiso: 'sensores.ver' } },
+      { path: 'comunidades', component: ComunidadesPage, canActivate: [permisoGuard], data: { permiso: 'comunidades.ver' } },
+      { path: 'usuarios', component: UsuariosPage, canActivate: [permisoGuard], data: { permiso: 'usuarios.gestionar' } },
+      { path: 'umbrales', component: UmbralesPage, canActivate: [permisoGuard], data: { permiso: 'reglas.ver' } },
 
       // La bitácora solo la puede ver el Administrador (regla RN-019).
       // adminGuard lo comprueba; si no es admin, lo manda al panel.

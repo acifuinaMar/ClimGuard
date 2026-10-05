@@ -7,7 +7,7 @@
     @if (!cargando() && !error()) {
       <span class="cuenta">{{ comunidades().length }} registradas</span>
     }
-    <button type="button" class="btn btn--primario" (click)="nueva()">+ Nueva comunidad</button>
+    <button type="button" class="btn btn--primario" (click)="nueva()" *siPermiso="'comunidades.gestionar'">+ Nueva comunidad</button>
   </div>
 </header>
 
@@ -51,7 +51,7 @@
 
         <div class="tarjeta__pie">
           <span class="tarjeta__fecha">Registrada: {{ c.fechaRegistro }}</span>
-          <div class="tarjeta__acciones">
+          <div class="tarjeta__acciones" *siPermiso="'comunidades.gestionar'">
             <button type="button" class="btn btn--chico" (click)="editar(c)">Editar</button>
             <button type="button" class="btn btn--chico btn--peligro" (click)="pedirBorrar(c)">Eliminar</button>
           </div>

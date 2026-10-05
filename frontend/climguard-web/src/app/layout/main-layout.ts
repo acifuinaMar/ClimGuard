@@ -48,9 +48,9 @@ export class MainLayout {
    */
   private todasLasSecciones: { ruta: string; icono: string; texto: string; permiso?: Permiso }[] = [
     { ruta: '/panel',       icono: '◉', texto: 'Panel',       permiso: 'dashboard.ver' },
-    { ruta: '/sensores',    icono: '▤', texto: 'Sensores',    permiso: 'sensores.gestionar' },
-    { ruta: '/umbrales',    icono: '⚙', texto: 'Reglas de alerta', permiso: 'reglas.gestionar' },
-    { ruta: '/comunidades', icono: '◈', texto: 'Comunidades', permiso: 'comunidades.gestionar' },
+    { ruta: '/sensores',    icono: '▤', texto: 'Sensores',    permiso: 'sensores.ver' },
+    { ruta: '/umbrales',    icono: '⚙', texto: 'Reglas de alerta', permiso: 'reglas.ver' },
+    { ruta: '/comunidades', icono: '◈', texto: 'Comunidades', permiso: 'comunidades.ver' },
     { ruta: '/usuarios',    icono: '◇', texto: 'Usuarios',    permiso: 'usuarios.gestionar' },
     { ruta: '/bitacora',    icono: '❑', texto: 'Bitácora',    permiso: 'bitacora.ver' }
   ];

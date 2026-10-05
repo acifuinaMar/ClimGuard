@@ -85,7 +85,8 @@
           <button
             type="button"
             class="btn btn--chico"
-            (click)="editar(u)">
+            (click)="editar(u)"
+            *siPermiso="'reglas.gestionar'">
 
             Editar
 

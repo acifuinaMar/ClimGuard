@@ -3,6 +3,7 @@ import { Sensor } from '../../core/models/sensor.model';
 import { SensorService } from '../../core/services/sensor.service';
 import { calcularNivel, textoNivel, unidadDe, variableDe, Nivel } from '../../core/nivel-alerta';
 import { SensorForm } from './sensor-form';
+import { SiPermisoDirective } from '../../shared/si-permiso.directive';
 
 interface SensorVista extends Sensor {
   nivel: Nivel;
@@ -13,7 +14,7 @@ interface SensorVista extends Sensor {
 
 @Component({
   selector: 'app-sensores-page',
-  imports: [SensorForm],
+  imports: [SensorForm, SiPermisoDirective],
   templateUrl: './sensores-page.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './sensores-page.scss'

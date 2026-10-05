@@ -3,10 +3,11 @@ import { Comunidad } from '../../core/models/comunidad.model';
 import { ComunidadService } from '../../core/services/comunidad.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ComunidadForm } from './comunidad-form';
+import { SiPermisoDirective } from '../../shared/si-permiso.directive';
 
 @Component({
   selector: 'app-comunidades-page',
-  imports: [ComunidadForm],
+  imports: [ComunidadForm, SiPermisoDirective],
   templateUrl: './comunidades-page.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './comunidades-page.scss'

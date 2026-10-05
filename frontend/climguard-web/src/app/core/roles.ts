@@ -7,6 +7,12 @@
    trabajamos con PERMISOS. Cada rol tiene una lista de permisos, y la
    interfaz pregunta por el permiso, no por el rol.
 
+   Además separamos DOS cosas distintas:
+     - VER un recurso (solo lectura).
+     - GESTIONAR un recurso (crear / editar / borrar).
+   Así, el "Usuario de consulta" puede VER los listados pero no tiene ni un
+   botón para modificar nada. Es el principio de MÍNIMO PRIVILEGIO.
+
    Ventaja — análisis lógico:
      - El "quién puede qué" vive en UN SOLO lugar (este archivo).
      - Si mañana el Operador puede hacer algo nuevo, se cambia una línea
@@ -14,6 +20,9 @@
        lados.
      - Es el patrón RBAC (Role-Based Access Control) que usan los sistemas
        reales.
+
+   ⚠️ Recordatorio: esto es comodidad visual, NO seguridad. La seguridad real
+   la impone la API, que rechaza con 403 si el rol no tiene permiso.
    ============================================================ */
 
 /** Los tres roles que exige la Fase 2 (RF-ADM-06). */
@@ -25,20 +34,26 @@ export type Rol = 'Administrador' | 'Operador' | 'Consulta';
  */
 export type Permiso =
   | 'usuarios.gestionar'      // crear/editar/activar usuarios
-  | 'comunidades.gestionar'   // crear/editar/activar comunidades
+  | 'comunidades.ver'         // ver el listado de comunidades (solo lectura)
+  | 'comunidades.gestionar'   // crear/editar/borrar comunidades
+  | 'sensores.ver'            // ver el listado de sensores (solo lectura)
   | 'sensores.gestionar'      // crear/editar/activar sensores
-  | 'reglas.gestionar'        // crear/editar reglas de alerta
+  | 'reglas.ver'              // ver las reglas de alerta (solo lectura)
+  | 'reglas.gestionar'        // crear/editar/activar reglas de alerta
   | 'alertas.atender'         // atender/cerrar alertas
   | 'bitacora.ver'            // consultar la bitácora de auditoría
   | 'dashboard.ver'           // ver el panel
-  | 'catalogos.ver';          // ver listados (solo lectura)
+  | 'catalogos.ver';          // ver catálogos (tipos de fenómeno, niveles…)
 
 /**
  * EL MAPA: qué permisos tiene cada rol.
  *
- * - Administrador: todo.
- * - Operador: opera sensores, reglas y alertas, pero NO gestiona usuarios.
- * - Consulta: solo mira.
+ *  - Administrador: todo.
+ *  - Operador: opera sensores y reglas, atiende alertas, y VE comunidades.
+ *  - Consulta: SOLO VE (sensores, comunidades, reglas, panel). No toca nada.
+ *
+ * No hace falta listar el permiso ".ver" de un recurso que el rol ya puede
+ * ".gestionar": la función de abajo entiende que "gestionar implica ver".
  */
 const PERMISOS_POR_ROL: Record<Rol, Permiso[]> = {
   Administrador: [
@@ -54,12 +69,16 @@ const PERMISOS_POR_ROL: Record<Rol, Permiso[]> = {
   Operador: [
     'sensores.gestionar',
     'reglas.gestionar',
+    'comunidades.ver',
     'alertas.atender',
     'dashboard.ver',
     'catalogos.ver'
   ],
   Consulta: [
     'dashboard.ver',
+    'sensores.ver',
+    'comunidades.ver',
+    'reglas.ver',
     'catalogos.ver'
   ]
 };
@@ -77,9 +96,21 @@ export function normalizarRol(valor: string | null | undefined): Rol {
   return 'Consulta';
 }
 
-/** ¿El rol tiene este permiso? */
+/**
+ * ¿El rol tiene este permiso?
+ *
+ * Regla lógica: quien puede GESTIONAR un recurso, también puede VERLO. Así no
+ * repetimos "sensores.ver" para un rol que ya tiene "sensores.gestionar".
+ */
 export function rolTienePermiso(rol: Rol, permiso: Permiso): boolean {
-  return PERMISOS_POR_ROL[rol].includes(permiso);
+  const permisos = PERMISOS_POR_ROL[rol];
+  if (permisos.includes(permiso)) return true;
+
+  if (permiso.endsWith('.ver')) {
+    const gestionar = permiso.replace('.ver', '.gestionar') as Permiso;
+    return permisos.includes(gestionar);
+  }
+  return false;
 }
 
 /** Etiqueta bonita para mostrar en pantalla. */
