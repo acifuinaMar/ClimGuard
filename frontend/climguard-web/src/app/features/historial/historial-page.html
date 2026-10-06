@@ -1,0 +1,112 @@
+<header class="cabecera">
+  <div>
+    <h1>Historial de eventos</h1>
+    <p class="cabecera__sub">Todos los eventos de riesgo detectados</p>
+  </div>
+  @if (usandoEjemplo()) {
+    <span class="aviso-ejemplo" title="El backend no respondió; se muestran eventos de ejemplo.">Datos de ejemplo</span>
+  }
+</header>
+
+<!-- ============ ESTADÍSTICAS (RF-ADM-48) ============ -->
+<div class="stats">
+  <div class="stat">
+    <span class="stat__num">{{ stats().total }}</span>
+    <span class="stat__tit">Eventos</span>
+  </div>
+  <div class="stat stat--rojo">
+    <span class="stat__num">{{ stats().activas }}</span>
+    <span class="stat__tit">Activos</span>
+  </div>
+  <div class="stat stat--verde">
+    <span class="stat__num">{{ stats().atendidas }}</span>
+    <span class="stat__tit">Atendidos</span>
+  </div>
+</div>
+
+<!-- ============ FILTROS (RF-ADM-47) ============ -->
+<div class="filtros">
+  <div class="filtro">
+    <label for="fFecha">Fecha</label>
+    <input id="fFecha" type="date" [ngModel]="filtroFecha()" (ngModelChange)="filtroFecha.set($event)">
+  </div>
+  <div class="filtro">
+    <label for="fCom">Comunidad</label>
+    <select id="fCom" [ngModel]="filtroComunidad()" (ngModelChange)="filtroComunidad.set($event)">
+      <option [ngValue]="0">Todas</option>
+      @for (c of comunidades(); track c.comunidadId) {
+        <option [ngValue]="c.comunidadId">{{ c.nombreComunidad }}</option>
+      }
+    </select>
+  </div>
+  <div class="filtro">
+    <label for="fFen">Fenómeno</label>
+    <select id="fFen" [ngModel]="filtroFenomeno()" (ngModelChange)="filtroFenomeno.set($event)">
+      <option [ngValue]="0">Todos</option>
+      @for (f of fenomenos(); track f.tipoFenomenoId) {
+        <option [ngValue]="f.tipoFenomenoId">{{ f.nombre }}</option>
+      }
+    </select>
+  </div>
+  <div class="filtro">
+    <label for="fNiv">Nivel</label>
+    <select id="fNiv" [ngModel]="filtroNivel()" (ngModelChange)="filtroNivel.set($event)">
+      <option [ngValue]="0">Todos</option>
+      @for (n of niveles(); track n.nivelAlertaId) {
+        <option [ngValue]="n.nivelAlertaId">{{ n.nombre }}</option>
+      }
+    </select>
+  </div>
+  @if (hayFiltros()) {
+    <button type="button" class="enlace" (click)="limpiarFiltros()">Limpiar filtros</button>
+  }
+</div>
+
+@if (cargando()) {
+  <div class="estado"><span class="estado__titulo">Cargando historial…</span></div>
+}
+
+@else {
+  <div class="tabla-caja">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Fecha / Hora</th>
+          <th>Comunidad</th>
+          <th>Sensor</th>
+          <th>Fenómeno</th>
+          <th>Nivel</th>
+          <th>Valor</th>
+          <th>Descripción</th>
+          <th>Estado</th>
+          <th>Responsable</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of filtradas(); track a.alertaId) {
+          <tr>
+            <td class="num">{{ a.fechaHora | date:'dd/MM/yy HH:mm' }}</td>
+            <td>{{ nombreComunidad(a.comunidadId) }}</td>
+            <td class="num">#{{ a.sensorId }}</td>
+            <td>{{ nombreFenomeno(a.tipoFenomenoIdSnap) }}</td>
+            <td>
+              <span class="pastel" [style.background]="colorNivel(a.nivelAlertaIdSnap)">
+                {{ nombreNivel(a.nivelAlertaIdSnap) }}
+              </span>
+            </td>
+            <td class="num">{{ a.valorDetectado }}</td>
+            <td>{{ a.mensajeSnap }}</td>
+            <td>
+              <span class="estado-badge" [class.estado-badge--on]="!a.activo">
+                {{ a.activo ? 'Activa' : 'Atendida' }}
+              </span>
+            </td>
+            <td class="num">{{ a.usuarioResponsableId ? ('#' + a.usuarioResponsableId) : '—' }}</td>
+          </tr>
+        } @empty {
+          <tr><td colspan="9" class="vacio">No hay eventos con esos filtros.</td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

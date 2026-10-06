@@ -8,6 +8,8 @@ import { UsuariosPage } from './features/usuarios/usuarios-page';
 import { ComunidadesPage } from './features/comunidades/comunidades-page';
 import { ReglasPage } from './features/reglas/reglas-page';
 import { BitacoraPage } from './features/bitacora/bitacora-page';
+import { AlertasPage } from './features/alertas/alertas-page';
+import { HistorialPage } from './features/historial/historial-page';
 
 export const routes: Routes = [
 
@@ -35,6 +37,8 @@ export const routes: Routes = [
       { path: 'comunidades', component: ComunidadesPage, canActivate: [permisoGuard], data: { permiso: 'comunidades.ver' } },
       { path: 'usuarios', component: UsuariosPage, canActivate: [permisoGuard], data: { permiso: 'usuarios.gestionar' } },
       { path: 'reglas', component: ReglasPage, canActivate: [permisoGuard], data: { permiso: 'reglas.ver' } },
+      { path: 'alertas', component: AlertasPage, canActivate: [permisoGuard], data: { permiso: 'alertas.ver' } },
+      { path: 'historial', component: HistorialPage, canActivate: [permisoGuard], data: { permiso: 'alertas.ver' } },
 
       // La bitácora solo la puede ver el Administrador (regla RN-019).
       // adminGuard lo comprueba; si no es admin, lo manda al panel.

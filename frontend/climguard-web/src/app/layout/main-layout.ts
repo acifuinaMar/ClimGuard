@@ -51,8 +51,10 @@ export class MainLayout {
     { ruta: '/mapa',        icono: '◎', texto: 'Mapa',        permiso: 'dashboard.ver' },
     { ruta: '/sensores',    icono: '▤', texto: 'Sensores',    permiso: 'sensores.ver' },
     { ruta: '/reglas',      icono: '⚙', texto: 'Reglas de alerta', permiso: 'reglas.ver' },
+    { ruta: '/alertas',     icono: '⚠', texto: 'Alertas',      permiso: 'alertas.ver' },
     { ruta: '/comunidades', icono: '◈', texto: 'Comunidades', permiso: 'comunidades.ver' },
     { ruta: '/usuarios',    icono: '◇', texto: 'Usuarios',    permiso: 'usuarios.gestionar' },
+    { ruta: '/historial',   icono: '≡', texto: 'Historial',   permiso: 'alertas.ver' },
     { ruta: '/bitacora',    icono: '❑', texto: 'Bitácora',    permiso: 'bitacora.ver' }
   ];
 

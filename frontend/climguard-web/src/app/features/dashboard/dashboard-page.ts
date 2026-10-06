@@ -170,7 +170,7 @@ export class DashboardPage {
       next: datos => {
 
         const activas = datos
-            .filter(a => a.activa)
+            .filter(a => a.activo)
             .sort(
                 (a, b) =>
                     new Date(b.fechaHora).getTime() -
