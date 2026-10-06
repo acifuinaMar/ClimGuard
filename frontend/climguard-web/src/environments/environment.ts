@@ -10,9 +10,8 @@ export const environment = {
   sufijoArchivo: '',
 
   // ---- SignalR: dirección del Hub de tiempo real ----
-  // OJO: confirmar con Mahuerk. El documento dice "/MonitoreoHub" pero el
-  // código de Fase 1 lo tenía en "/hubs/monitoreo". Si no conecta, es esto.
-  hubUrl: 'http://157.245.253.228:8080/MonitoreoHub'
+  // Confirmado en el backend (Program.cs): app.MapHub<MonitoreoHub>("/hubs/monitoreo").
+  hubUrl: 'http://157.245.253.228:8080/hubs/monitoreo'
 
   // ---- DATOS DE PRUEBA LOCALES ----
   // Para construir pantallas cuando la API no tenga datos cargados,

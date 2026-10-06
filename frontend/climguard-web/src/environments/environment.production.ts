@@ -14,5 +14,6 @@ export const environment = {
   sufijoArchivo: '',
 
   // El Hub va por el mismo origen; nginx lo reenvía (incluye el WebSocket).
-  hubUrl: '/MonitoreoHub'
+  // Ruta confirmada en el backend: app.MapHub<MonitoreoHub>("/hubs/monitoreo").
+  hubUrl: '/hubs/monitoreo'
 };
