@@ -11,14 +11,38 @@
 
       <div class="campo">
         <label for="nombre">Nombre de la comunidad</label>
-        <input id="nombre" type="text" formControlName="nombre"
+        <input id="nombre" type="text" formControlName="nombreComunidad"
                placeholder="Ej.: San José"
-               [class.malo]="nombre.invalid && nombre.touched">
-        @if (nombre.touched && nombre.hasError('required')) {
+               [class.malo]="nombreComunidad.invalid && nombreComunidad.touched">
+        @if (nombreComunidad.touched && nombreComunidad.hasError('required')) {
           <span class="error">El nombre es obligatorio.</span>
-        } @else if (nombre.touched && nombre.hasError('minlength')) {
+        } @else if (nombreComunidad.touched && nombreComunidad.hasError('minlength')) {
           <span class="error">Debe tener al menos 3 caracteres.</span>
         }
+      </div>
+
+      <div class="campo">
+        <label for="pais">País</label>
+        <input id="pais" type="text" formControlName="pais" placeholder="Ej.: Guatemala">
+      </div>
+
+      <div class="fila">
+        <div class="campo">
+          <label for="depto">Departamento</label>
+          <input id="depto" type="text" formControlName="departamento" placeholder="Ej.: Izabal"
+                 [class.malo]="departamento.invalid && departamento.touched">
+          @if (departamento.touched && departamento.hasError('required')) {
+            <span class="error">Obligatorio.</span>
+          }
+        </div>
+        <div class="campo">
+          <label for="muni">Municipio</label>
+          <input id="muni" type="text" formControlName="municipio" placeholder="Ej.: Puerto Barrios"
+                 [class.malo]="municipio.invalid && municipio.touched">
+          @if (municipio.touched && municipio.hasError('required')) {
+            <span class="error">Obligatorio.</span>
+          }
+        </div>
       </div>
 
       <div class="campo">
@@ -36,7 +60,6 @@
             <span class="error">Debe estar entre −90 y 90.</span>
           }
         </div>
-
         <div class="campo">
           <label for="lon">Longitud</label>
           <input id="lon" type="number" step="0.000001" formControlName="longitud"
@@ -47,6 +70,11 @@
         </div>
       </div>
       <span class="ayuda">Las coordenadas ubican la comunidad en el mapa.</span>
+
+      <label class="interruptor">
+        <input type="checkbox" formControlName="activo">
+        Comunidad activa
+      </label>
 
       <footer class="modal__pie">
         <button type="button" class="btn btn--claro"

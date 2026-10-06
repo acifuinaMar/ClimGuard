@@ -7,8 +7,9 @@ import { AuthService } from './auth.service';
 
 /**
  * Todo el trato con /api/Comunidad vive aquí.
- * Mismo patrón que SensorService: los componentes le piden a este servicio,
- * nunca llaman a la API por su cuenta.
+ * Leer (GET) lo pueden hacer los tres roles; crear/editar/borrar solo el
+ * Administrador (lo impone el backend). Por eso el frontend oculta esos botones
+ * salvo al Administrador, pero el candado real es la API.
  */
 @Injectable({ providedIn: 'root' })
 export class ComunidadService {
@@ -30,35 +31,57 @@ export class ComunidadService {
   }
 
   /**
-   * El backend exige saber QUIÉN crea, para registrarlo en la bitácora.
-   * Si no se le manda `usuarioLogeado`, revienta con error 500 porque intenta
-   * anotar "creado por usuario 0", y el usuario 0 no existe.
+   * POST /api/Comunidad (solo Administrador). El backend registra quién crea
+   * (usuarioIng / usuarioLogeado) para la bitácora.
    */
   crear(comunidad: Comunidad): Observable<Comunidad> {
+    const ahora = new Date().toISOString();
     return this.http.post<Comunidad>(this.base, {
-      ...comunidad,
+      comunidadId: 0,
+      nombreComunidad: comunidad.nombreComunidad,
+      descripcion: comunidad.descripcion,
+      pais: comunidad.pais,
+      departamento: comunidad.departamento,
+      municipio: comunidad.municipio,
+      latitud: comunidad.latitud,
+      longitud: comunidad.longitud,
+      activo: comunidad.activo,
+      usuarioIng: this.usuario,
+      fechaIng: ahora,
+      usuarioAct: null,
+      fechaAct: null,
       usuarioLogeado: this.usuario
     });
   }
 
   /**
-   * PUT /api/Comunidad — SIN id en la dirección.
-   * El backend (validación de Mahuerk) ahora lee el id DENTRO del body, en
-   * `comunidadId`, y exige que sea distinto de 0. Por eso lo fijamos aquí
-   * de forma explícita, aunque también venga en `comunidad`.
+   * PUT /api/Comunidad (solo Administrador). SIN id en la dirección: el id viaja
+   * en el cuerpo (comunidadId). Se conservan usuarioIng/fechaIng originales y se
+   * marca la modificación con usuarioAct/fechaAct.
    */
-  actualizar(id: number, comunidad: Comunidad): Observable<Comunidad> {
+  actualizar(comunidad: Comunidad): Observable<Comunidad> {
+    const ahora = new Date().toISOString();
     return this.http.put<Comunidad>(this.base, {
-      ...comunidad,
-      comunidadId: id,
+      comunidadId: comunidad.comunidadId,
+      nombreComunidad: comunidad.nombreComunidad,
+      descripcion: comunidad.descripcion,
+      pais: comunidad.pais,
+      departamento: comunidad.departamento,
+      municipio: comunidad.municipio,
+      latitud: comunidad.latitud,
+      longitud: comunidad.longitud,
+      activo: comunidad.activo,
+      usuarioIng: comunidad.usuarioIng ?? this.usuario,
+      fechaIng: comunidad.fechaIng ?? ahora,
+      usuarioAct: this.usuario,
+      fechaAct: ahora,
       usuarioLogeado: this.usuario
     });
   }
 
   /**
-   * El backend pide el id del usuario que borra, como parámetro de consulta,
-   * para registrarlo en la bitácora (quién eliminó qué).
-   * Endpoint real: DELETE /api/Comunidad/{id}?usuarioLogeado={idUsuario}
+   * DELETE /api/Comunidad/{id}?usuarioLogeado={id} (solo Administrador).
+   * El backend pide quién borra, como parámetro de consulta, para la bitácora.
    */
   eliminar(id: number): Observable<void> {
     return this.http.delete<void>(`${this.base}/${id}?usuarioLogeado=${this.usuario}`);

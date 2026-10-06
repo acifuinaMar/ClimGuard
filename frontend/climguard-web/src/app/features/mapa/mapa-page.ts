@@ -142,17 +142,17 @@ export class MapaPage implements OnDestroy {
                   <em>(${textoNivel(n)})</em></li>`;
         }).join('')
       : '<li>Sin sensores</li>';
-    return `<div class="pop"><h4>${c.nombre}</h4><ul>${filas}</ul></div>`;
+    return `<div class="pop"><h4>${c.nombreComunidad}</h4><ul>${filas}</ul></div>`;
   }
 
   /** Datos de ejemplo (Guatemala) para ver el mapa mientras el backend no está. */
   private datosEjemplo(): { comunidades: Comunidad[]; sensores: Sensor[] } {
     const ahora = new Date().toISOString();
     const comunidades: Comunidad[] = [
-      { comunidadId: 1, nombre: 'Ciudad de Guatemala', latitud: 14.6349, longitud: -90.5069, descripcion: 'Área metropolitana', fechaRegistro: ahora },
-      { comunidadId: 2, nombre: 'Quetzaltenango',      latitud: 14.8333, longitud: -91.5167, descripcion: 'Occidente',         fechaRegistro: ahora },
-      { comunidadId: 3, nombre: 'Puerto Barrios',      latitud: 15.7278, longitud: -88.5944, descripcion: 'Caribe',            fechaRegistro: ahora },
-      { comunidadId: 4, nombre: 'Cobán',               latitud: 15.4708, longitud: -90.3711, descripcion: 'Verapaz',           fechaRegistro: ahora }
+      { comunidadId: 1, nombreComunidad: 'Ciudad de Guatemala', descripcion: 'Área metropolitana', pais: 'Guatemala', departamento: 'Guatemala',     municipio: 'Guatemala',      latitud: 14.6349, longitud: -90.5069, activo: true },
+      { comunidadId: 2, nombreComunidad: 'Quetzaltenango',      descripcion: 'Occidente',          pais: 'Guatemala', departamento: 'Quetzaltenango', municipio: 'Quetzaltenango', latitud: 14.8333, longitud: -91.5167, activo: true },
+      { comunidadId: 3, nombreComunidad: 'Puerto Barrios',      descripcion: 'Caribe',             pais: 'Guatemala', departamento: 'Izabal',         municipio: 'Puerto Barrios', latitud: 15.7278, longitud: -88.5944, activo: true },
+      { comunidadId: 4, nombreComunidad: 'Cobán',               descripcion: 'Verapaz',            pais: 'Guatemala', departamento: 'Alta Verapaz',   municipio: 'Cobán',          latitud: 15.4708, longitud: -90.3711, activo: true }
     ];
     const sensores: Sensor[] = [
       { sensorId: 1, comunidadId: 1, tipoSensorId: 3, nombre: 'Viento Centro',  valorActual: 25,  activo: true, fechaInstalacion: ahora, ultimaActualizacion: ahora, usuarioLogeado: 0 }, // verde
