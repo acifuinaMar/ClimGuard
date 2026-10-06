@@ -48,8 +48,9 @@ export type Permiso =
 /**
  * EL MAPA: qué permisos tiene cada rol.
  *
- *  - Administrador: todo.
- *  - Operador: opera sensores y reglas, atiende alertas, y VE comunidades.
+ *  - Administrador: todo. Es el ÚNICO que crea/edita/borra sensores,
+ *    comunidades y reglas (así lo exige el backend — mínimo privilegio).
+ *  - Operador: VE sensores, comunidades y reglas, y atiende alertas.
  *  - Consulta: SOLO VE (sensores, comunidades, reglas, panel). No toca nada.
  *
  * No hace falta listar el permiso ".ver" de un recurso que el rol ya puede
@@ -67,9 +68,9 @@ const PERMISOS_POR_ROL: Record<Rol, Permiso[]> = {
     'catalogos.ver'
   ],
   Operador: [
-    'sensores.gestionar',
-    'reglas.gestionar',
+    'sensores.ver',
     'comunidades.ver',
+    'reglas.ver',
     'alertas.atender',
     'dashboard.ver',
     'catalogos.ver'
