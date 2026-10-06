@@ -6,7 +6,7 @@ import { LoginPage } from './features/auth/login-page';
 import { SensoresPage } from './features/sensores/sensores-page';
 import { UsuariosPage } from './features/usuarios/usuarios-page';
 import { ComunidadesPage } from './features/comunidades/comunidades-page';
-import { UmbralesPage } from './features/umbrales/umbrales-page';
+import { ReglasPage } from './features/reglas/reglas-page';
 import { BitacoraPage } from './features/bitacora/bitacora-page';
 
 export const routes: Routes = [
@@ -34,7 +34,7 @@ export const routes: Routes = [
       { path: 'sensores', component: SensoresPage, canActivate: [permisoGuard], data: { permiso: 'sensores.ver' } },
       { path: 'comunidades', component: ComunidadesPage, canActivate: [permisoGuard], data: { permiso: 'comunidades.ver' } },
       { path: 'usuarios', component: UsuariosPage, canActivate: [permisoGuard], data: { permiso: 'usuarios.gestionar' } },
-      { path: 'umbrales', component: UmbralesPage, canActivate: [permisoGuard], data: { permiso: 'reglas.ver' } },
+      { path: 'reglas', component: ReglasPage, canActivate: [permisoGuard], data: { permiso: 'reglas.ver' } },
 
       // La bitácora solo la puede ver el Administrador (regla RN-019).
       // adminGuard lo comprueba; si no es admin, lo manda al panel.
