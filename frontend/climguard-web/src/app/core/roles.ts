@@ -40,6 +40,7 @@ export type Permiso =
   | 'sensores.gestionar'      // crear/editar/activar sensores
   | 'reglas.ver'              // ver las reglas de alerta (solo lectura)
   | 'reglas.gestionar'        // crear/editar/activar reglas de alerta
+  | 'fenomenos.gestionar'     // gestionar el catálogo de tipos de fenómeno
   | 'alertas.ver'             // ver alertas y el historial de eventos
   | 'alertas.atender'         // atender/cerrar alertas
   | 'bitacora.ver'            // consultar la bitácora de auditoría
@@ -63,6 +64,7 @@ const PERMISOS_POR_ROL: Record<Rol, Permiso[]> = {
     'comunidades.gestionar',
     'sensores.gestionar',
     'reglas.gestionar',
+    'fenomenos.gestionar',
     'alertas.ver',
     'alertas.atender',
     'bitacora.ver',
@@ -73,6 +75,7 @@ const PERMISOS_POR_ROL: Record<Rol, Permiso[]> = {
     'sensores.ver',
     'comunidades.ver',
     'reglas.ver',
+    'fenomenos.gestionar',
     'alertas.ver',
     'alertas.atender',
     'dashboard.ver',

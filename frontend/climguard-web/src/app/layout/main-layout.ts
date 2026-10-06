@@ -53,6 +53,7 @@ export class MainLayout {
     { ruta: '/reglas',      icono: '⚙', texto: 'Reglas de alerta', permiso: 'reglas.ver' },
     { ruta: '/alertas',     icono: '⚠', texto: 'Alertas',      permiso: 'alertas.ver' },
     { ruta: '/comunidades', icono: '◈', texto: 'Comunidades', permiso: 'comunidades.ver' },
+    { ruta: '/fenomenos',   icono: '☁', texto: 'Tipos de fenómeno', permiso: 'fenomenos.gestionar' },
     { ruta: '/usuarios',    icono: '◇', texto: 'Usuarios',    permiso: 'usuarios.gestionar' },
     { ruta: '/historial',   icono: '≡', texto: 'Historial',   permiso: 'alertas.ver' },
     { ruta: '/bitacora',    icono: '❑', texto: 'Bitácora',    permiso: 'bitacora.ver' }
