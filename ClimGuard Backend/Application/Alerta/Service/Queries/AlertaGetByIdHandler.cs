@@ -14,6 +14,9 @@ namespace Application.Alerta.Service.Queries
         {
             var alerta = await _repository.GetById(request.id);
 
+            if(alerta == null)
+                return null;
+
             return new AlertaResultDto(
                 alerta.AlertaId,
                 alerta.ValorDetectado,

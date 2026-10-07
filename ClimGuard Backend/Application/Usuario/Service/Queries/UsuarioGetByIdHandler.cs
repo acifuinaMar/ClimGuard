@@ -16,6 +16,9 @@ namespace Application.Usuario.Service.Queries
         {
             var usuario = await _repository.GetById(request.id);
 
+            if(usuario == null)
+                return null;
+
             return new UsuarioResultDto(
                 usuario.UsuarioId,
                 usuario.NombreCompleto,

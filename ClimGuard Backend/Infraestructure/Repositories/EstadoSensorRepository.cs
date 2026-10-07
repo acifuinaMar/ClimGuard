@@ -77,6 +77,9 @@ namespace Infraestructure.Repositories
                 var obj = await _context.EstadoSensors
                     .Where(a => a.EstadoSensorId == nivel).FirstOrDefaultAsync();
 
+                if (obj == null)
+                    return null;
+
                 return new EstadoSensorDomain
                 (
                     obj.EstadoSensorId,
@@ -99,7 +102,6 @@ namespace Infraestructure.Repositories
 
                 if (obj == null)
                     return false;
-
 
                 //obj.EstadoSensorId = nivel.EstadoSensorId;
                 obj.Nombre = nivel.Nombre;

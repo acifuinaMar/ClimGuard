@@ -91,6 +91,9 @@ namespace Infraestructure.Repositories
                 var obj = await _context.NivelAlerta
                     .Where(a => a.NivelAlertaId == nivel).FirstOrDefaultAsync();
 
+                if (obj == null)
+                    return null;
+
                 return new NivelAlertaDomain
                 (
                     obj.NivelAlertaId,

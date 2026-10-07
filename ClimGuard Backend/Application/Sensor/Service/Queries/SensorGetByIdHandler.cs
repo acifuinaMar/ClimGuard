@@ -16,6 +16,9 @@ namespace Application.Sensor.Service.Queries
         {
             var sensor = await _repository.GetById(request.id);
 
+            if(sensor == null)
+                return null;
+
             return new SensorResultDto(
                 sensor.SensorId,
                 sensor.Nombre,

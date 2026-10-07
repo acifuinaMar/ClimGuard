@@ -76,6 +76,9 @@ namespace Infraestructure.Repositories
                 var obj = await _context.TipoSensors
                     .Where(a => a.TipoSensorId == tipo).FirstOrDefaultAsync();
 
+                if (obj == null)
+                    return null;
+
                 return new TipoSensorDomain
                 (
                     obj.TipoSensorId,

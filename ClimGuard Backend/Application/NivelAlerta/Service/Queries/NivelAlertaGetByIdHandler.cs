@@ -15,6 +15,9 @@ namespace Application.NivelAlerta.Service.Queries
         {
             var nivel = await _repository.GetById(request.id);
 
+            if (nivel == null)
+                return null;    
+
             return new NivelAlertaResultDto(
                 nivel.NivelAlertaId,
                 nivel.Nombre,

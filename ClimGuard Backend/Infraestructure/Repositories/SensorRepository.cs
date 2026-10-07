@@ -109,6 +109,9 @@ namespace Services.Services{
                 var obj = await _context.Sensors
                     .Where(a => a.SensorId == sensor).FirstOrDefaultAsync();
 
+                if (obj == null)
+                    return null;
+
                 return new SensorDomain(
                     obj.SensorId,
                     obj.Nombre,

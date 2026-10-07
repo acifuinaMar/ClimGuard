@@ -18,9 +18,7 @@ namespace Application.EstadoSensor.Service.Commands
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<bool> Handle(
-            EstadoSensorDeleteCommand request,
-            CancellationToken cancellationToken)
+        public async Task<bool> Handle(EstadoSensorDeleteCommand request,CancellationToken cancellationToken)
         {
             var estado = await _repository.GetById(request.EstadoSensorId);
 

@@ -3,7 +3,6 @@ using Domain.Interfaces;
 using Infraestructure.Models;
 using Infraestructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Infraestructure.Repositories
 {
@@ -83,6 +82,9 @@ namespace Infraestructure.Repositories
             {
                 var obj = await _context.TipoFenomenos
                     .Where(a => a.TipoFenomenoId == tipo).FirstOrDefaultAsync();
+
+                if(obj == null)
+                    return null;
 
                 return new TipoFenomenoDomain
                 (

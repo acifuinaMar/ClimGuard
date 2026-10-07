@@ -29,4 +29,6 @@ public partial class Usuario
     public virtual ICollection<Bitacora> Bitacoras { get; set; } = new List<Bitacora>();
 
     public virtual ICollection<Alerta> Alertas { get; set; } = new List<Alerta>();
+    public virtual ICollection<ReglaAlerta> ReglaAlertumUsuarioActNavigations { get; set; } = new List<ReglaAlerta>();
+    public virtual ICollection<ReglaAlerta> ReglaAlertumUsuarioIngNavigations { get; set; } = new List<ReglaAlerta>();
 }
