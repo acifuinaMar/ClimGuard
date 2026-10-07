@@ -29,3 +29,17 @@ export const ROLES = [
   { rolId: 2, nombre: 'Operador' },
   { rolId: 3, nombre: 'Consulta' }
 ];
+
+/**
+ * Lo que el formulario envía al crear o editar un usuario. Incluye la contraseña
+ * EN CLARO: el backend la encripta (SHA256). Por eso nunca se guarda ni se
+ * muestra; solo se manda una vez.
+ */
+export interface GuardarUsuario {
+  usuarioId: number;
+  nombreCompleto: string;
+  nombreUsuario: string;
+  password: string;
+  rolId: number;
+  activo: boolean;
+}

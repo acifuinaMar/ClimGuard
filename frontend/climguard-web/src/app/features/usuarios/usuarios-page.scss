@@ -83,3 +83,37 @@
   text-transform: capitalize;
 }
 .rol--admin { background: var(--cg-primario-claro); color: var(--cg-primario-oscuro); font-weight: 600; }
+
+.der { text-align: right; white-space: nowrap; }
+
+.aviso-ok {
+  padding: .65rem .9rem;
+  border-radius: 7px;
+  font-size: .88rem;
+  margin-bottom: .9rem;
+  background: var(--cg-verde-fondo);
+  color: var(--cg-verde);
+  border: 1px solid var(--cg-verde);
+}
+
+/* ================= BOTONES ================= */
+.btn {
+  padding: .5rem 1rem;
+  border-radius: 7px;
+  font-size: .88rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+.btn:disabled { opacity: .6; cursor: progress; }
+.btn--primario { background: var(--cg-primario); color: #fff; }
+.btn--primario:hover:not(:disabled) { background: var(--cg-primario-oscuro); }
+.btn--chico {
+  padding: .32rem .7rem;
+  font-size: .82rem;
+  background: var(--cg-superficie);
+  border-color: var(--cg-borde);
+  color: var(--cg-texto-suave);
+}
+.btn--chico:hover:not(:disabled) { background: var(--cg-superficie-2); }

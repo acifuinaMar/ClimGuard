@@ -1,11 +1,13 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
-import { Usuario, ROLES } from '../../core/models/usuario.model';
+import { Usuario, GuardarUsuario, ROLES } from '../../core/models/usuario.model';
 import { UsuarioService } from '../../core/services/usuario.service';
+import { UsuarioForm } from './usuario-form';
 
 @Component({
   selector: 'app-usuarios-page',
+  imports: [UsuarioForm],
   templateUrl: './usuarios-page.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './usuarios-page.scss'
@@ -17,6 +19,11 @@ export class UsuariosPage {
   cargando = signal(true);
   error = signal<string | null>(null);
   usandoEjemplo = signal(false);
+
+  formAbierto = signal(false);
+  editando = signal<Usuario | null>(null);
+  guardando = signal(false);
+  aviso = signal<string | null>(null);
 
   activos = computed(() => this.usuarios().filter(u => u.activo).length);
 
@@ -37,24 +44,63 @@ export class UsuariosPage {
     });
   }
 
-  /** Nombre a mostrar: el nombre completo del backend, o el usuario si viene vacío. */
   nombreCompleto(u: Usuario): string {
     return (u.nombreCompleto ?? '').trim() || u.nombreUsuario;
   }
-
-  /** Iniciales para el círculo de color. */
   iniciales(u: Usuario): string {
     return this.nombreCompleto(u).split(' ').slice(0, 2)
       .map(p => p.charAt(0).toUpperCase()).join('');
   }
-
-  /** Nombre del rol a partir de su id (1 Administrador, 2 Operador, 3 Consulta). */
   nombreRol(rolId: number): string {
     return ROLES.find(r => r.rolId === rolId)?.nombre ?? `Rol ${rolId}`;
   }
-
   esAdmin(u: Usuario): boolean {
     return u.rolId === 1;
+  }
+
+  // ---- crear / editar ----
+  nuevo(): void { this.editando.set(null); this.formAbierto.set(true); }
+  editar(u: Usuario): void { this.editando.set(u); this.formAbierto.set(true); }
+  cerrarForm(): void { this.formAbierto.set(false); this.editando.set(null); }
+
+  onGuardar(g: GuardarUsuario): void {
+    // En modo ejemplo no hay backend: simulamos localmente.
+    if (this.usandoEjemplo()) {
+      if (g.usuarioId === 0) {
+        const nuevoId = Math.max(0, ...this.usuarios().map(u => u.usuarioId)) + 1;
+        this.usuarios.update(l => [...l, {
+          usuarioId: nuevoId, nombreCompleto: g.nombreCompleto, nombreUsuario: g.nombreUsuario,
+          ultimoAcceso: null, activo: g.activo, rolId: g.rolId
+        }]);
+      } else {
+        this.usuarios.update(l => l.map(u => u.usuarioId === g.usuarioId
+          ? { ...u, nombreCompleto: g.nombreCompleto, nombreUsuario: g.nombreUsuario, activo: g.activo, rolId: g.rolId }
+          : u));
+      }
+      this.cerrarForm();
+      this.mostrarAviso(g.usuarioId === 0 ? 'Usuario creado (ejemplo).' : 'Usuario actualizado (ejemplo).');
+      return;
+    }
+
+    this.guardando.set(true);
+    const peticion = g.usuarioId === 0 ? this.servicio.crear(g) : this.servicio.actualizar(g);
+    peticion.subscribe({
+      next: () => {
+        this.guardando.set(false);
+        this.cerrarForm();
+        this.mostrarAviso(g.usuarioId === 0 ? 'Usuario creado.' : 'Usuario actualizado.');
+        this.cargar();
+      },
+      error: () => {
+        this.guardando.set(false);
+        this.error.set('No se pudo guardar el usuario. ¿Está encendido el backend?');
+      }
+    });
+  }
+
+  private mostrarAviso(texto: string): void {
+    this.aviso.set(texto);
+    setTimeout(() => this.aviso.set(null), 3000);
   }
 
   private ejemplo(): Usuario[] {
