@@ -90,7 +90,7 @@ export class DashboardPage {
       return '--';
 
     const fechas = this.sensores()
-      .map(s => new Date(s.ultimaActualizacion));
+      .map(s => new Date(s.fechaUltimaConexion));
 
     const ultima = new Date(
       Math.max(...fechas.map(f => f.getTime()))

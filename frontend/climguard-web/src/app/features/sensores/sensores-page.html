@@ -5,6 +5,9 @@
   </div>
 
   <div class="cabecera__acciones">
+    @if (usandoEjemplo()) {
+      <span class="aviso-ejemplo" title="El backend no respondió; se muestran sensores de ejemplo. Al conectarlo, usa los reales.">Datos de ejemplo</span>
+    }
     @if (!cargando() && !error()) {
       <span class="cuenta">{{ activos() }} de {{ sensores().length }} activos</span>
     }
@@ -52,7 +55,7 @@
           <tr [class.fila--inactiva]="!s.activo">
             <td>
               <span class="nombre">{{ s.nombre }}</span>
-              <span class="sub">#{{ s.sensorId }} · comunidad {{ s.comunidadId }}</span>
+              <span class="sub">{{ s.codigo }} · #{{ s.sensorId }} · comunidad {{ s.comunidadId }}</span>
             </td>
 
             <td>{{ s.variable }}</td>
@@ -69,7 +72,7 @@
               <!-- Indicador de estado (solo lectura). Activar o desactivar vive
                    en la columna «Acciones», protegido por permiso. -->
               <span class="pastilla" [class.pastilla--on]="s.activo">
-                {{ s.activo ? 'Activo' : 'Inactivo' }}
+                {{ nombreEstado(s.estadoSensorId) }}
               </span>
             </td>
 

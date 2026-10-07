@@ -155,10 +155,10 @@ export class MapaPage implements OnDestroy {
       { comunidadId: 4, nombreComunidad: 'Cobán',               descripcion: 'Verapaz',            pais: 'Guatemala', departamento: 'Alta Verapaz',   municipio: 'Cobán',          latitud: 15.4708, longitud: -90.3711, activo: true }
     ];
     const sensores: Sensor[] = [
-      { sensorId: 1, comunidadId: 1, tipoSensorId: 3, nombre: 'Viento Centro',  valorActual: 25,  activo: true, fechaInstalacion: ahora, ultimaActualizacion: ahora, usuarioLogeado: 0 }, // verde
-      { sensorId: 2, comunidadId: 2, tipoSensorId: 1, nombre: 'Temp. Xela',     valorActual: -1,  activo: true, fechaInstalacion: ahora, ultimaActualizacion: ahora, usuarioLogeado: 0 }, // rojo (helada)
-      { sensorId: 3, comunidadId: 3, tipoSensorId: 5, nombre: 'Río Dulce',      valorActual: 3.9, activo: true, fechaInstalacion: ahora, ultimaActualizacion: ahora, usuarioLogeado: 0 }, // naranja
-      { sensorId: 4, comunidadId: 4, tipoSensorId: 4, nombre: 'Lluvia Cobán',   valorActual: 25,  activo: true, fechaInstalacion: ahora, ultimaActualizacion: ahora, usuarioLogeado: 0 }  // amarillo
+      { sensorId: 1, nombre: 'Viento Centro', codigo: 'SEN-001', ubicacion: 'Centro', descripcion: 'Anemómetro',   fechaInstalacion: ahora, fechaUltimaConexion: ahora, valorActual: 25,  comunidadId: 1, tipoSensorId: 3, estadoSensorId: 1 }, // verde
+      { sensorId: 2, nombre: 'Temp. Xela',    codigo: 'SEN-002', ubicacion: 'Xela',   descripcion: 'Termómetro',   fechaInstalacion: ahora, fechaUltimaConexion: ahora, valorActual: -1,  comunidadId: 2, tipoSensorId: 1, estadoSensorId: 1 }, // rojo (helada)
+      { sensorId: 3, nombre: 'Río Dulce',     codigo: 'SEN-003', ubicacion: 'Río',    descripcion: 'Nivel de río', fechaInstalacion: ahora, fechaUltimaConexion: ahora, valorActual: 3.9, comunidadId: 3, tipoSensorId: 5, estadoSensorId: 1 }, // naranja
+      { sensorId: 4, nombre: 'Lluvia Cobán',  codigo: 'SEN-004', ubicacion: 'Cobán',  descripcion: 'Pluviómetro',  fechaInstalacion: ahora, fechaUltimaConexion: ahora, valorActual: 25,  comunidadId: 4, tipoSensorId: 4, estadoSensorId: 1 }  // amarillo
     ];
     return { comunidades, sensores };
   }
