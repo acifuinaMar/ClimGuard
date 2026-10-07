@@ -3,9 +3,14 @@
     <h1>Usuarios</h1>
     <p class="cabecera__sub">Personas con acceso al sistema</p>
   </div>
-  @if (!cargando() && !error()) {
-    <span class="cuenta">{{ activos() }} de {{ usuarios().length }} activos</span>
-  }
+  <div class="cabecera__acciones">
+    @if (usandoEjemplo()) {
+      <span class="aviso-ejemplo" title="El backend no respondió; se muestran usuarios de ejemplo. Al conectarlo, usa los reales.">Datos de ejemplo</span>
+    }
+    @if (!cargando() && !error()) {
+      <span class="cuenta">{{ activos() }} de {{ usuarios().length }} activos</span>
+    }
+  </div>
 </header>
 
 @if (cargando()) {
@@ -49,8 +54,8 @@
             </td>
             <td class="mono">{{ u.nombreUsuario }}</td>
             <td>
-              <span class="rol" [class.rol--admin]="u.rol.toLowerCase() === 'administrador'">
-                {{ u.rol }}
+              <span class="rol" [class.rol--admin]="esAdmin(u)">
+                {{ nombreRol(u.rolId) }}
               </span>
             </td>
             <td>

@@ -1,5 +1,7 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { Usuario } from '../../core/models/usuario.model';
+import { of } from 'rxjs';
+import { catchError, timeout } from 'rxjs/operators';
+import { Usuario, ROLES } from '../../core/models/usuario.model';
 import { UsuarioService } from '../../core/services/usuario.service';
 
 @Component({
@@ -14,33 +16,52 @@ export class UsuariosPage {
   usuarios = signal<Usuario[]>([]);
   cargando = signal(true);
   error = signal<string | null>(null);
+  usandoEjemplo = signal(false);
 
   activos = computed(() => this.usuarios().filter(u => u.activo).length);
 
   constructor() {
-    this.servicio.listar().subscribe({
-      next: (datos) => { this.usuarios.set(datos); this.cargando.set(false); },
-      error: () => {
-        this.error.set('No se pudieron cargar los usuarios.');
-        this.cargando.set(false);
-      }
+    this.cargar();
+  }
+
+  cargar(): void {
+    this.cargando.set(true);
+    this.error.set(null);
+    this.servicio.listar().pipe(
+      timeout(5000),
+      catchError(() => of<Usuario[]>([]))
+    ).subscribe((datos) => {
+      this.usandoEjemplo.set(datos.length === 0);
+      this.usuarios.set(datos.length ? datos : this.ejemplo());
+      this.cargando.set(false);
     });
   }
 
-  /**
-   * Arma el nombre completo a partir de los cuatro campos que devuelve la API.
-   * Se filtran los vacíos para no dejar espacios dobles cuando falta un apellido.
-   */
+  /** Nombre a mostrar: el nombre completo del backend, o el usuario si viene vacío. */
   nombreCompleto(u: Usuario): string {
-    const partes = [u.nombre1, u.nombre2, u.apellido1, u.apellido2]
-      .map(p => (p ?? '').trim())
-      .filter(p => p.length > 0);
-    return partes.length ? partes.join(' ') : u.nombreUsuario;
+    return (u.nombreCompleto ?? '').trim() || u.nombreUsuario;
   }
 
   /** Iniciales para el círculo de color. */
   iniciales(u: Usuario): string {
     return this.nombreCompleto(u).split(' ').slice(0, 2)
       .map(p => p.charAt(0).toUpperCase()).join('');
+  }
+
+  /** Nombre del rol a partir de su id (1 Administrador, 2 Operador, 3 Consulta). */
+  nombreRol(rolId: number): string {
+    return ROLES.find(r => r.rolId === rolId)?.nombre ?? `Rol ${rolId}`;
+  }
+
+  esAdmin(u: Usuario): boolean {
+    return u.rolId === 1;
+  }
+
+  private ejemplo(): Usuario[] {
+    return [
+      { usuarioId: 1, nombreCompleto: 'Administrador del Sistema', nombreUsuario: 'admin',    ultimoAcceso: null, activo: true,  rolId: 1 },
+      { usuarioId: 2, nombreCompleto: 'Operador de Campo',         nombreUsuario: 'operador', ultimoAcceso: null, activo: true,  rolId: 2 },
+      { usuarioId: 3, nombreCompleto: 'Usuario de Consulta',       nombreUsuario: 'consulta', ultimoAcceso: null, activo: false, rolId: 3 }
+    ];
   }
 }
