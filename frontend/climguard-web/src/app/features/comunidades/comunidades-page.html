@@ -4,10 +4,13 @@
     <p class="cabecera__sub">Comunidades monitoreadas por el sistema</p>
   </div>
   <div class="cabecera__acciones">
+    @if (usandoEjemplo()) {
+      <span class="aviso-ejemplo" title="El backend no respondió; se muestran comunidades de ejemplo. Al conectarlo, usa las reales.">Datos de ejemplo</span>
+    }
     @if (!cargando() && !error()) {
       <span class="cuenta">{{ comunidades().length }} registradas</span>
     }
-    <button type="button" class="btn btn--primario" (click)="nueva()">+ Nueva comunidad</button>
+    <button type="button" class="btn btn--primario" (click)="nueva()" *siPermiso="'comunidades.gestionar'">+ Nueva comunidad</button>
   </div>
 </header>
 
@@ -41,7 +44,8 @@
           <span class="tarjeta__id">#{{ c.comunidadId }}</span>
         </div>
 
-        <h2 class="tarjeta__nombre">{{ c.nombre }}</h2>
+        <h2 class="tarjeta__nombre">{{ c.nombreComunidad }}</h2>
+        <p class="tarjeta__ubic">{{ c.municipio }}, {{ c.departamento }} · {{ c.pais }}</p>
         <p class="tarjeta__desc">{{ c.descripcion || 'Sin descripción' }}</p>
 
         <div class="tarjeta__coords">
@@ -50,8 +54,8 @@
         </div>
 
         <div class="tarjeta__pie">
-          <span class="tarjeta__fecha">Registrada: {{ c.fechaRegistro }}</span>
-          <div class="tarjeta__acciones">
+          <span class="estado-badge" [class.estado-badge--on]="c.activo">{{ c.activo ? 'Activa' : 'Inactiva' }}</span>
+          <div class="tarjeta__acciones" *siPermiso="'comunidades.gestionar'">
             <button type="button" class="btn btn--chico" (click)="editar(c)">Editar</button>
             <button type="button" class="btn btn--chico btn--peligro" (click)="pedirBorrar(c)">Eliminar</button>
           </div>
@@ -73,7 +77,7 @@
   <div class="fondo" (click)="cancelarBorrar()">
     <div class="confirmar" (click)="$event.stopPropagation()">
       <h2>¿Eliminar esta comunidad?</h2>
-      <p>Vas a eliminar <strong>{{ c.nombre }}</strong>. Esta acción no se puede deshacer.</p>
+      <p>Vas a eliminar <strong>{{ c.nombreComunidad }}</strong>. Esta acción no se puede deshacer.</p>
       <div class="confirmar__pie">
         <button type="button" class="btn btn--claro" (click)="cancelarBorrar()" [disabled]="borrando()">Cancelar</button>
         <button type="button" class="btn btn--peligro-lleno" (click)="confirmarBorrar()" [disabled]="borrando()">

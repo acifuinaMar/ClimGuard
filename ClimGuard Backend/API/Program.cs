@@ -100,19 +100,17 @@ builder.Services.AddMediatR(config =>
 var app = builder.Build();
 
 // OpenAPI JSON
-if (app.Environment.IsDevelopment())
+// OpenAPI JSON
+app.MapOpenApi();
+
+// Swagger JSON + Swagger UI
+app.UseSwagger();
+
+app.UseSwaggerUI(options =>
 {
-    app.MapOpenApi();
-
-    // Swagger JSON + Swagger UI
-    app.UseSwagger();
-
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Mi API v1");
-        options.RoutePrefix = "swagger";
-    });
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Mi API v1");
+    options.RoutePrefix = "swagger";
+});
 
 // Activar el middleware de CORS antes de autorización y controladores
 app.UseCors(miorigen);

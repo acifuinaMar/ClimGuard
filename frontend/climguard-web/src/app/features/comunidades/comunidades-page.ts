@@ -1,12 +1,15 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { of } from 'rxjs';
+import { catchError, timeout } from 'rxjs/operators';
 import { Comunidad } from '../../core/models/comunidad.model';
 import { ComunidadService } from '../../core/services/comunidad.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ComunidadForm } from './comunidad-form';
+import { SiPermisoDirective } from '../../shared/si-permiso.directive';
 
 @Component({
   selector: 'app-comunidades-page',
-  imports: [ComunidadForm],
+  imports: [ComunidadForm, SiPermisoDirective],
   templateUrl: './comunidades-page.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './comunidades-page.scss'
@@ -18,6 +21,8 @@ export class ComunidadesPage {
   comunidades = signal<Comunidad[]>([]);
   cargando = signal(true);
   error = signal<string | null>(null);
+  /** true si el backend no respondió y mostramos comunidades de ejemplo. */
+  usandoEjemplo = signal(false);
 
   formAbierto = signal(false);
   editando = signal<Comunidad | null>(null);
@@ -35,12 +40,21 @@ export class ComunidadesPage {
   cargar(): void {
     this.cargando.set(true);
     this.error.set(null);
-    this.servicio.listar().subscribe({
-      next: (datos) => { this.comunidades.set(datos); this.cargando.set(false); },
-      error: () => {
-        this.error.set('No se pudieron cargar las comunidades.');
-        this.cargando.set(false);
+
+    // Si el backend no responde en 5s, caemos a datos de ejemplo para poder ver
+    // la pantalla. Al conectarlo, usa las comunidades reales sin tocar nada.
+    this.servicio.listar().pipe(
+      timeout(5000),
+      catchError(() => of<Comunidad[]>([]))
+    ).subscribe((datos) => {
+      if (datos.length === 0) {
+        this.comunidades.set(this.comunidadesEjemplo());
+        this.usandoEjemplo.set(true);
+      } else {
+        this.comunidades.set(datos);
+        this.usandoEjemplo.set(false);
       }
+      this.cargando.set(false);
     });
   }
 
@@ -53,7 +67,7 @@ export class ComunidadesPage {
     this.guardando.set(true);
     const peticion = c.comunidadId === 0
       ? this.servicio.crear(c)
-      : this.servicio.actualizar(c.comunidadId, c);
+      : this.servicio.actualizar(c);
 
     peticion.subscribe({
       next: () => {
@@ -64,7 +78,7 @@ export class ComunidadesPage {
       },
       error: () => {
         this.guardando.set(false);
-        this.error.set('No se pudo guardar la comunidad.');
+        this.error.set('No se pudo guardar la comunidad. ¿Está encendido el backend?');
       }
     });
   }
@@ -97,5 +111,14 @@ export class ComunidadesPage {
   private mostrarAviso(texto: string): void {
     this.aviso.set(texto);
     setTimeout(() => this.aviso.set(null), 3000);
+  }
+
+  /** Comunidades de ejemplo para ver la pantalla mientras el backend no responde. */
+  private comunidadesEjemplo(): Comunidad[] {
+    return [
+      { comunidadId: 1, nombreComunidad: 'Ciudad de Guatemala', descripcion: 'Área metropolitana', pais: 'Guatemala', departamento: 'Guatemala',     municipio: 'Guatemala',      latitud: 14.6349, longitud: -90.5069, activo: true },
+      { comunidadId: 2, nombreComunidad: 'Quetzaltenango',      descripcion: 'Occidente',          pais: 'Guatemala', departamento: 'Quetzaltenango', municipio: 'Quetzaltenango', latitud: 14.8333, longitud: -91.5167, activo: true },
+      { comunidadId: 3, nombreComunidad: 'Puerto Barrios',      descripcion: 'Zona Caribe',        pais: 'Guatemala', departamento: 'Izabal',         municipio: 'Puerto Barrios', latitud: 15.7278, longitud: -88.5944, activo: false }
+    ];
   }
 }

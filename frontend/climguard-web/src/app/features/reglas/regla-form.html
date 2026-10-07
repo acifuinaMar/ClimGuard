@@ -1,0 +1,89 @@
+<div class="fondo" (click)="cancelar.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <header class="modal__cabecera">
+      <h2>Editar regla de alerta</h2>
+      <button type="button" class="modal__cerrar"
+              (click)="cancelar.emit()" aria-label="Cerrar">✕</button>
+    </header>
+
+    <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+
+      <div class="campo">
+        <label for="nombre">Nombre de la regla</label>
+        <input id="nombre" type="text" formControlName="nombre"
+               placeholder="Ej.: Crecida de río"
+               [class.malo]="nombre.invalid && nombre.touched">
+        @if (nombre.touched && nombre.hasError('required')) {
+          <span class="error">El nombre es obligatorio.</span>
+        } @else if (nombre.touched && nombre.hasError('minlength')) {
+          <span class="error">Debe tener al menos 3 caracteres.</span>
+        }
+      </div>
+
+      <div class="campo">
+        <label for="tipoSensor">Tipo de sensor</label>
+        <select id="tipoSensor" formControlName="tipoSensorId">
+          @for (t of tiposSensor(); track t.tipoSensorId) {
+            <option [value]="t.tipoSensorId">{{ t.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="fila">
+        <div class="campo">
+          <label for="min">Valor mínimo</label>
+          <input id="min" type="number" step="0.01" formControlName="valorMin">
+        </div>
+        <div class="campo">
+          <label for="max">Valor máximo</label>
+          <input id="max" type="number" step="0.01" formControlName="valorMax">
+        </div>
+      </div>
+      <span class="ayuda">La alerta se dispara cuando la lectura cae en este rango.</span>
+
+      <div class="fila">
+        <div class="campo">
+          <label for="nivel">Nivel de peligro</label>
+          <select id="nivel" formControlName="nivelAlertaId">
+            @for (n of niveles(); track n.nivelAlertaId) {
+              <option [value]="n.nivelAlertaId">{{ n.nombre }}</option>
+            }
+          </select>
+        </div>
+        <div class="campo">
+          <label for="fenomeno">Tipo de fenómeno</label>
+          <select id="fenomeno" formControlName="tipoFenomenoId">
+            @for (f of fenomenos(); track f.tipoFenomenoId) {
+              <option [value]="f.tipoFenomenoId">{{ f.nombre }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="mensaje">Mensaje de la alerta</label>
+        <textarea id="mensaje" formControlName="mensaje" rows="2"
+                  placeholder="Mensaje que verá el operador"
+                  [class.malo]="mensaje.invalid && mensaje.touched"></textarea>
+        @if (mensaje.touched && mensaje.hasError('required')) {
+          <span class="error">El mensaje es obligatorio.</span>
+        }
+      </div>
+
+      <label class="interruptor">
+        <input type="checkbox" formControlName="activo">
+        Regla activa
+      </label>
+
+      <footer class="modal__pie">
+        <button type="button" class="btn btn--claro"
+                (click)="cancelar.emit()" [disabled]="guardando()">Cancelar</button>
+        <button type="submit" class="btn btn--primario" [disabled]="guardando()">
+          @if (guardando()) { Guardando… } @else { Guardar }
+        </button>
+      </footer>
+
+    </form>
+  </div>
+</div>

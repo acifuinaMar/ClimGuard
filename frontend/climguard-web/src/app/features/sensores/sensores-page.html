@@ -5,10 +5,13 @@
   </div>
 
   <div class="cabecera__acciones">
+    @if (usandoEjemplo()) {
+      <span class="aviso-ejemplo" title="El backend no respondió; se muestran sensores de ejemplo. Al conectarlo, usa los reales.">Datos de ejemplo</span>
+    }
     @if (!cargando() && !error()) {
       <span class="cuenta">{{ activos() }} de {{ sensores().length }} activos</span>
     }
-    <button type="button" class="btn btn--primario" (click)="nuevo()">+ Nuevo sensor</button>
+    <button type="button" class="btn btn--primario" (click)="nuevo()" *siPermiso="'sensores.gestionar'">+ Nuevo sensor</button>
   </div>
 </header>
 
@@ -52,7 +55,7 @@
           <tr [class.fila--inactiva]="!s.activo">
             <td>
               <span class="nombre">{{ s.nombre }}</span>
-              <span class="sub">#{{ s.sensorId }} · comunidad {{ s.comunidadId }}</span>
+              <span class="sub">{{ s.codigo }} · #{{ s.sensorId }} · comunidad {{ s.comunidadId }}</span>
             </td>
 
             <td>{{ s.variable }}</td>
@@ -66,20 +69,19 @@
             </td>
 
             <td>
-              <button type="button"
-                      class="pastilla"
-                      [class.pastilla--on]="s.activo"
-                      (click)="alternarEstado(s)"
-                      [title]="s.activo ? 'Clic para desactivar' : 'Clic para activar'">
-                {{ s.activo ? 'Activo' : 'Inactivo' }}
-              </button>
+              <!-- Indicador de estado (solo lectura). Activar o desactivar vive
+                   en la columna «Acciones», protegido por permiso. -->
+              <span class="pastilla" [class.pastilla--on]="s.activo">
+                {{ nombreEstado(s.estadoSensorId) }}
+              </span>
             </td>
 
             <td class="der">
               <button
                 type="button"
                 class="btn btn--chico"
-                (click)="editar(s)">
+                (click)="editar(s)"
+                *siPermiso="'sensores.gestionar'">
                 Editar
               </button>
 
@@ -87,14 +89,16 @@
                 <button
                   type="button"
                   class="btn btn--chico btn--peligro"
-                  (click)="alternarEstado(s)">
+                  (click)="alternarEstado(s)"
+                  *siPermiso="'sensores.gestionar'">
                   Desactivar
                 </button>
               } @else {
                 <button
                   type="button"
                   class="btn btn--chico"
-                  (click)="alternarEstado(s)">
+                  (click)="alternarEstado(s)"
+                  *siPermiso="'sensores.gestionar'">
                   Activar
                 </button>
               }

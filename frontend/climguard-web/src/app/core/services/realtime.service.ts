@@ -62,9 +62,11 @@ export class RealtimeService {
       .withAutomaticReconnect() // si se cae la red, reintenta solo
       .build();
 
-    // --- Enganchar los eventos que el backend promete emitir ---
-    this.conexion.on('NuevaLectura', (dato: LecturaTiempoReal) => this.nuevaLectura$.next(dato));
-    this.conexion.on('NuevaAlerta', (dato: unknown) => this.nuevaAlerta$.next(dato));
+    // --- Enganchar los eventos con los nombres EXACTOS que emite el backend ---
+    // (SignalRRealtimeNotifier.cs): "LecturaNueva" y "AlertaNueva".
+    // Dejamos "SensorActualizado" enganchado por si el backend lo agrega.
+    this.conexion.on('LecturaNueva', (dato: LecturaTiempoReal) => this.nuevaLectura$.next(dato));
+    this.conexion.on('AlertaNueva', (dato: unknown) => this.nuevaAlerta$.next(dato));
     this.conexion.on('SensorActualizado', (dato: unknown) => this.sensorActualizado$.next(dato));
 
     // --- Estado de conexión ---

@@ -48,10 +48,14 @@ export class MainLayout {
    */
   private todasLasSecciones: { ruta: string; icono: string; texto: string; permiso?: Permiso }[] = [
     { ruta: '/panel',       icono: '◉', texto: 'Panel',       permiso: 'dashboard.ver' },
-    { ruta: '/sensores',    icono: '▤', texto: 'Sensores',    permiso: 'sensores.gestionar' },
-    { ruta: '/umbrales',    icono: '⚙', texto: 'Reglas de alerta', permiso: 'reglas.gestionar' },
-    { ruta: '/comunidades', icono: '◈', texto: 'Comunidades', permiso: 'comunidades.gestionar' },
+    { ruta: '/mapa',        icono: '◎', texto: 'Mapa',        permiso: 'dashboard.ver' },
+    { ruta: '/sensores',    icono: '▤', texto: 'Sensores',    permiso: 'sensores.ver' },
+    { ruta: '/reglas',      icono: '⚙', texto: 'Reglas de alerta', permiso: 'reglas.ver' },
+    { ruta: '/alertas',     icono: '⚠', texto: 'Alertas',      permiso: 'alertas.ver' },
+    { ruta: '/comunidades', icono: '◈', texto: 'Comunidades', permiso: 'comunidades.ver' },
+    { ruta: '/fenomenos',   icono: '☁', texto: 'Tipos de fenómeno', permiso: 'fenomenos.gestionar' },
     { ruta: '/usuarios',    icono: '◇', texto: 'Usuarios',    permiso: 'usuarios.gestionar' },
+    { ruta: '/historial',   icono: '≡', texto: 'Historial',   permiso: 'alertas.ver' },
     { ruta: '/bitacora',    icono: '❑', texto: 'Bitácora',    permiso: 'bitacora.ver' }
   ];
 

@@ -1,9 +1,6 @@
-<!-- La capa oscura de fondo. Al hacer clic en ella se cierra, que es lo que
-     todo el mundo espera de una ventana modal. -->
+<!-- La capa oscura de fondo. Al hacer clic en ella se cierra. -->
 <div class="fondo" (click)="cancelar.emit()">
 
-  <!-- $event.stopPropagation() evita que el clic DENTRO de la ventana
-       llegue al fondo y la cierre por accidente. -->
   <div class="modal" (click)="$event.stopPropagation()">
 
     <header class="modal__cabecera">
@@ -28,6 +25,16 @@
 
       <div class="fila">
         <div class="campo">
+          <label for="codigo">Código</label>
+          <input id="codigo" type="text" formControlName="codigo"
+                 placeholder="Ej.: SEN-001"
+                 [class.malo]="codigo.invalid && codigo.touched">
+          @if (codigo.touched && codigo.hasError('required')) {
+            <span class="error">Obligatorio.</span>
+          }
+        </div>
+
+        <div class="campo">
           <label for="tipo">Variable que mide</label>
           <select id="tipo" formControlName="tipoSensorId">
             @for (t of tipos; track t.id) {
@@ -35,24 +42,49 @@
             }
           </select>
         </div>
+      </div>
 
+      <div class="fila">
         <div class="campo">
-          <label for="comunidad">Comunidad</label>
+          <label for="comunidad">Comunidad (id)</label>
           <input id="comunidad" type="number" min="1" formControlName="comunidadId">
         </div>
+
+        <div class="campo">
+          <label for="estado">Estado</label>
+          <select id="estado" formControlName="estadoSensorId">
+            @for (e of estados; track e.estadoSensorId) {
+              <option [value]="e.estadoSensorId">{{ e.nombre }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="ubicacion">Ubicación</label>
+        <input id="ubicacion" type="text" formControlName="ubicacion"
+               placeholder="Ej.: Orilla del río Motagua"
+               [class.malo]="ubicacion.invalid && ubicacion.touched">
+        @if (ubicacion.touched && ubicacion.hasError('required')) {
+          <span class="error">La ubicación es obligatoria.</span>
+        }
+      </div>
+
+      <div class="campo">
+        <label for="descripcion">Descripción</label>
+        <input id="descripcion" type="text" formControlName="descripcion"
+               placeholder="Breve descripción del sensor"
+               [class.malo]="descripcion.invalid && descripcion.touched">
+        @if (descripcion.touched && descripcion.hasError('required')) {
+          <span class="error">La descripción es obligatoria.</span>
+        }
       </div>
 
       <div class="campo">
         <label for="valor">Valor actual</label>
         <input id="valor" type="number" step="0.1" formControlName="valorActual">
-        <span class="ayuda">Es la lectura simulada del sensor en este momento.</span>
+        <span class="ayuda">Es la lectura del sensor en este momento.</span>
       </div>
-
-      <label class="interruptor">
-        <input type="checkbox" formControlName="activo">
-        <span>Sensor activo</span>
-      </label>
-      <span class="ayuda ayuda--suelta">Un sensor inactivo no genera lecturas nuevas.</span>
 
       <footer class="modal__pie">
         <button type="button" class="btn btn--claro"

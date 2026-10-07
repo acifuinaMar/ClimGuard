@@ -73,17 +73,17 @@
 
         <article
           class="alerta"
-          [class.alerta--verde]="colorAlerta(a.nivelAlertaId) === 'verde'"
-          [class.alerta--amarillo]="colorAlerta(a.nivelAlertaId) === 'amarillo'"
-          [class.alerta--naranja]="colorAlerta(a.nivelAlertaId) === 'naranja'"
-          [class.alerta--rojo]="colorAlerta(a.nivelAlertaId) === 'rojo'">
+          [class.alerta--verde]="colorAlerta(a.nivelAlertaIdSnap) === 'verde'"
+          [class.alerta--amarillo]="colorAlerta(a.nivelAlertaIdSnap) === 'amarillo'"
+          [class.alerta--naranja]="colorAlerta(a.nivelAlertaIdSnap) === 'naranja'"
+          [class.alerta--rojo]="colorAlerta(a.nivelAlertaIdSnap) === 'rojo'">
 
           <h3>
-            {{ tipoFenomeno(a.tipoFenomenoId) }}
+            {{ tipoFenomeno(a.tipoFenomenoIdSnap) }}
           </h3>
 
           <p class="alerta__mensaje">
-            {{ a.mensaje }}
+            {{ a.mensajeSnap }}
           </p>
 
           <div class="alerta__info">

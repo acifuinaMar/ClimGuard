@@ -1,0 +1,29 @@
+<header class="cabecera">
+  <div>
+    <h1>Mapa de monitoreo</h1>
+    <p class="cabecera__sub">Comunidades y sensores según su nivel de alerta</p>
+  </div>
+
+  @if (usandoEjemplo()) {
+    <span class="aviso-ejemplo"
+          title="El backend no está disponible; se muestran datos de ejemplo. Al conectarlo, el mapa usa los datos reales.">
+      Datos de ejemplo
+    </span>
+  }
+</header>
+
+<!-- Leyenda de colores (los cuatro niveles del enunciado) -->
+<div class="leyenda">
+  <span><i class="punto" style="background:#22c55e"></i> Normal</span>
+  <span><i class="punto" style="background:#eab308"></i> Precaución</span>
+  <span><i class="punto" style="background:#f97316"></i> Alerta</span>
+  <span><i class="punto" style="background:#dc2626"></i> Emergencia</span>
+</div>
+
+<div class="mapa-caja">
+  <div #mapa class="mapa"></div>
+
+  @if (cargando()) {
+    <div class="mapa-cargando">Cargando mapa…</div>
+  }
+</div>

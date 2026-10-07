@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { forkJoin, map, Observable } from 'rxjs';
+import { forkJoin, map, of, Observable } from 'rxjs';
+import { catchError, timeout } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { Bitacora } from '../models/bitacora.model';
 import { Usuario } from '../models/usuario.model';
@@ -15,7 +16,8 @@ export interface BitacoraVista extends Bitacora {
  *
  * La API devuelve solo el usuarioId (un número). Para mostrar algo legible,
  * este servicio cruza cada registro con la lista de usuarios y le pega el
- * nombre. Así la tabla dice "admin" en vez de "1".
+ * nombre. Si el backend no responde, devuelve lista vacía (no rompe) y la
+ * pantalla muestra datos de ejemplo.
  */
 @Injectable({ providedIn: 'root' })
 export class BitacoraService {
@@ -23,25 +25,20 @@ export class BitacoraService {
 
   private get suf(): string { return environment.sufijoArchivo; }
 
-  /**
-   * Trae la bitácora y los usuarios A LA VEZ (forkJoin), y los combina.
-   * forkJoin espera a que ambas llamadas terminen antes de continuar.
-   */
   listar(): Observable<BitacoraVista[]> {
-    const bitacora$ = this.http.get<Bitacora[]>(`${environment.apiUrl}/Bitacora${this.suf}`);
-    const usuarios$ = this.http.get<Usuario[]>(`${environment.apiUrl}/Usuario${this.suf}`);
+    const bitacora$ = this.http.get<Bitacora[]>(`${environment.apiUrl}/Bitacora${this.suf}`)
+      .pipe(timeout(5000), catchError(() => of<Bitacora[]>([])));
+    const usuarios$ = this.http.get<Usuario[]>(`${environment.apiUrl}/Usuario${this.suf}`)
+      .pipe(timeout(5000), catchError(() => of<Usuario[]>([])));
 
     return forkJoin([bitacora$, usuarios$]).pipe(
       map(([registros, usuarios]) => {
-        // Un mapa id -> nombre, para buscar rápido.
         const nombrePorId = new Map(usuarios.map(u => [u.usuarioId, u.nombreUsuario]));
-
         return registros
           .map(r => ({
             ...r,
             nombreUsuario: nombrePorId.get(r.usuarioId) ?? `Usuario ${r.usuarioId}`
           }))
-          // Más recientes primero.
           .sort((a, b) => b.bitacoraId - a.bitacoraId);
       })
     );
