@@ -13,11 +13,13 @@ namespace Application.EstadoSensor.Service.Queries
             _repository = repository;
         }
 
-        public async Task<EstadoSensorResultDto> Handle(
-            EstadoSensorGetByIdQuery request,
-            CancellationToken cancellationToken)
+        public async Task<EstadoSensorResultDto> Handle(EstadoSensorGetByIdQuery request, CancellationToken cancellationToken)
         {
             var estado = await _repository.GetById(request.id);
+
+
+            if(estado == null)
+                return null;
 
             return new EstadoSensorResultDto
             (

@@ -15,6 +15,10 @@ namespace Application.TipoFenomeno.Service.Queries
         public async Task<TipoFenomenoResultDto> Handle(TipoFenomenoGetByIdQuery request, CancellationToken cancellationToken)
         {
             var tipo = await _repository.GetById(request.id);
+
+            if(tipo == null)
+                return null;
+
             return new TipoFenomenoResultDto(
                 tipo.TipoFenomenoId,
                 tipo.Nombre,

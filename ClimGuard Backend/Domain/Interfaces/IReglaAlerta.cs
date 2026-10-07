@@ -10,5 +10,7 @@ public interface IReglaAlerta
 
     Task<ReglaAlertaDomain> GetByTipoSensor(int tipoSensorId);
 
+    Task<ReglaAlertaDomain> Create(ReglaAlertaDomain reglaAlerta);
     Task<ReglaAlertaDomain> Update(ReglaAlertaDomain reglaAlerta);
+    Task<bool> Delete(ReglaAlertaDomain reglaAlerta);
 }

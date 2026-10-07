@@ -92,7 +92,7 @@ namespace Infraestructure.Repositories
             {
                 var query = _context.Alerta;
 
-                Console.WriteLine(query.ToQueryString());
+               // Console.WriteLine(query.ToQueryString());
 
                 var list = await query.ToListAsync();
                 return list.Select(a => new AlertaDomain
@@ -127,6 +127,9 @@ namespace Infraestructure.Repositories
             {
                 var obj = await _context.Alerta
                     .Where(a => a.AlertaId == id).FirstOrDefaultAsync();
+
+                if(obj == null)
+                    return null;
 
                 return new AlertaDomain
                 (
@@ -163,7 +166,6 @@ namespace Infraestructure.Repositories
 
                 if (obj == null)
                     return false;
-
 
                 //obj.AlertaId = alerta.AlertaId;
                 obj.ValorDetectado = alerta.ValorDetectado;

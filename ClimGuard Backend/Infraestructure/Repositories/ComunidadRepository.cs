@@ -103,6 +103,9 @@ namespace Services.Services
                 var obj = await _context.Comunidads
                     .Where(a => a.ComunidadId == comunidadId).FirstOrDefaultAsync();
 
+                if(obj == null)
+                    return null;
+
                 return new ComunidadDomain(
                     obj.ComunidadId,
                     obj.NombreComunidad,

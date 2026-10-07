@@ -2,34 +2,8 @@ namespace Domain.Entities.ReglaAlerta;
 
 public class ReglaAlertaDomain
 {
-    public int ReglaAlertaId { get; }
-
-    public string Nombre { get; }
-
-    public decimal ValorMin { get; }
-
-    public decimal ValorMax { get; }
-
-    public string Mensaje { get; }
-
-    public bool Activo { get; }
-
-    public int TipoSensorId { get; }
-
-    public int TipoFenomenoId { get; }
-
-    public int NivelAlertaId { get; }
-
-    public ReglaAlertaDomain(
-        int reglaAlertaId,
-        string nombre,
-        decimal valorMin,
-        decimal valorMax,
-        string mensaje,
-        bool activo,
-        int tipoSensorId,
-        int tipoFenomenoId,
-        int nivelAlertaId)
+    public ReglaAlertaDomain(int reglaAlertaId, string nombre, decimal valorMin, decimal valorMax, string mensaje, bool activo, 
+        int tipoSensorId, int tipoFenomenoId, int nivelAlertaId, int usuarioIng, DateTime fechaIng, int usuarioAct, DateTime fechaAct)
     {
         ReglaAlertaId = reglaAlertaId;
         Nombre = nombre;
@@ -40,5 +14,35 @@ public class ReglaAlertaDomain
         TipoSensorId = tipoSensorId;
         TipoFenomenoId = tipoFenomenoId;
         NivelAlertaId = nivelAlertaId;
+        UsuarioIng = usuarioIng;
+        FechaIng = fechaIng;
+        UsuarioAct = usuarioAct;
+        FechaAct = fechaAct;
     }
+
+    public int ReglaAlertaId { get; set; }
+
+    public string Nombre { get; set; } = string.Empty;
+
+    public decimal ValorMin { get; set; }
+
+    public decimal ValorMax { get; set; }
+
+    public string Mensaje { get; set; } = string.Empty;
+
+    public bool Activo { get; set; }
+
+    public int TipoSensorId { get; set; }
+
+    public int TipoFenomenoId { get; set; }
+
+    public int NivelAlertaId { get; set; }
+
+    public int UsuarioIng { get; set; }
+
+    public DateTime FechaIng { get; set; }
+
+    public int UsuarioAct { get; set; }
+
+    public DateTime FechaAct { get; set; }
 }

@@ -86,15 +86,17 @@ namespace Infraestructure.Repositories
             var obj = await _context.Usuarios
                 .FirstOrDefaultAsync(x => x.UsuarioId == id);
 
-            Console.WriteLine("========== GetById ==========");
-            Console.WriteLine($"Id solicitado : {id}");
-            Console.WriteLine($"Encontró?     : {obj != null}");
+            if(obj == null)
+                return null;
+            //Console.WriteLine("========== GetById ==========");
+            //Console.WriteLine($"Id solicitado : {id}");
+            //Console.WriteLine($"Encontró?     : {obj != null}");
 
-            if (obj != null)
-            {
-                Console.WriteLine($"UsuarioId     : {obj.UsuarioId}");
-                Console.WriteLine($"Nombre        : {obj.NombreUsuario}");
-            }
+            //if (obj != null)
+            //{
+            //    Console.WriteLine($"UsuarioId     : {obj.UsuarioId}");
+            //    Console.WriteLine($"Nombre        : {obj.NombreUsuario}");
+            //}
             return new UsuarioDomain(
                 obj.UsuarioId,
                 obj.NombreCompleto,

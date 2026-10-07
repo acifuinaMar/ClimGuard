@@ -1,10 +1,8 @@
-﻿using Domain.Entities.Alert;
-using Domain.Entities.SensorReading;
+﻿using Domain.Entities.SensorReading;
 using Infraestructure.Models;
 using Infraestructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Services.Services.Interfaces;
-using System.Drawing;
 
 namespace Infraestructure.Repositories
 {
@@ -83,6 +81,9 @@ namespace Infraestructure.Repositories
             {
                 var obj = await _context.LecturaSensors
                     .Where(a => a.LecturaId == lectura).FirstOrDefaultAsync();
+
+                if (obj == null)
+                    return null;
 
                 return new LecturaSensorDomain(
                     Convert.ToInt32(obj.LecturaId),

@@ -19,6 +19,9 @@ namespace Application.LecturaSensor.Service.Queries
                 request.Hasta
             );
 
+            if(lecturas == null)
+                return null;
+
             // CORRECCIÓN 2: Mapear la lista completa, no un solo elemento
             return lecturas.Select(l => new LecturaSensorResultDto
             (

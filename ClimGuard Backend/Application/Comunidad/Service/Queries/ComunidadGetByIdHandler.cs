@@ -15,6 +15,9 @@ namespace Application.Comunidad.Service.Queries
         {
             var comunidad = await _repository.GetById(request.id);
 
+            if (comunidad == null)
+                return null;
+
             return new ComunidadResultDto(
                 comunidad.ComunidadId,
                 comunidad.NombreComunidad,
