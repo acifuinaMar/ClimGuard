@@ -53,7 +53,7 @@ services:
     environment:
       MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
     volumes:
-      - "./ClimGuard Backend/Script para DB/QueryMain.sql:/scripts/01-schema.sql:ro"
+      - "./ClimGuard Backend/Script para DB/QueryMain_P2.sql:/scripts/01-schema.sql:ro"
       - "./docker/sqlserver/02-seed-usuarios.sql:/scripts/02-seed.sql:ro"
     entrypoint: >
       /bin/bash -c "

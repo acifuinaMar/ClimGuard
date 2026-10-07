@@ -1,3 +1,4 @@
+using Domain.Entities.Alert;
 namespace Domain.Entities.AlertLevel;
 
 public partial class NivelAlertaDomain
