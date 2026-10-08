@@ -3,7 +3,7 @@ namespace Domain.Entities.ReglaAlerta;
 public class ReglaAlertaDomain
 {
     public ReglaAlertaDomain(int reglaAlertaId, string nombre, decimal valorMin, decimal valorMax, string mensaje, bool activo, 
-        int tipoSensorId, int tipoFenomenoId, int nivelAlertaId, int usuarioIng, DateTime fechaIng, int usuarioAct, DateTime fechaAct)
+        int tipoSensorId, int tipoFenomenoId, int nivelAlertaId, int usuarioIng, DateTime fechaIng, int? usuarioAct, DateTime? fechaAct)
     {
         ReglaAlertaId = reglaAlertaId;
         Nombre = nombre;
@@ -42,7 +42,7 @@ public class ReglaAlertaDomain
 
     public DateTime FechaIng { get; set; }
 
-    public int UsuarioAct { get; set; }
+    public int? UsuarioAct { get; set; }
 
-    public DateTime FechaAct { get; set; }
+    public DateTime? FechaAct { get; set; }
 }

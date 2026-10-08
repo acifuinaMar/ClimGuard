@@ -221,8 +221,69 @@ namespace Services.Services{
 
         public async Task<bool> SimularSensores()
         {
-            throw new NotImplementedException(
-                "La simulación debe migrarse para generar registros en la tabla Lectura en lugar de actualizar Sensor.");
+            var random = new Random();
+
+            var sensores = await _context.Sensors
+                .Where(s => s.EstadoSensorId == 1)
+                .ToListAsync();
+
+            foreach (var sensor in sensores)
+            {
+                decimal nuevoValor = sensor.ValorActual;
+
+                switch (sensor.TipoSensorId)
+                {
+                    case 1: // Temperatura (°C)
+                        nuevoValor += (decimal)(random.NextDouble() * 4 - 2);
+                        nuevoValor = Math.Clamp(nuevoValor, -10m, 45m);
+                        break;
+
+                    case 2: // Humedad (%)
+                        nuevoValor += (decimal)(random.NextDouble() * 10 - 5);
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 100m);
+                        break;
+
+                    case 3: // Viento (km/h)
+                        nuevoValor += ((decimal)random.NextDouble() * 15m) - 7.5m;
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 150m);
+                        break;
+
+                    case 4: // Lluvia (mm)
+                        nuevoValor += (decimal)(random.NextDouble() * 20 - 10);
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 300m);
+                        break;
+
+                    case 5: // Nivel del río (m)
+                        nuevoValor += (decimal)(random.NextDouble() * 2 - 1);
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 20m);
+                        break;
+
+                    default:
+                        nuevoValor += (decimal)(random.NextDouble() * 4 - 2);
+                        break;
+                }
+
+                nuevoValor = Math.Round(nuevoValor, 2);
+
+                // Actualiza el sensor
+                sensor.ValorActual = nuevoValor;
+                sensor.FechaUltimaConexion = DateTime.Now;
+                sensor.UsuarioAct = 1;
+                sensor.FechaAct = DateTime.Now;
+
+                // Crea la lectura
+                _context.LecturaSensors.Add(new LecturaSensor
+                {
+                    SensorId = sensor.SensorId,
+                    Valor = nuevoValor,
+                    FechaHora = DateTime.Now,
+                    UsuarioIng = 1
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return true;
         }
 }
 }

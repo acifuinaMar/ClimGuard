@@ -27,9 +27,9 @@ public partial class ReglaAlerta
 
     public DateTime FechaIng { get; set; }
 
-    public int UsuarioAct { get; set; }
+    public int? UsuarioAct { get; set; }
 
-    public DateTime FechaAct { get; set; }
+    public DateTime? FechaAct { get; set; }
 
     public virtual TipoSensor TipoSensor { get; set; } = null!;
 

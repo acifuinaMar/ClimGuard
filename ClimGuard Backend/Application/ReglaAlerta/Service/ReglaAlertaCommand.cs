@@ -14,8 +14,8 @@ namespace Application.ReglaAlerta.Service
         int nivelAlertaId,
         int usuarioIng,
         DateTime fechaIng,
-        int usuarioAct, 
-        DateTime fechaAct,
+        int? usuarioAct, 
+        DateTime? fechaAct,
         int usuarioLogeado
     ) : IRequest<ReglaAlertaResultDto>;
 
