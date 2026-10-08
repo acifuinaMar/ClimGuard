@@ -10,6 +10,7 @@
         Datos de ejemplo
       </span>
     }
+    <button type="button" class="btn btn--primario" (click)="nuevo()" *siPermiso="'reglas.gestionar'">+ Nueva regla</button>
   </div>
 </header>
 
@@ -86,9 +87,9 @@
 }
 
 <!-- ============ VENTANA DE EDICIÓN (solo Administrador) ============ -->
-@if (formAbierto() && reglaEditando(); as r) {
+@if (formAbierto()) {
   <app-regla-form
-    [regla]="r"
+    [regla]="reglaEditando()"
     [niveles]="niveles()"
     [fenomenos]="fenomenos()"
     [tiposSensor]="tiposSensor()"

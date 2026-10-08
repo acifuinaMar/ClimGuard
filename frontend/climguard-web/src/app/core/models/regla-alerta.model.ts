@@ -11,4 +11,10 @@ export interface ReglaAlerta {
   tipoSensorId: number;
   tipoFenomenoId: number;
   nivelAlertaId: number;
+
+  // Auditoría del backend (el front solo la conserva para reenviarla al editar).
+  usuarioIng?: number;
+  fechaIng?: string;
+  usuarioAct?: number | null;
+  fechaAct?: string | null;
 }

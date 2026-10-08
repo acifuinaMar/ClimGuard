@@ -1,12 +1,12 @@
-import { Component, inject, input, output, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, input, output, effect, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ReglaAlerta } from '../../core/models/regla-alerta.model';
 import { NivelAlertaCat, TipoFenomenoCat, TipoSensorCat } from '../../core/models/catalogo.model';
 
 /**
- * Ventana modal para EDITAR una regla de alerta. Componente hijo: recibe la regla
- * y los catálogos (niveles, fenómenos, tipos de sensor) y avisa hacia afuera cuando
- * el usuario guarda o cancela. No sabe nada de la API.
+ * Ventana modal para crear o editar una regla de alerta. Componente hijo: recibe
+ * la regla (o null si es alta) y los catálogos (niveles, fenómenos, tipos de
+ * sensor), y avisa al guardar o cancelar. No sabe nada de la API.
  */
 @Component({
   selector: 'app-regla-form',
@@ -18,7 +18,7 @@ import { NivelAlertaCat, TipoFenomenoCat, TipoSensorCat } from '../../core/model
 export class ReglaForm {
   private fb = inject(FormBuilder);
 
-  regla = input.required<ReglaAlerta>();
+  regla = input<ReglaAlerta | null>(null);
   niveles = input<NivelAlertaCat[]>([]);
   fenomenos = input<TipoFenomenoCat[]>([]);
   tiposSensor = input<TipoSensorCat[]>([]);
@@ -26,6 +26,9 @@ export class ReglaForm {
 
   guardar = output<ReglaAlerta>();
   cancelar = output<void>();
+
+  esEdicion = computed(() => this.regla() !== null);
+  titulo = computed(() => this.esEdicion() ? 'Editar regla de alerta' : 'Nueva regla de alerta');
 
   formulario = this.fb.nonNullable.group({
     nombre:         ['', [Validators.required, Validators.minLength(3)]],
@@ -39,9 +42,11 @@ export class ReglaForm {
   });
 
   constructor() {
-    // Cuando llega la regla a editar, se rellena el formulario con sus valores.
+    // Cuando llega una regla a editar, se rellena el formulario. Si es null (alta
+    // nueva), el formulario queda con sus valores por defecto.
     effect(() => {
       const r = this.regla();
+      if (!r) return;
       this.formulario.patchValue({
         nombre: r.nombre,
         tipoSensorId: r.tipoSensorId,
@@ -64,11 +69,11 @@ export class ReglaForm {
       return;
     }
     const v = this.formulario.getRawValue();
+    const ex = this.regla();
 
-    // Los <select> devuelven texto; los convertimos a número para que coincida
-    // con lo que espera el backend.
+    // Los <select> devuelven texto; se convierten a número para el backend.
     this.guardar.emit({
-      reglaAlertaId: this.regla().reglaAlertaId,
+      reglaAlertaId: ex?.reglaAlertaId ?? 0,
       nombre: v.nombre.trim(),
       tipoSensorId: Number(v.tipoSensorId),
       valorMin: Number(v.valorMin),
@@ -76,7 +81,12 @@ export class ReglaForm {
       nivelAlertaId: Number(v.nivelAlertaId),
       tipoFenomenoId: Number(v.tipoFenomenoId),
       mensaje: v.mensaje.trim(),
-      activo: v.activo
+      activo: v.activo,
+      // Auditoría: se conserva la original al editar; el servicio completa el resto.
+      usuarioIng: ex?.usuarioIng,
+      fechaIng: ex?.fechaIng,
+      usuarioAct: ex?.usuarioAct ?? null,
+      fechaAct: ex?.fechaAct ?? null
     });
   }
 }

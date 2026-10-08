@@ -113,6 +113,8 @@
   border: 1px solid transparent;
 }
 .btn:disabled { opacity: .6; cursor: progress; }
+.btn--primario { background: var(--cg-primario); color: #fff; }
+.btn--primario:hover:not(:disabled) { background: var(--cg-primario-oscuro); }
 .btn--chico {
   padding: .32rem .7rem;
   font-size: .82rem;

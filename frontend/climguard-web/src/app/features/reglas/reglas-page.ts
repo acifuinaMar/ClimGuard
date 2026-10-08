@@ -13,8 +13,8 @@ import { ReglaForm } from './regla-form';
    REGLAS DE ALERTA (Fase 2, RF-ADM-29 a 35)
    ------------------------------------------------------------
    Lista las reglas que disparan las alertas y permite editarlas (solo el
-   Administrador). El backend solo ofrece GET y PUT, así que no se crean ni se
-   borran reglas: para apagar una, se edita su campo "activa".
+   Administrador). El backend permite crear, editar y borrar; para apagar una
+   regla sin borrarla, se edita su campo "activa".
 
    Consume los endpoints reales (ReglaAlerta, NivelAlerta, TipoFenomeno). Si el
    backend no responde, muestra reglas de ejemplo para poder verlo; al conectarlo,
@@ -94,7 +94,11 @@ export class ReglasPage {
     return this.tiposSensor().find(t => t.tipoSensorId === id)?.nombre ?? `Tipo ${id}`;
   }
 
-  // ---- Editar ----
+  // ---- Crear / editar ----
+  nuevo(): void {
+    this.reglaEditando.set(null);
+    this.formAbierto.set(true);
+  }
   editar(r: ReglaAlerta): void {
     this.reglaEditando.set(r);
     this.formAbierto.set(true);
@@ -105,12 +109,29 @@ export class ReglasPage {
   }
 
   onGuardar(regla: ReglaAlerta): void {
+    // En modo ejemplo (sin backend) simulamos crear/editar localmente.
+    if (this.usandoEjemplo()) {
+      if (regla.reglaAlertaId === 0) {
+        const nuevoId = Math.max(0, ...this.reglas().map(r => r.reglaAlertaId)) + 1;
+        this.reglas.update(l => [...l, { ...regla, reglaAlertaId: nuevoId }]);
+      } else {
+        this.reglas.update(l => l.map(r => r.reglaAlertaId === regla.reglaAlertaId ? { ...r, ...regla } : r));
+      }
+      this.cerrarForm();
+      this.mostrarAviso(regla.reglaAlertaId === 0 ? 'Regla creada (ejemplo).' : 'Regla actualizada (ejemplo).');
+      return;
+    }
+
     this.guardando.set(true);
-    this.reglaService.actualizar(regla).subscribe({
+    const peticion = regla.reglaAlertaId === 0
+      ? this.reglaService.crear(regla)
+      : this.reglaService.actualizar(regla);
+
+    peticion.subscribe({
       next: () => {
         this.guardando.set(false);
         this.cerrarForm();
-        this.mostrarAviso('Regla actualizada.');
+        this.mostrarAviso(regla.reglaAlertaId === 0 ? 'Regla creada.' : 'Regla actualizada.');
         this.cargar();
       },
       error: () => {

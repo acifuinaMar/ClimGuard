@@ -2,7 +2,7 @@
   <div class="modal" (click)="$event.stopPropagation()">
 
     <header class="modal__cabecera">
-      <h2>Editar regla de alerta</h2>
+      <h2>{{ titulo() }}</h2>
       <button type="button" class="modal__cerrar"
               (click)="cancelar.emit()" aria-label="Cerrar">✕</button>
     </header>
