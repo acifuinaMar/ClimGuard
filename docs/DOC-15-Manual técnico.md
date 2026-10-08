@@ -5,7 +5,7 @@
 |-----------|-----------|
 | Documento | Manual Técnico e Instalación |
 | Código | DOC-15 |
-| Versión | 1.0 |
+| Versión | 2.0 |
 | Estado | Finalizado |
 
 ---
@@ -42,9 +42,10 @@ ClimGuard se implementa utilizando una arquitectura cliente-servidor compuesta p
 - Backend desarrollado en .NET Web API.
 - Base de datos SQL Server.
 - Comunicación en tiempo real mediante SignalR.
+- Background Service para la simulación automática de lecturas y generación de alertas.
 - Contenedores Docker para facilitar el despliegue.
 
-La comunicación entre el cliente y el servidor se realiza mediante servicios REST.
+La comunicación entre el cliente y el servidor se realiza mediante servicios REST, mientras que la actualización de información en tiempo real se implementa mediante SignalR. Adicionalmente, un Background Service ejecuta de forma periódica la simulación de sensores, registra lecturas y genera alertas automáticamente.
 
 ---
 
@@ -61,6 +62,7 @@ Para ejecutar el sistema se requiere:
 - .NET 10 SDK (solo para desarrollo)
 - Node.js 20 LTS o superior (solo para desarrollo)
 - Angular CLI (solo para desarrollo)
+- Nginx (para despliegues en Linux con HTTPS).
 
 ## Hardware recomendado
 
@@ -113,7 +115,7 @@ Configurar la cadena de conexión en:
 ```
 appsettings.json
 ```
-
+Verificar que la base de datos haya sido inicializada utilizando el script QueryMain_P2.sql y que existan los registros iniciales de los catálogos requeridos (Comunidades, Tipos de Sensor, Estados, Niveles de Alerta, etc.).
 ## Frontend
 
 Configurar la URL de la API dentro del archivo:
@@ -137,7 +139,17 @@ Para iniciar los servicios en segundo plano:
 ```bash
 docker compose up -d
 ```
+Una vez iniciados los contenedores puede verificarse su estado mediante:
 
+```bash
+docker ps
+```
+
+Y consultar los registros de la API utilizando:
+
+```bash
+docker logs climguard-api
+```
 Para detener los servicios:
 
 ```bash
@@ -165,7 +177,7 @@ cd "ClimGuard Backend"
 Ejecutar:
 
 ```bash
-dotnet run
+dotnet run --project API/API.csproj
 ```
 
 ---
@@ -200,13 +212,13 @@ Durante la inicialización se crean:
 
 - Tablas principales.
 - Tablas catálogo.
-- Umbrales iniciales.
+- Reglas de alerta iniciales.
 - Usuarios de prueba.
 
 El script principal es:
 
 ```
-QueryMain.sql
+QueryMain_P2.sql
 ```
 
 ---
@@ -219,6 +231,8 @@ QueryMain.sql
 | .NET | 10 |
 | SQL Server | 2022 |
 | SignalR | Incluido en .NET |
+| Entity Framework Core | 10 |
+| Nginx | Última escalable |
 | Docker | Última estable |
 | Git | Control de versiones |
 | GitHub | Repositorio remoto |
@@ -236,6 +250,8 @@ Las principales responsabilidades se distribuyen de la siguiente manera:
 - Repositories: acceso a datos.
 - Models: representación de las entidades.
 - Components: interfaz de usuario.
+- Background Services: simulación automática de lecturas, actualización del valor actual de los sensores y generación de alertas.
+- Las alertas se generan automáticamente mediante la evaluación de las reglas configuradas para cada tipo de sensor, conservando snapshots de la información utilizada al momento de su creación.
 
 La comunicación en tiempo real se implementa mediante SignalR.
 
@@ -258,6 +274,6 @@ Las siguientes funcionalidades podrán incorporarse en futuras versiones:
 
 # Observaciones
 
-- El presente documento corresponde al primer release del sistema ClimGuard.
-- El sistema utiliza datos simulados para representar el comportamiento de los sensores.
+- El presente documento corresponde al segundo release del sistema ClimGuard.
+- El sistema incorpora un Background Service que genera lecturas simuladas, las almacena en la base de datos y evalúa automáticamente las reglas de alerta configuradas.
 - La arquitectura implementada permite incorporar dispositivos IoT sin modificaciones significativas en la estructura general del sistema.

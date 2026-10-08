@@ -5,7 +5,7 @@
 |-----------|-----------|
 | Documento | Arquitectura del Sistema |
 | Código | DOC-13 |
-| Versión | 1.0 |
+| Versión | 2.0 |
 | Estado | Finalizado |
 
 ---
@@ -14,7 +14,7 @@
 
 El presente documento describe la arquitectura de software implementada en ClimGuard.
 
-Su propósito es mostrar la organización de los principales componentes del sistema, la comunicación entre ellos y las tecnologías utilizadas durante el desarrollo del primer release.
+Su propósito es mostrar la organización de los principales componentes del sistema, la comunicación entre ellos y las tecnologías utilizadas durante el desarrollo del segundo release.
 
 La arquitectura fue diseñada siguiendo una separación por capas, permitiendo desacoplar la interfaz de usuario, la lógica de negocio y el acceso a datos, facilitando el mantenimiento, la escalabilidad y futuras integraciones con sensores físicos.
 
@@ -29,29 +29,29 @@ Actualmente las lecturas provienen de datos simulados; sin embargo, la arquitect
 ```mermaid
 flowchart LR
 
-ESP32["Simulador / ESP32"]
-
-API["API .NET 10"]
-
-SQL[(SQL Server)]
-
-SignalR["SignalR Hub"]
+Usuario((Usuario))
 
 Angular["Angular 20"]
 
-Usuario((Usuario))
+API["ASP.NET Core Web API"]
 
-ESP32 --> API
+Background["Background Service<br/>Simulación de Sensores"]
+
+SQL[(SQL Server 2022)]
+
+SignalR["SignalR Hub"]
+
+Angular --> API
+
+Usuario --> Angular
+
+Background --> API
 
 API --> SQL
 
 API --> SignalR
 
 SignalR --> Angular
-
-Angular --> Usuario
-
-Angular --> API
 ```
 
 ---
@@ -70,6 +70,7 @@ end
 subgraph Backend
 Controllers["Controllers"]
 Services["Services"]
+BackgroundServices["Background Services"]
 Repositories["Repositories"]
 end
 
@@ -90,6 +91,7 @@ Repositories --> SQL
 | Frontend | Presentación de la información e interacción con el usuario. |
 | Controllers | Recepción de solicitudes HTTP y exposición de la API REST. |
 | Services | Implementación de la lógica de negocio del sistema. |
+| Background Services | Generación de los valores para los sensores. |
 | Repositories | Acceso a la base de datos mediante consultas y persistencia de información. |
 | SQL Server | Almacenamiento permanente de la información del sistema. |
 
@@ -148,6 +150,7 @@ Configuracion --> Controllers
 
 Controllers --> Services
 Services --> Repositories
+
 Repositories --> SQLServer
 
 Services --> SignalR
@@ -164,8 +167,13 @@ El flujo de procesamiento de la información dentro del sistema se realiza de la
 3. Los Controllers reciben la solicitud.
 4. Los Services ejecutan la lógica de negocio.
 5. Los Repositories realizan las operaciones sobre SQL Server.
-6. Cuando ocurre una actualización relevante (por ejemplo, una nueva lectura o una alerta), SignalR notifica automáticamente al frontend.
-7. Angular actualiza la interfaz sin necesidad de recargar la página.
+6. El Background Service obtiene periódicamente los sensores activos.
+7. Genera nuevas lecturas para cada sensor.
+8. Actualiza el valor actual del sensor.
+9. Evalúa las reglas de alerta configuradas.
+10. Registra automáticamente las alertas generadas.
+11. SignalR notifica los cambios al frontend.
+12. Angular actualiza la interfaz en tiempo real.
 
 ---
 
@@ -177,6 +185,7 @@ El flujo de procesamiento de la información dentro del sistema se realiza de la
 | Backend | .NET 10 Web API |
 | Comunicación Cliente-Servidor | REST |
 | Comunicación en tiempo real | SignalR |
+| ORM | Entity Framework Core | 
 | Base de Datos | SQL Server 2022 |
 | Contenedores | Docker |
 | Control de versiones | Git |
@@ -192,6 +201,7 @@ El flujo de procesamiento de la información dentro del sistema se realiza de la
 | Repository | Encapsula el acceso a la base de datos. |
 | Service Layer | Centraliza la lógica de negocio del sistema. |
 | Dependency Injection | Utilizado por .NET para la gestión de dependencias. |
+| Background Service   | Simulación automática de lecturas y generación periódica de alertas. |
 | API REST | Comunicación entre Angular y el backend. |
 | Publish / Subscribe | Implementado mediante SignalR para actualizar información en tiempo real. |
 
@@ -228,6 +238,7 @@ Entre las posibles ampliaciones futuras se encuentran:
 - Envío de notificaciones mediante correo electrónico o SMS.
 - Integración con servicios meteorológicos externos.
 - Despliegue en infraestructura en la nube.
+- Sustitución del Background Service por sensores físicos sin afectar la arquitectura general.
 
 ---
 
@@ -237,7 +248,7 @@ Durante el desarrollo del primer release se tomaron las siguientes decisiones ar
 
 - La comunicación entre el frontend y el backend se realiza exclusivamente mediante una API REST.
 - La actualización en tiempo real del dashboard se implementa mediante SignalR.
-- Los datos utilizados para las gráficas corresponden actualmente a información simulada.
+- Las lecturas son generadas automáticamente por un Background Service que simula el comportamiento de los sensores y almacena el historial en la base de datos.
 - La persistencia de la información se realiza en SQL Server 2022.
 - Los servicios del sistema se ejecutan utilizando contenedores Docker.
 
@@ -247,4 +258,4 @@ Durante el desarrollo del primer release se tomaron las siguientes decisiones ar
 
 - La arquitectura implementada favorece el mantenimiento y la evolución del sistema mediante una clara separación de responsabilidades.
 - La incorporación futura de sensores físicos no requerirá cambios significativos en el frontend ni en la estructura general de la aplicación.
-- El presente documento describe la arquitectura correspondiente al primer release de ClimGuard.
+- El presente documento describe la arquitectura correspondiente al segundo release de ClimGuard.

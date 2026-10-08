@@ -1,50 +1,71 @@
 # ClimGuard
+
 ## Sistema Web de Monitoreo y Alerta Temprana para Riesgos Climáticos
 
-Proyecto desarrollado para el curso de **Desarrollo Web**.
+> Proyecto desarrollado para el curso de **Desarrollo Web** utilizando una arquitectura cliente-servidor basada en Angular, ASP.NET Core, SQL Server y Docker.
 
 ---
 
 ## Descripción
 
-ClimGuard es una plataforma web para el monitoreo de variables climáticas en tiempo real, diseñada para detectar automáticamente condiciones de riesgo y generar alertas tempranas para comunidades vulnerables.
+ClimGuard es una plataforma web diseñada para el monitoreo de variables climáticas y la generación automática de alertas tempranas para comunidades vulnerables.
 
-La solución fue desarrollada utilizando una arquitectura cliente-servidor basada en **Angular**, **.NET**, **SQL Server**, **SignalR** y **Docker**, permitiendo una futura integración con dispositivos IoT como ESP32 y sensores físicos.
+El sistema permite administrar comunidades, sensores, reglas de alerta y catálogos, mientras un **Background Service** simula el comportamiento de los sensores, registra lecturas históricas y genera alertas automáticamente cuando se cumplen las condiciones configuradas.
 
----
-
-# Tecnologías
-
-- Angular 20
-- .NET 10 Web API
-- SQL Server 2022
-- SignalR
-- Docker
-- Git
-- GitHub
+La información se actualiza en tiempo real mediante **SignalR**, ofreciendo una experiencia dinámica para el usuario.
 
 ---
 
-# Documentación
+# Características principales
 
-| Documento | Descripción |
-|------------|-------------|
-| [DOC-00 – Estándar de Documentación](docs/DOC-00-Estandar%20de%20Documentacion.md) | Convenciones utilizadas en toda la documentación del proyecto. |
-| [DOC-01 – Introducción](docs/DOC-01-Introduccion.md) | Introducción, objetivos, alcance y tecnologías utilizadas. |
-| [DOC-02 – Requerimientos](docs/DOC-02-Requerimientos.md) | Requerimientos funcionales, no funcionales, restricciones y criterios de aceptación. |
-| [DOC-03 – Reglas del Negocio](docs/DOC-03-Reglas%20del%20Negocio.md) | Reglas de negocio que gobiernan el funcionamiento del sistema. |
-| [DOC-04 – Historias de Usuario](docs/DOC-04-Historias%20de%20usuario.md) | Historias de usuario implementadas. |
-| [DOC-05 – Casos de Uso](docs/DOC-05-Casos%20de%20uso.md) | Especificación detallada de los casos de uso. |
-| [DOC-06 – Diagrama General de Casos de Uso](docs/DOC-06-Diagrama%20de%20casos%20de%20uso%20general.md) | Diagrama general de actores y funcionalidades. |
-| [DOC-07 – Diagramas de Actividades](docs/DOC-07-Diagramas%20de%20Actividades.md) | Diagramas de actividad de los procesos principales. |
-| [DOC-08 – Diagramas de Secuencia](docs/DOC-08-Diagramas%20de%20secuencia.md) | Diagramas de interacción entre componentes. |
-| [DOC-09 – Diagrama de Clases](docs/DOC-09-Diagrama%20de%20clases.md) | Modelo de clases del dominio del sistema. |
-| [DOC-10 – Modelo de Base de Datos](docs/DOC-10-Modelo%20de%20BD.md) | Modelo relacional y estructura de la base de datos. |
-| [DOC-11 – Diagrama Entidad-Relación](docs/DOC-11%20Diagrama%20Entidad-Relación.md) | Diagrama entidad-relación de la base de datos. |
-| [DOC-12 – API REST](docs/DOC-12-API.md) | Documentación de los endpoints implementados. |
-| [DOC-13 – Arquitectura de Software](docs/DOC-13-Arquitectura%20de%20Software.md) | Arquitectura lógica, física y de componentes del sistema. |
-| [DOC-14 – Manual de Usuario](docs/DOC-14-Manual%20de%20usuario.md) | Guía de utilización del sistema. |
-| [DOC-15 – Manual Técnico](docs/DOC-15-Manual%20técnico.md) | Instalación, configuración y mantenimiento del sistema. |
+- Administración de comunidades.
+- Gestión de sensores climáticos.
+- Simulación automática de lecturas.
+- Generación automática de alertas.
+- Configuración de reglas de alerta.
+- Historial de lecturas.
+- Bitácora de acciones.
+- Actualización en tiempo real mediante SignalR.
+- Despliegue utilizando Docker.
+- Arquitectura preparada para integrar sensores físicos (IoT).
+
+---
+
+# Tecnologías utilizadas
+
+| Tecnología | Versión |
+|------------|----------|
+| Angular | 20 |
+| ASP.NET Core Web API | 10 |
+| SQL Server | 2022 |
+| Entity Framework Core | 10 |
+| SignalR | Incluido en .NET |
+| Docker & Docker Compose | Última estable |
+| Git | Control de versiones |
+| GitHub | Repositorio remoto |
+
+---
+
+# Arquitectura
+
+El sistema se encuentra organizado bajo una arquitectura cliente-servidor.
+
+```text
+                 Usuario
+                    │
+                    ▼
+            Angular Frontend
+                    │
+          REST API + SignalR
+                    │
+          ASP.NET Core Web API
+                    │
+      Background Service (Simulación)
+                    │
+              SQL Server 2022
+```
+
+El **Background Service** ejecuta periódicamente la simulación de sensores, registra las lecturas generadas, evalúa las reglas configuradas y crea automáticamente las alertas correspondientes.
 
 ---
 
@@ -57,26 +78,15 @@ ClimGuard
 │   └── climguard-web/
 │
 ├── ClimGuard Backend/
+│   ├── API/
+│   ├── Application/
+│   ├── Domain/
+│   ├── Infrastructure/
+│   └── Services/
 │
-├── docker/
+├── Script para DB/
 │
 ├── docs/
-│   ├── DOC-00-Estandar de Documentacion.md
-│   ├── DOC-01-Introduccion.md
-│   ├── DOC-02-Requerimientos.md
-│   ├── DOC-03-Reglas del Negocio.md
-│   ├── DOC-04-Historias de usuario.md
-│   ├── DOC-05-Casos de uso.md
-│   ├── DOC-06-Diagrama de casos de uso general.md
-│   ├── DOC-07-Diagramas de Actividades.md
-│   ├── DOC-08-Diagramas de secuencia.md
-│   ├── DOC-09-Diagrama de clases.md
-│   ├── DOC-10-Modelo de BD.md
-│   ├── DOC-11 Diagrama Entidad-Relación.md
-│   ├── DOC-12-API.md
-│   ├── DOC-13-Arquitectura de Software.md
-│   ├── DOC-14-Manual de usuario.md
-│   └── DOC-15-Manual técnico.md
 │
 ├── docker-compose.yml
 │
@@ -87,25 +97,25 @@ ClimGuard
 
 # Ejecución rápida
 
-Clonar el repositorio:
+## 1. Clonar el repositorio
 
 ```bash
 git clone <URL_DEL_REPOSITORIO>
 ```
 
-Ingresar al proyecto:
+## 2. Ingresar al proyecto
 
 ```bash
 cd ClimGuard
 ```
 
-Levantar los contenedores:
+## 3. Levantar el entorno
 
 ```bash
 docker compose up --build
 ```
 
-Para detener los servicios:
+## 4. Detener los servicios
 
 ```bash
 docker compose down
@@ -113,24 +123,62 @@ docker compose down
 
 ---
 
-# Arquitectura
+# Documentación
 
-El sistema está compuesto por:
+La documentación completa del proyecto se encuentra disponible en la carpeta **docs/** e incluye:
 
-- Frontend Angular 20
-- Backend .NET 10 Web API
-- SQL Server 2022
-- SignalR para comunicación en tiempo real
-- Docker para el despliegue
+- Introducción
+- Requerimientos
+- Reglas de negocio
+- Historias de usuario
+- Casos de uso
+- Diagramas UML
+- Modelo de Base de Datos
+- API REST
+- Arquitectura de Software
+- Manual de Usuario
+- Manual Técnico
 
-La comunicación entre el frontend y el backend se realiza mediante una API REST.
+---
+
+# Funcionalidades implementadas
+
+- Gestión de usuarios y roles.
+- Administración de comunidades.
+- Administración de sensores.
+- Gestión de tipos de sensores.
+- Gestión de estados.
+- Gestión de niveles de alerta.
+- Gestión de tipos de fenómeno.
+- Configuración de reglas de alerta.
+- Simulación automática de lecturas.
+- Generación automática de alertas.
+- Historial de lecturas.
+- Bitácora del sistema.
+- Dashboard con actualización en tiempo real.
+
+---
+
+# Trabajo futuro
+
+El sistema fue diseñado para facilitar futuras ampliaciones, entre ellas:
+
+- Integración con sensores físicos (ESP32 u otros dispositivos IoT).
+- Envío de notificaciones por correo electrónico.
+- Integración con servicios meteorológicos externos.
+- Reportes en PDF y Excel.
+- Predicción de riesgos mediante modelos de inteligencia artificial.
 
 ---
 
 # Equipo de desarrollo
 
-Dalila Nineth Zacarías de León
-Mahuerk Yoc Vázquez
-Maryori Elizabeth Acifuina Juárez
+- **Dalila Nineth Zacarías de León**
+- **Mahuerk Yoc Vázquez**
+- **Maryori Elizabeth Acifuina Juárez**
 
 ---
+
+# Licencia
+
+Proyecto desarrollado con fines académicos para el curso de **Desarrollo Web**.

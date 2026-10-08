@@ -5,7 +5,7 @@
 |-----------|-----------|
 | Documento | Especificación de la API REST |
 | Código | DOC-12 |
-| Versión | 1.0 |
+| Versión | 2.0 |
 | Estado | En desarrollo |
 
 ---
@@ -256,6 +256,7 @@ DELETE /api/comunidades/{id}
 ---
 
 ## 2.3 Sensores
+> El código del sensor debe ser único y la comunidad, tipo de sensor y estado deben existir previamente en los catálogos del sistema.
 
 ### Obtener sensores
 
@@ -348,31 +349,44 @@ PUT `/api/sensores/{id}`
 
 ---
 
-## 2.4 Umbrales
+## 2.4 Reglas de Alerta
 
-### Obtener umbrales
+Las reglas de alerta permiten configurar los rangos que determinarán la generación automática de alertas para cada tipo de sensor.
 
-GET `/api/umbrales`
+Cada regla define:
 
-Filtros:
+- Tipo de sensor.
+- Nivel de alerta.
+- Tipo de fenómeno.
+- Valor mínimo.
+- Valor máximo.
+- Mensaje asociado.
 
-- idSensor
+### Obtener reglas
 
----
+GET `/api/ReglaAlerta`
 
-### Obtener umbral
+### Obtener regla
 
-GET `/api/umbrales/{id}`
+GET `/api/ReglaAlerta/{id}`
 
----
+### Obtener reglas por tipo de sensor
 
-### Actualizar umbral
+GET `/api/ReglaAlerta/{tipoSensorId}`
 
-PUT `/api/umbrales/{id}`
-> Regla de negocio:
+### Crear regla
 
-> El sistema únicamente permitirá modificar los valores de los umbrales previamente configurados para cada tipo de sensor. No se contempla la creación ni eliminación de umbrales durante la operación del sistema.
----
+POST `/api/ReglaAlerta`
+
+### Actualizar regla
+
+PUT `/api/ReglaAlerta`
+
+### Eliminar regla
+
+DELETE `/api/ReglaAlerta/{id}&usuarioLogeado={usuarioId}`
+
+> Las reglas únicamente podrán ser administradas por usuarios con rol Administrador.
 
 # 3. Monitoreo
 
@@ -394,7 +408,7 @@ El módulo de monitoreo concentra las operaciones relacionadas con la recepción
 
 ### Descripción
 
-Registra una nueva lectura proveniente de un sensor. Una vez almacenada la lectura, el sistema evaluará automáticamente los umbrales configurados para determinar si debe generarse una alerta.
+Registra una nueva lectura proveniente de un sensor. Una vez almacenada la lectura, el sistema evaluará automáticamente las reglas de alerta configuradas para determinar si debe generarse una alerta.
 
 ### Request
 
@@ -603,7 +617,7 @@ GET /api/lecturas?idSensor=3&fechaInicio=2026-08-01&fechaFin=2026-08-31
 
 Obtiene la información utilizada para representar la gráfica del Dashboard.
 
-En el primer release los valores mostrados corresponden a datos simulados utilizados para fines demostrativos.
+En el primer release los valores mostrados corresponden a información obtenida de las lecturas registradas por el Background Service.
 
 | Campo | Valor |
 |--------|-------|
@@ -638,6 +652,27 @@ En el primer release los valores mostrados corresponden a datos simulados utiliz
     ]
 }
 ```
+
+
+
+
+
+---
+## 3.4 Simulación Automática
+
+El sistema incorpora un Background Service encargado de simular el comportamiento de los sensores registrados.
+
+El proceso ejecuta automáticamente las siguientes operaciones:
+
+1. Obtiene los sensores activos.
+2. Genera una nueva lectura para cada sensor.
+3. Actualiza el valor actual del sensor.
+4. Registra la lectura en el historial.
+5. Evalúa las reglas de alerta configuradas.
+6. Genera automáticamente una alerta cuando la lectura cumple una condición establecida.
+
+Este proceso se ejecuta periódicamente y no requiere intervención del usuario.
+---
 # 4. Auditoría
 
 El módulo de auditoría permite consultar las acciones realizadas por los usuarios dentro del sistema.
@@ -691,7 +726,7 @@ GET /api/bitacora?idUsuario=2&fechaInicio=2026-08-01&fechaFin=2026-08-31
         {
             "idBitacora": 16,
             "usuario": "Administrador",
-            "accion": "Actualizó un umbral.",
+            "accion": "Actualizó una regla alerta.",
             "fechaHora": "2026-08-20T09:48:12"
         }
     ]
@@ -710,7 +745,7 @@ GET /api/bitacora?idUsuario=2&fechaInicio=2026-08-01&fechaFin=2026-08-31
 - Los nombres de los endpoints se definieron siguiendo principios REST.
 - Las respuestas de la API utilizarán JSON como formato de intercambio.
 - Los códigos HTTP deberán emplearse conforme a su significado estándar.
-- Algunos indicadores mostrados en el Dashboard corresponden a información simulada utilizada durante el desarrollo del primer release del sistema.
+- Las lecturas mostradas en el Dashboard son generadas automáticamente por un Background Service que simula el comportamiento de los sensores y registra el historial en la base de datos.
 ---
 
 # Consideraciones de Implementación
@@ -720,8 +755,9 @@ GET /api/bitacora?idUsuario=2&fechaInicio=2026-08-01&fechaFin=2026-08-31
 - La autenticación se realizará mediante JSON Web Token (JWT).
 - El acceso a los recursos será controlado mediante roles.
 - La validación de los datos de entrada deberá realizarse tanto en el cliente como en el servidor.
-- Las alertas serán generadas automáticamente por el sistema al evaluar las lecturas registradas contra los umbrales configurados.
+- Las alertas son generadas automáticamente mediante un Background Service que procesa las lecturas registradas y evalúa las reglas de alerta configuradas para cada tipo de sensor.
 - La documentación de la API podrá complementarse mediante Swagger/OpenAPI durante la etapa de desarrollo.
 - La activación y desactivación de sensores se realiza mediante la actualización de su estado. El sistema no contempla la eliminación física de sensores durante la operación.
+- La entidad Alerta conserva snapshots del mensaje, nivel de alerta y tipo de fenómeno utilizados al momento de generar la alerta, garantizando la integridad histórica de la información.
 
 ---
