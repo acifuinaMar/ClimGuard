@@ -2,16 +2,13 @@
 export const environment = {
   produccion: false,
 
-  // ---- API REAL, en el servidor compartido del equipo ----
-  // OJO: si un compañero corre el backend en su propia máquina, puede cambiar
-  // esto a http://localhost:5093/api — pero eso solo funciona en SU computadora.
-  // Para que funcione en la de todos, dejamos el servidor público.
-  apiUrl: 'http://157.245.253.228:8080/api',
+  // ---- API REAL, desplegada en el VPS del equipo (HTTPS) ----
+  // Así, al correr `npm start`, el frontend local consume el backend en vivo.
+  apiUrl: 'https://climguard.acifuina.online/api',
   sufijoArchivo: '',
 
-  // ---- SignalR: dirección del Hub de tiempo real ----
-  // Confirmado en el backend (Program.cs): app.MapHub<MonitoreoHub>("/hubs/monitoreo").
-  hubUrl: 'http://157.245.253.228:8080/hubs/monitoreo'
+  // ---- SignalR: Hub de tiempo real (mismo VPS) ----
+  hubUrl: 'https://climguard.acifuina.online/hubs/monitoreo'
 
   // ---- DATOS DE PRUEBA LOCALES ----
   // Para construir pantallas cuando la API no tenga datos cargados,
