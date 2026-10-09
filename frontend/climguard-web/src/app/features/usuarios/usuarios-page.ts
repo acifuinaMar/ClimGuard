@@ -4,6 +4,7 @@ import { catchError, timeout } from 'rxjs/operators';
 import { Usuario, GuardarUsuario, ROLES } from '../../core/models/usuario.model';
 import { UsuarioService } from '../../core/services/usuario.service';
 import { UsuarioForm } from './usuario-form';
+import { detalleError } from '../../core/http-error';
 
 @Component({
   selector: 'app-usuarios-page',
@@ -91,9 +92,9 @@ export class UsuariosPage {
         this.mostrarAviso(g.usuarioId === 0 ? 'Usuario creado.' : 'Usuario actualizado.');
         this.cargar();
       },
-      error: () => {
+      error: (err) => {
         this.guardando.set(false);
-        this.error.set('No se pudo guardar el usuario. ¿Está encendido el backend?');
+        this.error.set('No se pudo guardar el usuario. ' + detalleError(err));
       }
     });
   }

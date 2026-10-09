@@ -10,6 +10,7 @@ import { AlertaService } from '../../core/services/alerta.service';
 import { ComunidadService } from '../../core/services/comunidad.service';
 import { CatalogoService } from '../../core/services/catalogo.service';
 import { SiPermisoDirective } from '../../shared/si-permiso.directive';
+import { detalleError } from '../../core/http-error';
 
 /* ============================================================
    ALERTAS (Fase 2, gestión de alertas)
@@ -103,9 +104,9 @@ export class AlertasPage {
         this.mostrarAviso('Alerta atendida.');
         this.cargar();
       },
-      error: () => {
+      error: (err) => {
         this.atendiendoId.set(null);
-        this.error.set('No se pudo atender la alerta. ¿Está encendido el backend?');
+        this.error.set('No se pudo atender la alerta. ' + detalleError(err));
       }
     });
   }

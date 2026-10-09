@@ -5,6 +5,7 @@ import { catchError, timeout } from 'rxjs/operators';
 import { TipoFenomeno } from '../../core/models/tipo-fenomeno.model';
 import { TipoFenomenoService } from '../../core/services/tipo-fenomeno.service';
 import { FenomenoForm } from './fenomeno-form';
+import { detalleError } from '../../core/http-error';
 
 /* ============================================================
    TIPOS DE FENÓMENO (catálogo de Fase 2)
@@ -87,9 +88,9 @@ export class FenomenosPage {
         this.mostrarAviso(t.tipoFenomenoId === 0 ? 'Tipo creado.' : 'Tipo actualizado.');
         this.cargar();
       },
-      error: () => {
+      error: (err) => {
         this.guardando.set(false);
-        this.error.set('No se pudo guardar. ¿Está encendido el backend?');
+        this.error.set('No se pudo guardar. ' + detalleError(err));
       }
     });
   }
@@ -117,10 +118,10 @@ export class FenomenosPage {
         this.mostrarAviso('Tipo eliminado.');
         this.cargar();
       },
-      error: () => {
+      error: (err) => {
         this.borrando.set(false);
         this.porBorrar.set(null);
-        this.error.set('No se pudo eliminar.');
+        this.error.set('No se pudo eliminar. ' + detalleError(err));
       }
     });
   }

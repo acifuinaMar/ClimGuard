@@ -8,6 +8,7 @@ import { ReglaAlertaService } from '../../core/services/regla-alerta.service';
 import { CatalogoService } from '../../core/services/catalogo.service';
 import { SiPermisoDirective } from '../../shared/si-permiso.directive';
 import { ReglaForm } from './regla-form';
+import { detalleError } from '../../core/http-error';
 
 /* ============================================================
    REGLAS DE ALERTA (Fase 2, RF-ADM-29 a 35)
@@ -134,9 +135,9 @@ export class ReglasPage {
         this.mostrarAviso(regla.reglaAlertaId === 0 ? 'Regla creada.' : 'Regla actualizada.');
         this.cargar();
       },
-      error: () => {
+      error: (err) => {
         this.guardando.set(false);
-        this.error.set('No se pudo guardar la regla. ¿Está encendido el backend?');
+        this.error.set('No se pudo guardar la regla. ' + detalleError(err));
       }
     });
   }

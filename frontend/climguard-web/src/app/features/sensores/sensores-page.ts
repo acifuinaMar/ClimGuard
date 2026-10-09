@@ -6,6 +6,7 @@ import { SensorService } from '../../core/services/sensor.service';
 import { calcularNivel, textoNivel, unidadDe, variableDe, Nivel } from '../../core/nivel-alerta';
 import { SensorForm } from './sensor-form';
 import { SiPermisoDirective } from '../../shared/si-permiso.directive';
+import { detalleError } from '../../core/http-error';
 
 interface SensorVista extends Sensor {
   nivel: Nivel;
@@ -118,9 +119,9 @@ export class SensoresPage {
         this.mostrarAviso(sensor.sensorId === 0 ? 'Sensor creado.' : 'Sensor actualizado.');
         this.cargar();
       },
-      error: () => {
+      error: (err) => {
         this.guardando.set(false);
-        this.error.set('No se pudo guardar el sensor. Revisa la conexión.');
+        this.error.set('No se pudo guardar el sensor. ' + detalleError(err));
       }
     });
   }
@@ -141,13 +142,13 @@ export class SensoresPage {
 
     this.servicio.cambiarEstado(s, activar).subscribe({
       next: () => this.mostrarAviso(activar ? 'Sensor activado.' : 'Sensor desactivado.'),
-      error: () => {
+      error: (err) => {
         this.sensores.update(lista =>
           lista.map(x => x.sensorId === s.sensorId
             ? { ...x, estadoSensorId: estadoPrevio, activo: estadoPrevio === ESTADO_SENSOR_ACTIVO }
             : x)
         );
-        this.error.set('No se pudo cambiar el estado del sensor.');
+        this.error.set('No se pudo cambiar el estado del sensor. ' + detalleError(err));
       }
     });
   }

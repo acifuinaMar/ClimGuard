@@ -6,6 +6,7 @@ import { ComunidadService } from '../../core/services/comunidad.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ComunidadForm } from './comunidad-form';
 import { SiPermisoDirective } from '../../shared/si-permiso.directive';
+import { detalleError } from '../../core/http-error';
 
 @Component({
   selector: 'app-comunidades-page',
@@ -76,9 +77,9 @@ export class ComunidadesPage {
         this.mostrarAviso(c.comunidadId === 0 ? 'Comunidad creada.' : 'Comunidad actualizada.');
         this.cargar();
       },
-      error: () => {
+      error: (err) => {
         this.guardando.set(false);
-        this.error.set('No se pudo guardar la comunidad. ¿Está encendido el backend?');
+        this.error.set('No se pudo guardar la comunidad. ' + detalleError(err));
       }
     });
   }
@@ -100,10 +101,10 @@ export class ComunidadesPage {
         this.mostrarAviso('Comunidad eliminada.');
         this.cargar();
       },
-      error: () => {
+      error: (err) => {
         this.borrando.set(false);
         this.porBorrar.set(null);
-        this.error.set('No se pudo eliminar la comunidad.');
+        this.error.set('No se pudo eliminar la comunidad. ' + detalleError(err));
       }
     });
   }
