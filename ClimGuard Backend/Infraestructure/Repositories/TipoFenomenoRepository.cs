@@ -18,7 +18,12 @@ namespace Infraestructure.Repositories
                 {
 
                     TipoFenomenoId = tipo.TipoFenomenoId,
-                    Nombre = tipo.Nombre
+                    Nombre = tipo.Nombre,
+                    Activo = tipo.Activo,
+                    UsuarioAct = tipo.UsuarioAct,
+                    UsuarioIng = tipo.UsuarioIng,
+                    FechaIng = tipo.FechaIng,
+                    FechaAct = tipo.FechaAct
                 };
                 _context.TipoFenomenos.Add(obj);
                 await _context.SaveChangesAsync();
@@ -114,7 +119,13 @@ namespace Infraestructure.Repositories
                     return false;
 
                 obj.Nombre = tipo.Nombre;
+                obj.Activo = tipo.Activo;
+                obj.UsuarioIng = tipo.UsuarioIng;
+                obj.FechaIng = tipo.FechaIng;
+                obj.UsuarioAct = tipo.UsuarioAct;
+                obj.FechaAct = tipo.FechaAct;
 
+                _context.TipoFenomenos.Update(obj);
                 await _context.SaveChangesAsync();
                 return true;
             }
