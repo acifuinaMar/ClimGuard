@@ -1,0 +1,56 @@
+# Transitional integration: preserves phase-2 monolith behind YARP.
+# NOT a completed six-microservice architecture.
+services:
+  gateway:
+    build: ./services/gateway
+    environment:
+      Jwt__Key: ${JWT_KEY:?set JWT_KEY}
+      Jwt__Issuer: ${JWT_ISSUER:?set JWT_ISSUER}
+      Jwt__Audience: ${JWT_AUDIENCE:?set JWT_AUDIENCE}
+    depends_on:
+      - api
+      - report-service
+      - audit-service
+    restart: unless-stopped
+  mongo:
+    image: mongo:7
+    volumes:
+      - climguard-mongodata:/data/db
+    restart: unless-stopped
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_USER: climguard
+      POSTGRES_DB: climguard
+    volumes:
+      - climguard-pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+  report-service:
+    build: ./services/report
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      JWT_KEY: ${JWT_KEY:?set JWT_KEY}
+      JWT_ISSUER: ${JWT_ISSUER:?set JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:?set JWT_AUDIENCE}
+      LEGACY_API_URL: http://api:8080
+    depends_on:
+      - mongo
+      - api
+    restart: unless-stopped
+  audit-service:
+    build: ./services/audit
+    environment:
+      MONGO_URL: mongodb://mongo:27017
+      JWT_KEY: ${JWT_KEY:?set JWT_KEY}
+      JWT_ISSUER: ${JWT_ISSUER:?set JWT_ISSUER}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:?set JWT_AUDIENCE}
+    depends_on:
+      - mongo
+    restart: unless-stopped
+  frontend:
+    volumes:
+      - ./phase3-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+volumes:
+  climguard-mongodata:
+  climguard-pgdata:

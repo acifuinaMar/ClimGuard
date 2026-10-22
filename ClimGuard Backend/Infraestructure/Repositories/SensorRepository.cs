@@ -35,7 +35,7 @@ namespace Services.Services{
                 await _context.SaveChangesAsync();
 
                 return new SensorDomain(
-                    sensor.SensorId,
+                    obj.SensorId,
                     sensor.Nombre,
                     sensor.Codigo,
                     sensor.Ubicacion,

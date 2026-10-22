@@ -3,6 +3,8 @@ using Application.Sensor.Service.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace API.Controllers
 {
@@ -12,10 +14,16 @@ namespace API.Controllers
     public class SensorController : ControllerBase
     {
         private readonly IMediator _mediator;
-
-        public SensorController(IMediator mediator)
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly ILogger<SensorController> _logger;
+        public SensorController(
+            IMediator mediator,
+            IHttpClientFactory httpClientFactory,
+            ILogger<SensorController> logger)
         {
             _mediator = mediator;
+            _httpClientFactory = httpClientFactory;
+            _logger = logger;
         }
 
         [HttpGet]
@@ -36,18 +44,72 @@ namespace API.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = "Administrador")]
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateSensorCommand command)
-        {
-            var result = await _mediator.Send(command);
+        
+    [Authorize(Roles = "Administrador")]
+    [HttpPost]
+    public async Task<IActionResult> Create(
+        [FromBody] CreateSensorCommand command)
+    {
+        // 1. Crear el sensor mediante la lógica existente.
+        var result = await _mediator.Send(command);
 
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = result.SensorId },
-                result
+        // 2. Registrar el evento de auditoría.
+        try
+        {
+            var token = HttpContext.Request.Headers.Authorization
+                .ToString()
+                .Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase)
+                .Trim();
+
+            using var client = _httpClientFactory.CreateClient("AuditService");
+
+            using var request = new HttpRequestMessage(
+                HttpMethod.Post,
+                "/api/audit"
+            );
+
+            request.Headers.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            request.Content = JsonContent.Create(new
+            {
+                action = "SENSOR_CREATED",
+                resource = "Sensor",
+                detail = new
+                {
+                    sensorId = result.SensorId,
+                    descripcion = "Sensor creado desde ClimGuard"
+                }
+            });
+
+            using var response = await client.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Audit Service devolvió HTTP {StatusCode} al registrar el sensor {SensorId}",
+                    (int)response.StatusCode,
+                    result.SensorId
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            // Un fallo de auditoría no cancela la creación del sensor.
+            _logger.LogWarning(
+                ex,
+                "No se pudo auditar la creación del sensor {SensorId}",
+                result.SensorId
             );
         }
+
+        // 3. Conservar la respuesta original.
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = result.SensorId },
+            result
+        );
+    }
 
         [HttpPost("simular")]
         public async Task<IActionResult> Simular()

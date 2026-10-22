@@ -13,6 +13,15 @@ var miorigen = builder.Configuration["Origin:miorigen"]!;
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddHttpClient("AuditService", client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AuditService:BaseUrl"]
+        ?? "http://audit-service:8000"
+    );
+
+    client.Timeout = TimeSpan.FromSeconds(3);
+});
 
 // Configuración de CORS permisivo (Cualquier origen, método y encabezado)
 //builder.Services.AddCors(options =>

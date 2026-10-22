@@ -1,0 +1,193 @@
+
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 17mm 14mm 20mm;
+
+      @bottom-center {
+        content: "Página " counter(page) " de " counter(pages);
+        font-size: 9px;
+        color: #64748b;
+      }
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      color: #243447;
+      font-size: 10px;
+    }
+
+    header {
+      border-bottom: 3px solid #087e8b;
+      padding-bottom: 12px;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      color: #087e8b;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .subtitle {
+      color: #64748b;
+      font-size: 10px;
+      margin-top: 4px;
+    }
+
+    h1 {
+      color: #087e8b;
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .meta {
+      color: #64748b;
+      font-size: 10px;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 9px;
+    }
+
+    thead {
+      display: table-header-group;
+    }
+
+    th {
+      background: #087e8b;
+      color: white;
+      padding: 9px 6px;
+      text-align: left;
+      font-weight: bold;
+    }
+
+    td {
+      padding: 9px 6px;
+      border-bottom: 1px solid #e2e8f0;
+      overflow-wrap: anywhere;
+      vertical-align: top;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f1f5f9;
+    }
+
+    tr {
+      break-inside: avoid;
+    }
+
+    .empty {
+      padding: 22px;
+      text-align: center;
+      color: #64748b;
+    }
+
+    footer {
+      margin-top: 22px;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 10px;
+      font-size: 9px;
+      color: #64748b;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="brand">ClimGuard</div>
+    <div class="subtitle">
+      Sistema de monitoreo climático
+    </div>
+  </header>
+
+  <h1>{{ title }}</h1>
+
+  <p class="meta">
+    Generado: {{ generated_at }} UTC
+    | Usuario: {{ user }}
+    | Tipo: {{ report_type }}
+  </p>
+
+  {% if report_type == "sensors" %}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Sensor</th>
+        <th>Código</th>
+        <th>Ubicación</th>
+        <th>Valor actual</th>
+        <th>Comunidad</th>
+        <th>Tipo</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.get('nombre') or '—' }}</td>
+        <td>{{ row.get('codigo') or '—' }}</td>
+        <td>{{ row.get('ubicacion') or '—' }}</td>
+        <td>{{ row.get('valorActual') if row.get('valorActual') is not none else '—' }}</td>
+        <td>{{ row.get('comunidadNombre') or row.get('comunidadId') or '—' }}</td>
+        <td>{{ row.get('tipoSensorNombre') or row.get('tipoSensorId') or '—' }}</td>
+        <td>{{ row.get('estadoSensorNombre') or row.get('estadoSensorId') or '—' }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="7" class="empty">
+          No hay sensores registrados.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% else %}
+
+  <table>
+    <thead>
+      <tr>
+        {% for c in columns %}
+        <th>{{ c }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        {% for c in columns %}
+        <td>{{ row.get(c) if row.get(c) is not none else '—' }}</td>
+        {% endfor %}
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="{{ columns|length or 1 }}" class="empty">
+          No hay datos disponibles.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% endif %}
+
+  <footer>
+    Reporte generado automáticamente por ClimGuard Report Service.
+  </footer>
+
+</body>
+</html>

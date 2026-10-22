@@ -51,11 +51,11 @@ namespace Application.Sensor.Service.Commands
             );
             await _repositoryBitacora.Create(bitacora);
 
-            await _repository.Create(sensor);
-            await _unitOfWork.SaveChangeAsync(cancellationToken);
+            var sensorCreado = await _repository.Create(sensor);
+            await _unitOfWork.SaveChangeAsync(cancellationToken);   
 
             return new SensorResultDto(
-                sensor.SensorId,
+                sensorCreado.SensorId,
                 sensor.Nombre,
                 sensor.Codigo,
                 sensor.Ubicacion,
