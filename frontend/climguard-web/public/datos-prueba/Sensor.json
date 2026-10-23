@@ -1,0 +1,21 @@
+[
+  { "sensorId": 1, "comunidadId": 3, "tipoSensorId": 1, "nombre": "Termómetro Norte",
+    "valorActual": -3.0, "activo": true,
+    "fechaInstalacion": "2026-08-17T02:38:09.063", "ultimaActualizacion": "2026-08-17T21:10:00.000" },
+
+  { "sensorId": 2, "comunidadId": 3, "tipoSensorId": 2, "nombre": "Nivel Río Grande",
+    "valorActual": 4.6, "activo": true,
+    "fechaInstalacion": "2026-08-17T02:38:09.063", "ultimaActualizacion": "2026-08-17T21:10:00.000" },
+
+  { "sensorId": 3, "comunidadId": 3, "tipoSensorId": 3, "nombre": "Pluviómetro Central",
+    "valorActual": 12.4, "activo": true,
+    "fechaInstalacion": "2026-08-17T02:38:09.063", "ultimaActualizacion": "2026-08-17T21:10:00.000" },
+
+  { "sensorId": 4, "comunidadId": 3, "tipoSensorId": 4, "nombre": "Anemómetro Sur",
+    "valorActual": 68.2, "activo": true,
+    "fechaInstalacion": "2026-08-17T02:38:09.063", "ultimaActualizacion": "2026-08-17T21:10:00.000" },
+
+  { "sensorId": 5, "comunidadId": 3, "tipoSensorId": 5, "nombre": "Higrómetro Bosque",
+    "valorActual": 18.0, "activo": false,
+    "fechaInstalacion": "2026-08-17T02:38:09.063", "ultimaActualizacion": "2026-08-17T21:10:00.000" }
+]

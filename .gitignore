@@ -1,0 +1,30 @@
+﻿# Credenciales y variables locales
+.env
+.env.*
+!.env.example
+
+# Certificados y llaves
+nginx/certs/
+*.pem
+*.pfx
+*.key
+
+# Dependencias y compilaciones
+**/node_modules/
+**/dist/
+**/bin/
+**/obj/
+**/target/
+**/.angular/
+
+# Archivos del entorno local
+.vs/
+.vscode/
+*.log
+
+# Configuraciones heredadas pendientes de revisión
+/ClimGuard Backend/API/appsettings.json
+/ClimGuard Backend/API/appsettings.Development.json
+
+# Manifiesto Kubernetes pendiente de revisión
+/k8s/climguard.yaml

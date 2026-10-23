@@ -1,0 +1,112 @@
+<header class="cabecera">
+  <div>
+    <h1>Reportes</h1>
+    <p class="cabecera__sub">Genere reportes en PDF desde el servidor y consulte el historial de generación</p>
+  </div>
+</header>
+
+@if (cargando()) {
+  <div class="estado"><span class="estado__titulo">Cargando reportes…</span></div>
+}
+
+@else {
+  @if (error()) {
+    <div class="aviso aviso--error" role="alert">{{ error() }}</div>
+  }
+  @if (mensaje()) {
+    <div class="aviso aviso--ok" role="status">{{ mensaje() }}</div>
+  }
+
+  @if (tipos().length) {
+    <section class="panel">
+      <h2>Nuevo reporte</h2>
+
+      <div class="campo">
+        <label for="tipo-reporte">Tipo de reporte</label>
+        <select id="tipo-reporte" [value]="tipoSel()" (change)="elegirTipo($any($event.target).value)">
+          @for (t of tipos(); track t.key) {
+            <option [value]="t.key">{{ t.name }}</option>
+          }
+        </select>
+        @if (tipoActual(); as t) { <small>{{ t.description }}</small> }
+      </div>
+
+      @if (campos().length) {
+        <div class="filtros">
+          @for (c of campos(); track c.clave) {
+            <div class="campo">
+              <label [for]="'f-' + c.clave">{{ c.etiqueta }}</label>
+              @if (c.tipo === 'select') {
+                <select [id]="'f-' + c.clave" [value]="valorFiltro(c.clave)" (change)="cambiarFiltro(c.clave, $any($event.target).value)">
+                  <option value="">Todas</option>
+                  @for (o of c.opciones; track o.valor) {
+                    <option [value]="o.valor">{{ o.texto }}</option>
+                  }
+                </select>
+              } @else {
+                <input type="date" [id]="'f-' + c.clave" [value]="valorFiltro(c.clave)" (change)="cambiarFiltro(c.clave, $any($event.target).value)" />
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <div class="acciones">
+        <button type="button" class="boton" (click)="generar()" [disabled]="generando() || !tipoSel()">
+          {{ generando() ? 'Generando…' : 'Generar PDF' }}
+        </button>
+      </div>
+    </section>
+  } @else {
+    <div class="estado estado--error">
+      <span class="estado__titulo">No hay tipos de reporte disponibles para su usuario</span>
+    </div>
+  }
+
+  <section class="panel">
+    <div class="panel__cab">
+      <h2>Historial</h2>
+      <span class="cuenta">{{ total() }} reportes</span>
+    </div>
+
+    @if (historial().length === 0) {
+      <p class="vacio">Todavía no se ha generado ningún reporte.</p>
+    } @else {
+      <div class="tabla-caja">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Identificador</th><th>Tipo</th><th>Generado por</th><th>Fecha</th><th>Filtros</th><th>Estado</th><th>Tamaño</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (r of historial(); track r.reportId) {
+              <tr>
+                <td class="id">{{ r.reportId }}</td>
+                <td>{{ nombreTipo(r.type) }}</td>
+                <td>{{ r.generatedByName || r.generatedBy }}</td>
+                <td>{{ r.generatedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td class="filtros-resumen">{{ resumenFiltros(r) }}</td>
+                <td><span class="estado-rep" [class]="'estado-rep estado-rep--' + r.status.toLowerCase()" [title]="r.error ?? ''">{{ estadoTexto(r.status) }}</span></td>
+                <td>{{ tamano(r.fileSize) }}</td>
+                <td>
+                  @if (r.status === 'COMPLETED') {
+                    <button type="button" class="boton boton--sec" (click)="descargar(r)">Descargar</button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (paginas() > 1) {
+        <nav class="paginas" aria-label="Paginación del historial">
+          <button type="button" class="boton boton--sec" (click)="irAPagina(pagina() - 1)" [disabled]="pagina() === 1">Anterior</button>
+          <span>Página {{ pagina() }} de {{ paginas() }}</span>
+          <button type="button" class="boton boton--sec" (click)="irAPagina(pagina() + 1)" [disabled]="pagina() === paginas()">Siguiente</button>
+        </nav>
+      }
+    }
+  </section>
+}

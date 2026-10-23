@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>{{ doc.title }}</title>
+  <style>
+    @page {
+      size: A4 landscape; margin: 20mm 14mm 20mm;
+      @top-left   { content: "ClimGuard · Sistema de monitoreo climático"; font-size: 8px; color: #64748b; }
+      @top-right  { content: "Documento generado automáticamente"; font-size: 8px; color: #64748b; }
+      @bottom-left   { content: "{{ meta.report_id }}"; font-size: 8px; color: #64748b; }
+      @bottom-center { content: "Página " counter(page) " de " counter(pages); font-size: 9px; color: #64748b; }
+      @bottom-right  { content: "ClimGuard Report Service"; font-size: 8px; color: #64748b; }
+    }
+    body { font-family: "DejaVu Sans", Arial, sans-serif; color: #243447; font-size: 9.5px; }
+    header.top { display: flex; align-items: center; border-bottom: 3px solid #087e8b; padding-bottom: 10px; margin-bottom: 14px; }
+    header.top svg { width: 46px; height: 46px; margin-right: 12px; }
+    .brand { color: #087e8b; font-size: 20px; font-weight: bold; }
+    .subtitle { color: #64748b; font-size: 10px; margin-top: 3px; }
+    h1 { color: #087e8b; font-size: 19px; margin: 0 0 2px; }
+    .doc-sub { color: #475569; font-size: 10.5px; margin: 0 0 10px; }
+    table.meta { border-collapse: collapse; margin-bottom: 12px; font-size: 9.5px; }
+    table.meta td { padding: 2px 14px 2px 0; border: 0; }
+    table.meta td.k { color: #64748b; font-weight: bold; }
+    h2 { color: #0f4c5c; font-size: 13px; margin: 16px 0 6px; border-left: 4px solid #087e8b; padding-left: 7px; }
+    .cards { display: flex; flex-wrap: wrap; margin: 4px 0 10px; }
+    .card { border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px 12px; margin: 0 8px 8px 0; min-width: 105px; background: #f8fafc; }
+    .card .v { font-size: 16px; font-weight: bold; color: #0f172a; } .card .l { font-size: 8.5px; color: #64748b; }
+    .card.ok { border-color: #28a745; } .card.warn { border-color: #fd7e14; } .card.danger { border-color: #dc3545; }
+    table.data { width: 100%; border-collapse: collapse; font-size: 8.6px; } table.data.narrow { width: 55%; }
+    thead { display: table-header-group; }
+    th { background: #087e8b; color: #fff; padding: 6px 5px; text-align: left; font-weight: bold; }
+    td { padding: 5px; border-bottom: 1px solid #e2e8f0; overflow-wrap: anywhere; vertical-align: top; }
+    tbody tr:nth-child(even) { background: #f1f5f9; } tr { break-inside: avoid; }
+    td.num, th.num { text-align: right; }
+    .empty { padding: 16px; text-align: center; color: #64748b; }
+    .note { color: #64748b; font-size: 8.5px; margin-top: 4px; }
+    .warnbox { border: 1px solid #fd7e14; background: #fff4e6; color: #7a3e00; padding: 6px 9px; margin: 8px 0; font-size: 9px; }
+    footer.end { margin-top: 18px; border-top: 1px solid #e2e8f0; padding-top: 8px; font-size: 8.5px; color: #64748b; }
+  </style>
+</head>
+<body>
+  {% set num_cols = ['Valor','Cantidad','Lecturas','Promedio','Mínimo','Máximo','Acumulado','Sensores','Alertas'] %}
+  <header class="top">
+    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-label="ClimGuard">
+      <path d="M32 3 6 13v17c0 15 10.5 26.5 26 31 15.5-4.5 26-16 26-31V13L32 3z" fill="#087e8b"/>
+      <path d="M14 36c6-8 10 6 18-2s12 6 18-2" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="32" cy="22" r="5" fill="#ffc107"/>
+    </svg>
+    <div><div class="brand">ClimGuard</div><div class="subtitle">Sistema de monitoreo y alerta temprana de riesgos climáticos</div></div>
+  </header>
+  <h1>{{ doc.title }}</h1>
+  <p class="doc-sub">{{ doc.subtitle }}</p>
+  <table class="meta">
+    <tr><td class="k">Reporte</td><td>{{ meta.report_id }}</td><td class="k">Generado</td><td>{{ meta.generated_at }} ({{ meta.tz }})</td><td class="k">Usuario</td><td>{{ meta.user }}</td></tr>
+    {% for label, value in doc.filters %}
+    {% if loop.index0 % 3 == 0 %}<tr>{% endif %}
+      <td class="k">{{ label }}</td><td>{{ value }}</td>
+    {% if loop.index0 % 3 == 2 or loop.last %}</tr>{% endif %}
+    {% endfor %}
+  </table>
+  {% if doc.truncated %}<div class="warnbox">Resultado limitado a {{ meta.max_rows }} registros por rendimiento. Aplique filtros (fechas, comunidad, sensor) para acotar el reporte.</div>{% endif %}
+  {% for sec in doc.sections %}
+    {% if sec.title %}<h2>{{ sec.title }}</h2>{% endif %}
+    {% if sec.cards %}<div class="cards">{% for c in sec.cards %}<div class="card {{ c.tone }}"><div class="v">{{ c.value }}</div><div class="l">{{ c.label }}</div></div>{% endfor %}</div>{% endif %}
+    {% if sec.columns %}
+    <table class="data {{ 'narrow' if sec.narrow else '' }}">
+      <thead><tr>{% for col in sec.columns %}<th class="{{ 'num' if col in num_cols else '' }}">{{ col }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for row in sec.rows %}<tr>{% for cell in row %}<td class="{{ 'num' if sec.columns[loop.index0] in num_cols else '' }}">{{ cell }}</td>{% endfor %}</tr>
+      {% else %}<tr><td colspan="{{ sec.columns|length }}" class="empty">{{ sec.empty_text }}</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% if sec.note %}<div class="note">{{ sec.note }}</div>{% endif %}
+  {% endfor %}
+  {% for n in doc.notes %}<div class="note">{{ n }}</div>{% endfor %}
+  <footer class="end">Reporte generado por ClimGuard Report Service · {{ meta.report_id }} · {{ doc.row_count }} registro(s).</footer>
+</body>
+</html>

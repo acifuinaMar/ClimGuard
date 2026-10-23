@@ -1,0 +1,138 @@
+.pantalla {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  /* Degradado en los tonos de marca: da profundidad sin distraer del formulario */
+  background:
+    radial-gradient(1100px 500px at 15% -10%, rgba(69, 184, 194, .18), transparent 60%),
+    linear-gradient(160deg, #0F1C22 0%, #14303a 100%);
+}
+
+.tarjeta {
+  width: 100%;
+  max-width: 380px;
+  background: var(--cg-superficie);
+  border-radius: 12px;
+  padding: 2rem 1.9rem 1.5rem;
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, .5);
+}
+
+.tarjeta__cabecera { text-align: center; margin-bottom: 1.5rem; }
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  margin-bottom: 1rem;
+}
+.marca__icono { font-size: 1.5rem; color: var(--cg-primario); }
+.marca__texto { font-size: 1.25rem; font-weight: 700; color: var(--cg-texto); }
+
+.tarjeta__titulo { font-size: 1.2rem; font-weight: 650; }
+.tarjeta__sub { font-size: .86rem; color: var(--cg-texto-tenue); margin-top: .2rem; }
+
+/* ================= CAMPOS ================= */
+form { display: flex; flex-direction: column; gap: 1rem; }
+
+.campo { display: flex; flex-direction: column; gap: .3rem; }
+.campo label {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--cg-texto-suave);
+}
+.campo input {
+  width: 100%;
+  padding: .6rem .75rem;
+  border: 1px solid var(--cg-borde);
+  border-radius: 7px;
+  font-size: .95rem;
+  font-family: inherit;
+  background: var(--cg-superficie);
+  color: var(--cg-texto);
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.campo input:focus {
+  outline: none;
+  border-color: var(--cg-primario);
+  box-shadow: 0 0 0 3px var(--cg-primario-claro);
+}
+.campo input::placeholder { color: #9fb0b6; }
+
+/* El borde rojo solo aparece cuando el usuario ya tocó el campo.
+   Marcar en rojo algo que aún no ha escrito sería agresivo. */
+.campo--malo { border-color: var(--cg-rojo) !important; }
+.campo__error { font-size: .78rem; color: var(--cg-rojo); }
+
+.campo__caja { position: relative; display: flex; }
+.campo__caja input { padding-right: 2.6rem; }
+.campo__ojo {
+  position: absolute;
+  right: .3rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: .95rem;
+  padding: .3rem .45rem;
+  border-radius: 5px;
+  line-height: 1;
+}
+.campo__ojo:hover { background: var(--cg-superficie-2); }
+
+/* ================= AVISOS Y BOTÓN ================= */
+.aviso-error {
+  background: var(--cg-rojo-fondo);
+  color: var(--cg-rojo);
+  border: 1px solid var(--cg-rojo);
+  border-radius: 7px;
+  padding: .6rem .75rem;
+  font-size: .85rem;
+  font-weight: 500;
+}
+
+.boton {
+  width: 100%;
+  padding: .7rem;
+  border: none;
+  border-radius: 7px;
+  background: var(--cg-primario);
+  color: #fff;
+  font-size: .95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.boton:hover:not(:disabled) { background: var(--cg-primario-oscuro); }
+.boton:disabled { opacity: .6; cursor: progress; }
+
+/* ================= PIE PROVISIONAL ================= */
+.tarjeta__pie {
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--cg-borde);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .4rem;
+  text-align: center;
+}
+.pie__aviso {
+  width: 100%;
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--cg-texto-tenue);
+  font-weight: 600;
+}
+.tarjeta__pie code {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: .76rem;
+  background: var(--cg-superficie-2);
+  color: var(--cg-texto-suave);
+  padding: .2rem .5rem;
+  border-radius: 4px;
+}

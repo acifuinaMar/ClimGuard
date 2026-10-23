@@ -1,0 +1,10 @@
+# Lo que NO se copia al construir la imagen.
+# node_modules se reinstala limpio dentro del contenedor (npm ci),
+# y dist se genera dentro. Copiarlos sería lento y podría traer basura
+# de tu sistema operativo a una imagen Linux.
+node_modules
+dist
+.angular
+.vscode
+.git
+*.log

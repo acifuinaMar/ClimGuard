@@ -1,0 +1,99 @@
+<!-- La capa oscura de fondo. Al hacer clic en ella se cierra. -->
+<div class="fondo" (click)="cancelar.emit()">
+
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <header class="modal__cabecera">
+      <h2>{{ titulo() }}</h2>
+      <button type="button" class="modal__cerrar"
+              (click)="cancelar.emit()" aria-label="Cerrar">✕</button>
+    </header>
+
+    <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+
+      <div class="campo">
+        <label for="nombre">Nombre del sensor</label>
+        <input id="nombre" type="text" formControlName="nombre"
+               placeholder="Ej.: Termómetro Norte"
+               [class.malo]="nombre.invalid && nombre.touched">
+        @if (nombre.touched && nombre.hasError('required')) {
+          <span class="error">El nombre es obligatorio.</span>
+        } @else if (nombre.touched && nombre.hasError('minlength')) {
+          <span class="error">Debe tener al menos 3 caracteres.</span>
+        }
+      </div>
+
+      <div class="fila">
+        <div class="campo">
+          <label for="codigo">Código</label>
+          <input id="codigo" type="text" formControlName="codigo"
+                 placeholder="Ej.: SEN-001"
+                 [class.malo]="codigo.invalid && codigo.touched">
+          @if (codigo.touched && codigo.hasError('required')) {
+            <span class="error">Obligatorio.</span>
+          }
+        </div>
+
+        <div class="campo">
+          <label for="tipo">Variable que mide</label>
+          <select id="tipo" formControlName="tipoSensorId">
+            @for (t of tipos; track t.id) {
+              <option [value]="t.id">{{ t.nombre }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="fila">
+        <div class="campo">
+          <label for="comunidad">Comunidad (id)</label>
+          <input id="comunidad" type="number" min="1" formControlName="comunidadId">
+        </div>
+
+        <div class="campo">
+          <label for="estado">Estado</label>
+          <select id="estado" formControlName="estadoSensorId">
+            @for (e of estados; track e.estadoSensorId) {
+              <option [value]="e.estadoSensorId">{{ e.nombre }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="ubicacion">Ubicación</label>
+        <input id="ubicacion" type="text" formControlName="ubicacion"
+               placeholder="Ej.: Orilla del río Motagua"
+               [class.malo]="ubicacion.invalid && ubicacion.touched">
+        @if (ubicacion.touched && ubicacion.hasError('required')) {
+          <span class="error">La ubicación es obligatoria.</span>
+        }
+      </div>
+
+      <div class="campo">
+        <label for="descripcion">Descripción</label>
+        <input id="descripcion" type="text" formControlName="descripcion"
+               placeholder="Breve descripción del sensor"
+               [class.malo]="descripcion.invalid && descripcion.touched">
+        @if (descripcion.touched && descripcion.hasError('required')) {
+          <span class="error">La descripción es obligatoria.</span>
+        }
+      </div>
+
+      <div class="campo">
+        <label for="valor">Valor actual</label>
+        <input id="valor" type="number" step="0.1" formControlName="valorActual">
+        <span class="ayuda">Es la lectura del sensor en este momento.</span>
+      </div>
+
+      <footer class="modal__pie">
+        <button type="button" class="btn btn--claro"
+                (click)="cancelar.emit()" [disabled]="guardando()">Cancelar</button>
+        <button type="submit" class="btn btn--primario" [disabled]="guardando()">
+          @if (guardando()) { Guardando… } @else { Guardar }
+        </button>
+      </footer>
+
+    </form>
+  </div>
+</div>

@@ -1,0 +1,230 @@
+# =====================================================================
+#  ClimGuard Fase 3 — microservicios
+#  Uso:   ./scripts/gen-env.sh && ./scripts/gen-certs.sh && docker compose up --build
+#  Web:   https://localhost:${EDGE_HTTPS_PORT:-8443}     (admin / Admin123 con SEED_DEFAULT_USERS=true)
+#  Solo el nginx de borde publica puertos. Cada base de datos vive en una red
+#  que comparte únicamente con SU servicio (ningún servicio ve la BD de otro).
+#  RAM aproximada del stack completo: 5-6 GB. Para un subconjunto:
+#     docker compose up auth-service audit-service gateway edge frontend
+# =====================================================================
+
+x-jwt: &jwt-net
+  Jwt__Key: ${JWT_KEY:?falta JWT_KEY (ejecute scripts/gen-env.sh)}
+  Jwt__Issuer: ${JWT_ISSUER:?falta JWT_ISSUER}
+  Jwt__Audience: ${JWT_AUDIENCE:?falta JWT_AUDIENCE}
+
+x-jwt-flat: &jwt-flat
+  JWT_KEY: ${JWT_KEY:?falta JWT_KEY}
+  JWT_ISSUER: ${JWT_ISSUER:?falta JWT_ISSUER}
+  JWT_AUDIENCE: ${JWT_AUDIENCE:?falta JWT_AUDIENCE}
+  INTERNAL_API_KEY: ${INTERNAL_API_KEY:?falta INTERNAL_API_KEY}
+
+x-dotnet-health: &dotnet-health
+  test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /health HTTP/1.0\\r\\n\\r\\n\" >&3 && head -n1 <&3 | grep -q 200'"]
+  interval: 20s
+  timeout: 5s
+  retries: 5
+  start_period: 30s
+
+x-svc: &svc
+  restart: unless-stopped
+  stop_grace_period: 30s          # apagado ordenado (SIGTERM) antes de SIGKILL
+
+services:
+  # ------------------------- Borde y frontend -------------------------
+  edge:
+    <<: *svc
+    image: nginx:1.27-alpine
+    ports:
+      - "${EDGE_HTTP_PORT:-8080}:80"
+      - "${EDGE_HTTPS_PORT:-8443}:443"
+    environment:
+      EDGE_HTTPS_PORT: ${EDGE_HTTPS_PORT:-8443}
+    volumes:
+      - ./nginx/edge.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on: [frontend, gateway]
+    networks: [edge]
+    mem_limit: 128m
+
+  frontend:
+    <<: *svc
+    build: ./frontend/climguard-web
+    networks: [edge]
+    mem_limit: 128m
+
+  gateway:
+    <<: *svc
+    build: ./services/gateway
+    environment:
+      <<: *jwt-net
+      Cors__Origins: ${CORS_ORIGINS:-https://localhost:8443}
+    healthcheck: *dotnet-health
+    depends_on:
+      auth-service: {condition: service_healthy}
+    networks: [edge, services]
+    mem_limit: 256m
+
+  # ------------------------- Microservicios -------------------------
+  auth-service:                       # NestJS · PostgreSQL
+    <<: *svc
+    build: ./services/auth
+    environment:
+      <<: *jwt-flat
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES:-30}
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:?falta AUTH_DB_PASSWORD}
+      POSTGRES_DB: climguard_auth
+      AUDIT_API_URL: http://audit-service:8000
+      SEED_DEFAULT_USERS: ${SEED_DEFAULT_USERS:-false}
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [services, pg]
+    mem_limit: 256m
+
+  community-service:                  # .NET 10 · PostgreSQL
+    <<: *svc
+    build: ./services/community
+    environment:
+      <<: *jwt-net
+      ConnectionStrings__Default: Host=postgres;Database=climguard_community;Username=community;Password=${COMMUNITY_DB_PASSWORD:?falta COMMUNITY_DB_PASSWORD}
+      InternalApiKey: ${INTERNAL_API_KEY}
+      Seed__Demo: ${SEED_DEMO:-false}
+    healthcheck: *dotnet-health
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [services, pg]
+    mem_limit: 256m
+
+  sensor-service:                     # .NET 10 · SQL Server
+    <<: *svc
+    build: ./services/sensor
+    environment:
+      <<: *jwt-net
+      ConnectionStrings__Default: Server=sqlserver;Database=ClimGuardSensor;User Id=sa;Password=${MSSQL_SA_PASSWORD:?falta MSSQL_SA_PASSWORD};TrustServerCertificate=True
+      InternalApiKey: ${INTERNAL_API_KEY}
+      Cors__Origins: ${CORS_ORIGINS:-https://localhost:8443}
+      Simulator__Enabled: ${SIMULATOR_ENABLED:-false}
+      Seed__Demo: ${SEED_DEMO:-false}
+    healthcheck: *dotnet-health
+    depends_on:
+      sqlserver: {condition: service_healthy}
+    networks: [services, sql]
+    mem_limit: 384m
+
+  alert-service:                      # Java 21 · Spring Boot · PostgreSQL
+    <<: *svc
+    build: ./services/alert
+    environment:
+      <<: *jwt-flat
+      DB_URL: jdbc:postgresql://postgres:5432/climguard_alert
+      DB_USER: alert
+      DB_PASSWORD: ${ALERT_DB_PASSWORD:?falta ALERT_DB_PASSWORD}
+      AUDIT_API_URL: http://audit-service:8000
+      SEED_DEMO: ${SEED_DEMO:-false}
+    depends_on:
+      postgres: {condition: service_healthy}
+    networks: [services, pg]
+    mem_limit: 512m
+
+  report-service:                     # Python · FastAPI · MongoDB (+GridFS) · Jinja2 + WeasyPrint
+    <<: *svc
+    build: ./services/report
+    environment:
+      <<: *jwt-flat
+      MONGO_URL: mongodb://root:${MONGO_ROOT_PASSWORD:?falta MONGO_ROOT_PASSWORD}@mongo:27017/?authSource=admin
+      MONGO_DB: climguard_reports
+      COMMUNITY_API_URL: http://community-service:8080
+      SENSOR_API_URL: http://sensor-service:8080
+      ALERT_API_URL: http://alert-service:8080
+      AUDIT_API_URL: http://audit-service:8000
+      REPORT_TIMEZONE: ${REPORT_TIMEZONE:-America/Guatemala}
+      REPORT_MAX_ROWS: ${REPORT_MAX_ROWS:-5000}
+      REPORT_CONCURRENCY: ${REPORT_CONCURRENCY:-2}
+    depends_on:
+      mongo: {condition: service_healthy}
+    networks: [services, mongo]
+    mem_limit: 768m
+
+  audit-service:                      # Python · FastAPI · MongoDB
+    <<: *svc
+    build: ./services/audit
+    environment:
+      <<: *jwt-flat
+      MONGO_URL: mongodb://root:${MONGO_ROOT_PASSWORD}@mongo:27017/?authSource=admin
+      MONGO_DB: climguard_audit
+    depends_on:
+      mongo: {condition: service_healthy}
+    networks: [services, mongo]
+    mem_limit: 256m
+
+  # ------------------------- Datos -------------------------
+  postgres:
+    <<: *svc
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:?falta POSTGRES_SUPERUSER_PASSWORD}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
+      COMMUNITY_DB_PASSWORD: ${COMMUNITY_DB_PASSWORD}
+      ALERT_DB_PASSWORD: ${ALERT_DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [pg]
+    mem_limit: 384m
+
+  sqlserver:
+    <<: *svc
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: Developer
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+      MSSQL_MEMORY_LIMIT_MB: "1536"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
+    networks: [sql]
+    mem_limit: 2g
+
+  mongo:
+    <<: *svc
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet -u root -p \"$$MONGO_INITDB_ROOT_PASSWORD\" --authenticationDatabase admin --eval 'db.adminCommand(\"ping\").ok' | grep -q 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+    networks: [mongo]
+    mem_limit: 512m
+
+networks:
+  edge: {}
+  services: {internal: true}        # sin salida a Internet
+  pg: {internal: true}
+  sql: {internal: true}
+  mongo: {internal: true}
+
+volumes:
+  pgdata: {}
+  sqldata: {}
+  mongodata: {}
