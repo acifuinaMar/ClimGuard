@@ -184,15 +184,61 @@ rg.MapGet("", async (SensorDb db, HttpResponse res, int? sensorId, int? comunida
     return Results.Ok((await q.OrderByDescending(r => r.FechaHora).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync()).Select(ReadingDto.From));
 }).RequireAuthorization("user");
 
-rg.MapGet("/stats", async (SensorDb db, int? comunidadId, DateTime? desde, DateTime? hasta) =>
+rg.MapGet("/stats", async (
+    SensorDb db,
+    int? comunidadId,
+    DateTime? desde,
+    DateTime? hasta) =>
 {
-    var q = db.Readings.AsNoTracking().Join(db.Sensors, r => r.SensorId, s => s.SensorId, (r, s) => new { r, s });
-    if (comunidadId is not null) q = q.Where(x => x.s.ComunidadId == comunidadId);
-    if (desde is not null) q = q.Where(x => x.r.FechaHora >= desde.Value.ToUniversalTime());
-    if (hasta is not null) q = q.Where(x => x.r.FechaHora <= hasta.Value.ToUniversalTime());
-    var rows = await q.GroupBy(x => x.s.TipoSensorId)
-        .Select(g => new StatRow(g.Key, g.Count(), g.Average(x => x.r.Valor), g.Min(x => x.r.Valor), g.Max(x => x.r.Valor), g.Sum(x => x.r.Valor)))
-        .OrderBy(x => x.TipoSensorId).ToListAsync();
+    var q = db.Readings
+        .AsNoTracking()
+        .Join(
+            db.Sensors.AsNoTracking(),
+            r => r.SensorId,
+            s => s.SensorId,
+            (r, s) => new
+            {
+                r.Valor,
+                r.FechaHora,
+                s.ComunidadId,
+                s.TipoSensorId
+            });
+
+    if (comunidadId is not null)
+        q = q.Where(x => x.ComunidadId == comunidadId);
+
+    if (desde is not null)
+        q = q.Where(x => x.FechaHora >= desde.Value.ToUniversalTime());
+
+    if (hasta is not null)
+        q = q.Where(x => x.FechaHora <= hasta.Value.ToUniversalTime());
+
+    // EF Core realiza las agregaciones en SQL.
+    // La construcción de StatRow se hace después de obtener los resultados.
+    var agregados = await q
+        .GroupBy(x => x.TipoSensorId)
+        .Select(g => new
+        {
+            TipoSensorId = g.Key,
+            Total = g.Count(),
+            Promedio = g.Average(x => x.Valor),
+            Minimo = g.Min(x => x.Valor),
+            Maximo = g.Max(x => x.Valor),
+            Suma = g.Sum(x => x.Valor)
+        })
+        .ToListAsync();
+
+    var rows = agregados
+        .Select(x => new StatRow(
+            x.TipoSensorId,
+            x.Total,
+            x.Promedio,
+            x.Minimo,
+            x.Maximo,
+            x.Suma))
+        .OrderBy(x => x.TipoSensorId)
+        .ToList();
+
     return Results.Ok(rows);
 }).RequireAuthorization("user");
 

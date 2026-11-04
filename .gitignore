@@ -28,3 +28,7 @@ nginx/certs/
 
 # Manifiesto Kubernetes pendiente de revisión
 /k8s/climguard.yaml
+
+# Cachés generadas por Python
+__pycache__/
+*.py[cod]

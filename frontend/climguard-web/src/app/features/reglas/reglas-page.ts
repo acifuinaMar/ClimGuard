@@ -60,7 +60,7 @@ export class ReglasPage {
     this.error.set(null);
 
     forkJoin({
-      reglas: this.reglaService.listar().pipe(timeout(5000), catchError(() => of<ReglaAlerta[]>([]))),
+      reglas: this.reglaService.listar().pipe(timeout(5000)),
       niveles: this.catalogo.nivelesAlerta(),
       fenomenos: this.catalogo.tiposFenomeno(),
       tipos: this.catalogo.tiposSensor()
@@ -70,13 +70,8 @@ export class ReglasPage {
         this.fenomenos.set(fenomenos);
         this.tiposSensor.set(tipos);
 
-        if (reglas.length === 0) {
-          this.reglas.set(this.reglasEjemplo());
-          this.usandoEjemplo.set(true);
-        } else {
-          this.reglas.set(reglas);
-          this.usandoEjemplo.set(false);
-        }
+        this.reglas.set(reglas);
+        this.usandoEjemplo.set(false);
         this.cargando.set(false);
       },
       error: () => {
