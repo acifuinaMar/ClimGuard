@@ -66,6 +66,8 @@ using (var scope = app.Services.CreateScope())
             await Task.Delay(3000);
         }
     }
+    if (builder.Configuration.GetValue("Migrations:AutoApply", true))
+        await SchemaUpgrades.ApplyAsync(db, app.Logger);
     if (!await db.SensorTypes.AnyAsync())
     {
         db.SensorTypes.AddRange(new[] { ("Temperatura", "°C"), ("Humedad", "%"), ("Velocidad del viento", "km/h"), ("Lluvia", "mm"), ("Nivel de río", "m"), ("Nivel de reservorio", "m"), ("Humo / Incendio", "ppm"), ("Otro", "-") }
@@ -77,9 +79,9 @@ using (var scope = app.Services.CreateScope())
     {
         var now = DateTime.UtcNow;
         db.Sensors.AddRange(
-            new Sensor { Nombre = "Temperatura San Juan", Codigo = "TMP-001", Ubicacion = "Plaza central", Descripcion = "Sensor de temperatura ambiente", FechaInstalacion = now.AddMonths(-6), FechaUltimaConexion = now, ComunidadId = 1, TipoSensorId = 1, EstadoSensorId = 1, UsuarioIng = 1 },
-            new Sensor { Nombre = "Lluvia San Juan", Codigo = "LLV-001", Ubicacion = "Cerro norte", Descripcion = "Pluviómetro", FechaInstalacion = now.AddMonths(-6), FechaUltimaConexion = now, ComunidadId = 1, TipoSensorId = 4, EstadoSensorId = 1, UsuarioIng = 1 },
-            new Sensor { Nombre = "Nivel lago Panajachel", Codigo = "NVL-001", Ubicacion = "Muelle", Descripcion = "Nivel de agua del lago", FechaInstalacion = now.AddMonths(-3), FechaUltimaConexion = now, ComunidadId = 2, TipoSensorId = 5, EstadoSensorId = 1, UsuarioIng = 1 });
+            new Sensor { Nombre = "Temperatura San Juan", Codigo = "TMP-001", Ubicacion = "Plaza central", Descripcion = "Sensor de temperatura ambiente", FechaInstalacion = now.AddMonths(-6), FechaUltimaConexion = now, ComunidadId = 1, TipoSensorId = 1, EstadoSensorId = 1, Origen = OrigenSensor.Simulado, UsuarioIng = 1 },
+            new Sensor { Nombre = "Lluvia San Juan", Codigo = "LLV-001", Ubicacion = "Cerro norte", Descripcion = "Pluviómetro", FechaInstalacion = now.AddMonths(-6), FechaUltimaConexion = now, ComunidadId = 1, TipoSensorId = 4, EstadoSensorId = 1, Origen = OrigenSensor.Simulado, UsuarioIng = 1 },
+            new Sensor { Nombre = "Nivel lago Panajachel", Codigo = "NVL-001", Ubicacion = "Muelle", Descripcion = "Nivel de agua del lago", FechaInstalacion = now.AddMonths(-3), FechaUltimaConexion = now, ComunidadId = 2, TipoSensorId = 5, EstadoSensorId = 1, Origen = OrigenSensor.Simulado, UsuarioIng = 1 });
         await db.SaveChangesAsync();
     }
 }
@@ -96,13 +98,14 @@ app.MapGet("/api/sensor-states", async (SensorDb db) => Results.Ok(await db.Sens
 
 // ---- Sensores ----
 var sg = app.MapGroup("/api/sensors");
-sg.MapGet("", async (SensorDb db, HttpResponse res, int? comunidadId, int? tipoSensorId, int? estadoSensorId, int page = 1, int pageSize = 100) =>
+sg.MapGet("", async (SensorDb db, HttpResponse res, int? comunidadId, int? tipoSensorId, int? estadoSensorId, string? origen, int page = 1, int pageSize = 100) =>
 {
     (page, pageSize) = Page(page, pageSize);
     var q = db.Sensors.AsNoTracking().AsQueryable();
     if (comunidadId is not null) q = q.Where(s => s.ComunidadId == comunidadId);
     if (tipoSensorId is not null) q = q.Where(s => s.TipoSensorId == tipoSensorId);
     if (estadoSensorId is not null) q = q.Where(s => s.EstadoSensorId == estadoSensorId);
+    if (OrigenSensor.Normalizar(origen) is { } og) q = q.Where(s => s.Origen == og);
     res.Headers["X-Total-Count"] = (await q.CountAsync()).ToString();
     return Results.Ok((await q.OrderBy(s => s.SensorId).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync()).Select(SensorDto.From));
 }).RequireAuthorization("user");
@@ -137,7 +140,7 @@ sg.MapPost("", async (SensorInput i, ClaimsPrincipal u, SensorDb db, IHttpClient
     var now = DateTime.UtcNow;
     var s = new Sensor { Nombre = i.Nombre!.Trim(), Codigo = code, Ubicacion = i.Ubicacion!.Trim(), Descripcion = i.Descripcion?.Trim() ?? "",
         FechaInstalacion = i.FechaInstalacion ?? now, FechaUltimaConexion = now, ComunidadId = i.ComunidadId, TipoSensorId = i.TipoSensorId,
-        EstadoSensorId = i.EstadoSensorId, UsuarioIng = u.UserId() };
+        EstadoSensorId = i.EstadoSensorId, Origen = i.OrigenNormalizado ?? OrigenSensor.Fisico, UsuarioIng = u.UserId() };
     db.Sensors.Add(s); await db.SaveChangesAsync();
     return Results.Created($"/api/sensors/{s.SensorId}", SensorDto.From(s));
 }).RequireAuthorization("admin");
@@ -152,6 +155,7 @@ sg.MapPut("/{id:int}", async (int id, SensorInput i, ClaimsPrincipal u, SensorDb
     s.Nombre = i.Nombre!.Trim(); s.Codigo = code; s.Ubicacion = i.Ubicacion!.Trim(); s.Descripcion = i.Descripcion?.Trim() ?? "";
     if (i.FechaInstalacion is { } fi) s.FechaInstalacion = fi;
     s.ComunidadId = i.ComunidadId; s.TipoSensorId = i.TipoSensorId; s.EstadoSensorId = i.EstadoSensorId;
+    if (i.OrigenNormalizado is { } nuevoOrigen) s.Origen = nuevoOrigen;   // sin Origen en el cuerpo = no cambia
     s.UsuarioAct = u.UserId(); s.FechaAct = DateTime.UtcNow;
     await db.SaveChangesAsync();
     return Results.Ok(SensorDto.From(s));

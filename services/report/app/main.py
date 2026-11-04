@@ -9,7 +9,7 @@ from typing import Any, Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from .audit_client import AuditClient
@@ -18,7 +18,7 @@ from .config import Settings
 from .reports.catalog import REPORT_TYPES
 from .reports.filters import FILTER_SPECS, FilterError
 from .security import AuthError, Principal, authenticate, require
-from .service import ReportService
+from .service import ReportBusy, ReportService
 from .store import MongoStore
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
@@ -42,6 +42,12 @@ async def lifespan(app: FastAPI):
         n = await asyncio.to_thread(store.fail_stale, timedelta(minutes=15), "Interrumpido por reinicio del servicio")
         if n:
             log.warning("%s reportes pendientes marcados como FAILED", n)
+        t = await asyncio.to_thread(ReportService.cleanup_orphan_tmp, settings.tmp_dir)
+        if t:
+            log.warning("%s archivos temporales huérfanos eliminados", t)
+        if settings.pdf_retention_days > 0:
+            r = await asyncio.to_thread(store.purge_pdfs_older_than, settings.pdf_retention_days)
+            log.info("Retención: %s PDFs con más de %s días eliminados (los metadatos se conservan)", r, settings.pdf_retention_days)
     except Exception as exc:  # noqa: BLE001
         log.warning("MongoDB no disponible al iniciar: %s", type(exc).__name__)
     yield
@@ -61,6 +67,19 @@ app = FastAPI(title="ClimGuard Report Service", version="3.0.0", lifespan=lifesp
 async def _auth(_: Request, exc: AuthError):
     return JSONResponse(status_code=exc.status, content={"detail": exc.detail},
                         headers={"WWW-Authenticate": "Bearer"} if exc.status == 401 else None)
+
+
+@app.exception_handler(ReportBusy)
+async def _busy(_: Request, exc: ReportBusy):
+    return JSONResponse(status_code=429, content={"detail": exc.user_message, "code": "QUEUE_FULL"}, headers={"Retry-After": "30"})
+
+
+def _failure(final: Optional[dict]) -> HTTPException:
+    """Código HTTP según la causa real (antes todo era 502): límite superado → 422; origen caído → 502; error propio → 500."""
+    final = final or {}
+    code = final.get("errorCode")
+    detail = final.get("error", "No fue posible generar el reporte")
+    return HTTPException({"LIMIT_EXCEEDED": 422, "UPSTREAM": 502}.get(code, 500), detail)
 
 
 @app.exception_handler(FilterError)
@@ -139,10 +158,10 @@ async def generate(body: GenerateRequest, request: Request, p: Principal = Depen
         pdf = await service.run(meta["reportId"], p)
         final = await asyncio.to_thread(request.app.state.store.get, meta["reportId"])
         if pdf is None:
-            raise HTTPException(502, (final or {}).get("error", "No fue posible generar el reporte"))
+            raise _failure(final)
         await asyncio.to_thread(request.app.state.store.register_download, meta["reportId"], datetime.now(timezone.utc))
         return _pdf(final, pdf)
-    task = asyncio.create_task(service.run(meta["reportId"], p))
+    task = asyncio.create_task(service.run(meta["reportId"], p, return_bytes=False))
     request.app.state.tasks.add(task)
     task.add_done_callback(request.app.state.tasks.discard)
     return JSONResponse(status_code=202, content=jsonable_encoder(meta), headers={"Location": f"/api/reports/{meta['reportId']}"})
@@ -160,12 +179,26 @@ async def get_report(report_id: str, request: Request, p: Principal = Depends(pr
 @app.get("/api/reports/{report_id}/download")
 async def download(report_id: str, request: Request, p: Principal = Depends(principal)):
     require(p, "reports.download")  # RF-REP-10: solo administradores autorizados
-    meta, pdf = await svc(request).download(p, report_id)
+    meta, handle = await svc(request).open_download(p, report_id)
     if meta is None:
         raise HTTPException(404, "Reporte no encontrado")
-    if pdf is None:
+    if handle is None:
         raise HTTPException(409, f"El reporte no está disponible (estado: {meta.get('status')})")
-    return _pdf(meta, pdf)
+
+    def blocks():                       # el PDF sale de GridFS por bloques de 256 KiB: nunca completo en memoria
+        try:
+            while True:
+                b = handle.read(256 * 1024)
+                if not b:
+                    break
+                yield b
+        finally:
+            handle.close()
+
+    headers = {"Content-Disposition": f'attachment; filename="{meta["fileName"]}"', "X-Report-Id": meta["reportId"], "Cache-Control": "no-store"}
+    if getattr(handle, "length", None) is not None:
+        headers["Content-Length"] = str(handle.length)
+    return StreamingResponse(blocks(), media_type="application/pdf", headers=headers)
 
 
 @app.post("/api/reports/{kind}")
@@ -178,6 +211,6 @@ async def generate_legacy(kind: str, request: Request, p: Principal = Depends(pr
     pdf = await service.run(meta["reportId"], p)
     if pdf is None:
         final = await asyncio.to_thread(request.app.state.store.get, meta["reportId"])
-        raise HTTPException(502, (final or {}).get("error", "No fue posible generar el reporte"))
+        raise _failure(final)
     await asyncio.to_thread(request.app.state.store.register_download, meta["reportId"], datetime.now(timezone.utc))
     return _pdf(meta, pdf)

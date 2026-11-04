@@ -41,6 +41,13 @@ public final class Entities {
         @Column(nullable = false) public Integer tipoFenomenoId;
         @Column(nullable = false, length = 300) public String mensaje;
         public boolean activo = true;
+        /**
+         * true = regla LEGADA: creada con la semántica anterior (min/max = rango NORMAL, alerta FUERA del rango).
+         * Se sigue evaluando con esa semántica para no dejar el sistema sin alertas durante la transición, y NUNCA con la nueva,
+         * hasta que un administrador la convierta explícitamente (PUT /api/rules/{id}?convertirSemantica=true).
+         * La columna se agrega con DEFAULT true: las reglas existentes quedan como legadas; las nuevas nacen en false.
+         */
+        @Column(name = "requiere_revision", columnDefinition = "boolean default true") public boolean requiereRevision = false;
         public Integer usuarioIng; public Instant fechaIng = Instant.now();
         public Integer usuarioAct; public Instant fechaAct;
     }
@@ -65,6 +72,8 @@ public final class Entities {
         @Column(precision = 18, scale = 2) public BigDecimal umbralMin;
         @Column(precision = 18, scale = 2) public BigDecimal umbralMax;
         @Column(nullable = false) public Integer estadoAlertaId = 1;
+        /** Semántica con la que se generó: 1 = fuera del rango normal (anterior), 2 = dentro del intervalo de peligro [min,max]. */
+        @Column(name = "semantica_regla", columnDefinition = "smallint default 1") public Integer semanticaRegla = RuleEvaluator.SEMANTICS_VERSION;
         public Integer usuarioResponsableId;
         public Integer usuarioIng; public Instant fechaIng = Instant.now();
         public Integer usuarioAct; public Instant fechaAct;

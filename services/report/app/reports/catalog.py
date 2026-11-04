@@ -51,6 +51,9 @@ def _umbral(alert, rules):
         lo, hi = (rule.get("valorMin"), rule.get("valorMax")) if rule else (None, None)
     if lo is None or hi is None:
         return DASH
+    # semanticaRegla: 2 = intervalo de peligro [min,max] (actual); ausente/1 = alerta generada con la semántica anterior (fuera del rango normal)
+    if alert.get("semanticaRegla") == 2:
+        return f"entre {fmt_num(lo)} y {fmt_num(hi)}"
     return f"fuera de {fmt_num(lo)} – {fmt_num(hi)}"
 
 
@@ -79,7 +82,7 @@ def _name(index, key):
 
 # 1 comunidades --------------------------------------------------------------
 async def collect_communities(api: Apis, f):
-    c, s = await asyncio.gather(api.community.get_all("/api/communities"), api.sensor.get_all("/api/sensors"))
+    c, s = await asyncio.gather(api.community.get_all("/api/communities"), api.sensor.get_lookup("/api/sensors"))
     return {"communities": c, "sensors": s}
 
 
@@ -106,7 +109,7 @@ def build_communities(d, f, ctx):
 # 2 sensores -----------------------------------------------------------------
 async def collect_sensors(api, f):
     p = {k: f.get(k) for k in ("comunidadId", "tipoSensorId", "estadoSensorId")}
-    s, c, t, st = await asyncio.gather(api.sensor.get_all("/api/sensors", p), api.community.get_all("/api/communities"),
+    s, c, t, st = await asyncio.gather(api.sensor.get_all("/api/sensors", p), api.community.get_lookup("/api/communities"),
                                        api.sensor.get_json("/api/sensor-types"), api.sensor.get_json("/api/sensor-states"))
     return {"sensors": s, "communities": c, "types": t, "states": st}
 
@@ -133,8 +136,8 @@ def build_sensors(d, f, ctx):
 async def collect_readings(api, f):
     p = {k: f.get(k) for k in ("sensorId", "comunidadId", "tipoSensorId")}
     p.update(date_params(f))
-    r, s, c, t, st = await asyncio.gather(api.sensor.get_all("/api/readings", p), api.sensor.get_all("/api/sensors"),
-                                          api.community.get_all("/api/communities"), api.sensor.get_json("/api/sensor-types"),
+    r, s, c, t, st = await asyncio.gather(api.sensor.get_all("/api/readings", p), api.sensor.get_lookup("/api/sensors"),
+                                          api.community.get_lookup("/api/communities"), api.sensor.get_json("/api/sensor-types"),
                                           api.sensor.get_json("/api/sensor-states"))
     return {"readings": r, "sensors": s, "communities": c, "types": t, "states": st}
 
@@ -166,8 +169,8 @@ async def collect_alerts(api, f):
     p.update(date_params(f))
     a, lv, ph, st, ru, se, co = await asyncio.gather(
         api.alert.get_all("/api/alerts", p), api.alert.get_json("/api/levels"), api.alert.get_json("/api/phenomena"),
-        api.alert.get_json("/api/alert-states"), api.alert.get_json("/api/rules"), api.sensor.get_all("/api/sensors"),
-        api.community.get_all("/api/communities"))
+        api.alert.get_json("/api/alert-states"), api.alert.get_json("/api/rules"), api.sensor.get_lookup("/api/sensors"),
+        api.community.get_lookup("/api/communities"))
     return {"alerts": a, "levels": lv, "phenomena": ph, "states": st, "rules": ru, "sensors": se, "communities": co}
 
 
@@ -203,8 +206,8 @@ async def collect_event_history(api, f):
     p = {k: f.get(k) for k in ("comunidadId", "tipoFenomenoId")}
     p.update(date_params(f))
     e, lv, ph, se, co = await asyncio.gather(api.alert.get_all("/api/alerts/events", p), api.alert.get_json("/api/levels"),
-                                             api.alert.get_json("/api/phenomena"), api.sensor.get_all("/api/sensors"),
-                                             api.community.get_all("/api/communities"))
+                                             api.alert.get_json("/api/phenomena"), api.sensor.get_lookup("/api/sensors"),
+                                             api.community.get_lookup("/api/communities"))
     return {"events": e, "levels": lv, "phenomena": ph, "sensors": se, "communities": co}
 
 
@@ -229,7 +232,7 @@ def build_event_history(d, f, ctx):
 # 6 estado de sensores ---------------------------------------------------------
 async def collect_sensor_status(api, f):
     s, c, t, st = await asyncio.gather(api.sensor.get_all("/api/sensors", {"comunidadId": f.get("comunidadId")}),
-                                       api.community.get_all("/api/communities"), api.sensor.get_json("/api/sensor-types"),
+                                       api.community.get_lookup("/api/communities"), api.sensor.get_json("/api/sensor-types"),
                                        api.sensor.get_json("/api/sensor-states"))
     return {"sensors": s, "communities": c, "types": t, "states": st}
 
@@ -274,7 +277,7 @@ async def collect_climate_stats(api, f):
     p = {"comunidadId": f.get("comunidadId"), **date_params(f)}
     st, ty, ast, lv, ph, co = await asyncio.gather(api.sensor.get_json("/api/readings/stats", p), api.sensor.get_json("/api/sensor-types"),
                                                    api.alert.get_json("/api/alerts/stats", p), api.alert.get_json("/api/levels"),
-                                                   api.alert.get_json("/api/phenomena"), api.community.get_all("/api/communities"))
+                                                   api.alert.get_json("/api/phenomena"), api.community.get_lookup("/api/communities"))
     return {"stats": st, "types": ty, "alert_stats": ast, "levels": lv, "phenomena": ph, "communities": co}
 
 
@@ -313,7 +316,7 @@ def build_climate_stats(d, f, ctx):
 async def collect_executive(api, f):
     p = {"comunidadId": f.get("comunidadId"), **date_params(f)}
     co, se, st, ty, rs, ast, lv, ph = await asyncio.gather(
-        api.community.get_all("/api/communities"), api.sensor.get_all("/api/sensors", {"comunidadId": f.get("comunidadId")}),
+        api.community.get_lookup("/api/communities"), api.sensor.get_lookup("/api/sensors", {"comunidadId": f.get("comunidadId")}),
         api.sensor.get_json("/api/sensor-states"), api.sensor.get_json("/api/sensor-types"),
         api.sensor.get_json("/api/readings/stats", p), api.alert.get_json("/api/alerts/stats", p),
         api.alert.get_json("/api/levels"), api.alert.get_json("/api/phenomena"))

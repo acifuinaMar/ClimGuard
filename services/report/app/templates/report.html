@@ -9,7 +9,7 @@
       @top-left   { content: "ClimGuard · Sistema de monitoreo climático"; font-size: 8px; color: #64748b; }
       @top-right  { content: "Documento generado automáticamente"; font-size: 8px; color: #64748b; }
       @bottom-left   { content: "{{ meta.report_id }}"; font-size: 8px; color: #64748b; }
-      @bottom-center { content: "Página " counter(page) " de " counter(pages); font-size: 9px; color: #64748b; }
+      {% if not meta.stamp_pages %}@bottom-center { content: "Página " counter(page) " de " counter(pages); font-size: 9px; color: #64748b; }{% endif %}
       @bottom-right  { content: "ClimGuard Report Service"; font-size: 8px; color: #64748b; }
     }
     body { font-family: "DejaVu Sans", Arial, sans-serif; color: #243447; font-size: 9.5px; }
@@ -41,6 +41,7 @@
 </head>
 <body>
   {% set num_cols = ['Valor','Cantidad','Lecturas','Promedio','Mínimo','Máximo','Acumulado','Sensores','Alertas'] %}
+  {% if meta.first %}
   <header class="top">
     <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" aria-label="ClimGuard">
       <path d="M32 3 6 13v17c0 15 10.5 26.5 26 31 15.5-4.5 26-16 26-31V13L32 3z" fill="#087e8b"/>
@@ -60,6 +61,7 @@
     {% endfor %}
   </table>
   {% if doc.truncated %}<div class="warnbox">Resultado limitado a {{ meta.max_rows }} registros por rendimiento. Aplique filtros (fechas, comunidad, sensor) para acotar el reporte.</div>{% endif %}
+  {% endif %}
   {% for sec in doc.sections %}
     {% if sec.title %}<h2>{{ sec.title }}</h2>{% endif %}
     {% if sec.cards %}<div class="cards">{% for c in sec.cards %}<div class="card {{ c.tone }}"><div class="v">{{ c.value }}</div><div class="l">{{ c.label }}</div></div>{% endfor %}</div>{% endif %}
@@ -75,6 +77,6 @@
     {% if sec.note %}<div class="note">{{ sec.note }}</div>{% endif %}
   {% endfor %}
   {% for n in doc.notes %}<div class="note">{{ n }}</div>{% endfor %}
-  <footer class="end">Reporte generado por ClimGuard Report Service · {{ meta.report_id }} · {{ doc.row_count }} registro(s).</footer>
+  {% if meta.last %}<footer class="end">Reporte generado por ClimGuard Report Service · {{ meta.report_id }} · {{ doc.row_count }} registro(s).</footer>{% endif %}
 </body>
 </html>

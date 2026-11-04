@@ -67,7 +67,7 @@ public class AlertController {
     private void validate(AlertRule in) {
         if (in.tipoSensorId == null || in.valorMin == null || in.valorMax == null || in.nivelAlertaId == null || in.tipoFenomenoId == null
                 || in.mensaje == null || in.mensaje.isBlank()) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Faltan campos obligatorios de la regla");
-        if (in.valorMin.compareTo(in.valorMax) > 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "valorMin no puede superar a valorMax");
+        if (in.valorMin.compareTo(in.valorMax) > 0) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "valorMin no puede superar a valorMax (el intervalo [valorMin, valorMax] es el que ACTIVA la alerta)");
         if (!levels.existsById(in.nivelAlertaId) || !phenomena.existsById(in.tipoFenomenoId)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nivel o fenómeno inválido");
     }
     @PostMapping("/api/rules") @ResponseStatus(HttpStatus.CREATED)
@@ -75,17 +75,25 @@ public class AlertController {
         var u = sec.admin(r); validate(in);
         if (in.nombre == null || in.nombre.isBlank()) in.nombre = in.mensaje;
         in.reglaAlertaId = null; in.usuarioIng = parse(u.id()); in.fechaIng = Instant.now();
+        in.requiereRevision = false;   // una regla nueva ya nace con la semántica de intervalo de peligro
         AlertRule s = rules.save(in);
         audit.emit("RULE_CREATED", "ReglaAlerta", u.id(), u.username(), Map.of("id", s.reglaAlertaId, "descripcion", "Regla creada"));
         return s;
     }
     @PutMapping("/api/rules/{id}")
-    public AlertRule updateRule(@PathVariable Long id, @RequestBody AlertRule in, HttpServletRequest r) {
+    public AlertRule updateRule(@PathVariable Long id, @RequestBody AlertRule in,
+                                @RequestParam(defaultValue = "false") boolean convertirSemantica, HttpServletRequest r) {
         var u = sec.admin(r); validate(in);
         AlertRule x = rules.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Regla no encontrada"));
         x.nombre = (in.nombre == null || in.nombre.isBlank()) ? in.mensaje : in.nombre; x.tipoSensorId = in.tipoSensorId; x.valorMin = in.valorMin; x.valorMax = in.valorMax; x.nivelAlertaId = in.nivelAlertaId;
-        x.tipoFenomenoId = in.tipoFenomenoId; x.mensaje = in.mensaje.trim(); x.activo = in.activo; x.usuarioAct = parse(u.id()); x.fechaAct = Instant.now();
-        audit.emit("RULE_UPDATED", "ReglaAlerta", u.id(), u.username(), Map.of("id", id, "descripcion", "Regla modificada"));
+        x.tipoFenomenoId = in.tipoFenomenoId; x.mensaje = in.mensaje.trim(); x.activo = in.activo;
+        // Una regla legada NO cambia de semántica por el simple hecho de editarla: solo con confirmación explícita
+        // (convertirSemantica=true), y entonces min/max que se envían se interpretan como intervalo que ACTIVA la alerta.
+        boolean convierte = convertirSemantica && x.requiereRevision;
+        if (convierte) x.requiereRevision = false;
+        x.usuarioAct = parse(u.id()); x.fechaAct = Instant.now();
+        audit.emit(convierte ? "RULE_SEMANTICS_CONVERTED" : "RULE_UPDATED", "ReglaAlerta", u.id(), u.username(),
+                Map.of("id", id, "descripcion", convierte ? "Regla convertida a la semántica de intervalo de peligro" : "Regla modificada"));
         return rules.save(x);
     }
     @DeleteMapping("/api/rules/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -144,12 +152,38 @@ public class AlertController {
     @PostMapping("/api/alerts/evaluate")
     public ResponseEntity<Map<String, Object>> evaluate(@RequestBody Evaluate in, HttpServletRequest r) {
         if (!sec.internalOk(r)) sec.operator(r);
-        Optional<Alert> a = svc.evaluate(in);
+        AlertService.Outcome o = svc.evaluate(in);
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("generated", a.isPresent());
-        body.put("alert", a.map(x -> Map.of("alertaId", x.alertaId, "comunidadId", x.comunidadId, "sensorId", x.sensorId,
-                "tipoFenomenoIdSnap", x.tipoFenomenoIdSnap, "nivelAlertaIdSnap", x.nivelAlertaIdSnap, "mensajeSnap", x.mensajeSnap,
-                "fechaHora", x.fechaHora, "activo", x.activo)).orElse(null));
+        // Compatibilidad: "generated" y "alert" conservan su significado (alerta NUEVA creada en esta llamada).
+        body.put("generated", o.generated());
+        body.put("alert", o.alerta() == null ? null : Map.of("alertaId", o.alerta().alertaId, "comunidadId", o.alerta().comunidadId, "sensorId", o.alerta().sensorId,
+                "tipoFenomenoIdSnap", o.alerta().tipoFenomenoIdSnap, "nivelAlertaIdSnap", o.alerta().nivelAlertaIdSnap, "mensajeSnap", o.alerta().mensajeSnap,
+                "fechaHora", o.alerta().fechaHora, "activo", o.alerta().activo));
+        // Nuevo: la condición de peligro existe aunque el cooldown haya impedido crear otra alerta.
+        body.put("condicionPeligro", dangerBody(o.condicion()));
+        body.put("suprimidaPorCooldown", o.suprimidaPorCooldown());
         return ResponseEntity.ok(body);
+    }
+
+    private static Map<String, Object> dangerBody(RuleEvaluator.RuleView v) {
+        return v == null ? null : Map.of("reglaAlertaId", v.id(), "nivelAlertaId", v.nivelAlertaId(), "tipoSensorId", v.tipoSensorId(),
+                "min", v.min(), "max", v.max(), "semantica", v.semantica());
+    }
+
+    /** Nivel de peligro de un valor según las reglas vigentes, sin crear alertas ni aplicar cooldown. */
+    @GetMapping("/api/rules/classify")
+    public Map<String, Object> classify(@RequestParam Integer tipoSensorId, @RequestParam java.math.BigDecimal valor, HttpServletRequest r) {
+        sec.user(r);
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("tipoSensorId", tipoSensorId); body.put("valor", valor);
+        body.put("condicionPeligro", dangerBody(svc.classify(tipoSensorId, valor).orElse(null)));
+        return body;
+    }
+
+    /** Reglas legadas (semántica anterior) pendientes de conversión. Siguen evaluándose con su semántica original. */
+    @GetMapping("/api/rules/pending-review")
+    public Map<String, Object> pendingReview(HttpServletRequest r) {
+        sec.user(r);
+        return Map.of("cantidad", rules.countByRequiereRevisionTrue());
     }
 }

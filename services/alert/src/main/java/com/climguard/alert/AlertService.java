@@ -32,26 +32,45 @@ public class AlertService {
         this.cooldown = Duration.ofSeconds(cooldownSeconds);
     }
 
-    /** Evalúa una lectura; devuelve la alerta creada o vacío (dentro de rango / en enfriamiento). */
+    /**
+     * Resultado de evaluar una lectura. Distingue tres cosas que antes se confundían:
+     * la condición de peligro (existe mientras el valor esté en un intervalo), la alerta creada y la supresión por cooldown.
+     */
+    public record Outcome(RuleView condicion, Alert alerta, boolean suprimidaPorCooldown) {
+        public boolean generated() { return alerta != null; }
+    }
+
+    private List<RuleView> evaluableRules() {
+        // Las reglas legadas (requiereRevision) se evalúan con SU semántica original; nunca con la nueva.
+        return rules.findByActivoTrue().stream()
+                .map(r -> new RuleView(r.reglaAlertaId, r.tipoSensorId, r.valorMin, r.valorMax, r.nivelAlertaId, r.activo, r.requiereRevision)).toList();
+    }
+
+    /** Nivel de peligro de un valor SIN crear nada y sin cooldown (para pantallas y consultas). */
+    @Transactional(readOnly = true)
+    public Optional<RuleView> classify(int tipoSensorId, BigDecimal valor) {
+        return RuleEvaluator.evaluate(evaluableRules(), tipoSensorId, valor);
+    }
+
+    /** Evalúa una lectura: calcula la condición de peligro y, si el cooldown lo permite, crea la alerta. */
     @Transactional
-    public Optional<Alert> evaluate(Evaluate e) {
+    public Outcome evaluate(Evaluate e) {
         if (e.sensorId() == null || e.comunidadId() == null || e.tipoSensorId() == null || e.valor() == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sensorId, comunidadId, tipoSensorId y valor son obligatorios");
-        List<RuleView> views = rules.findByActivoTrue().stream()
-                .map(r -> new RuleView(r.reglaAlertaId, r.tipoSensorId, r.valorMin, r.valorMax, r.nivelAlertaId, r.activo)).toList();
-        Optional<RuleView> hit = RuleEvaluator.evaluate(views, e.tipoSensorId(), e.valor());
-        if (hit.isEmpty()) return Optional.empty();
+        Optional<RuleView> hit = RuleEvaluator.evaluate(evaluableRules(), e.tipoSensorId(), e.valor());
+        if (hit.isEmpty()) return new Outcome(null, null, false);   // sin reglas aplicables o fuera de todos los intervalos
         RuleView rv = hit.get();
         Instant when = e.fechaHora() != null ? e.fechaHora() : Instant.now();
-        if (RuleEvaluator.suppressed(alerts.lastAt(e.sensorId(), rv.id()), when, cooldown)) return Optional.empty();
+        if (RuleEvaluator.suppressed(alerts.lastAt(e.sensorId(), rv.id()), when, cooldown)) return new Outcome(rv, null, true);
         AlertRule rule = rules.findById(rv.id()).orElseThrow();
         Alert a = new Alert();
         a.valorDetectado = e.valor(); a.mensajeSnap = rule.mensaje; a.nivelAlertaIdSnap = rule.nivelAlertaId;
         a.tipoFenomenoIdSnap = rule.tipoFenomenoId; a.fechaHora = when; a.sensorId = e.sensorId(); a.comunidadId = e.comunidadId();
         a.reglaAlertaId = rule.reglaAlertaId; a.umbralMin = rule.valorMin; a.umbralMax = rule.valorMax; a.estadoAlertaId = 1; a.usuarioIng = 1;
+        a.semanticaRegla = rv.semantica();
         alerts.save(a);
         record(a, "Alerta generada", "Alerta generada por " + rule.mensaje, null);
-        return Optional.of(a);
+        return new Outcome(rv, a, false);
     }
 
     @Transactional

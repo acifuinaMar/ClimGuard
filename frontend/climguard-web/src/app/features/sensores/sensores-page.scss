@@ -157,3 +157,8 @@
 .confirmar h2 { font-size: 1.05rem; font-weight: 650; }
 .confirmar p { font-size: .92rem; color: var(--cg-texto-suave); }
 .confirmar__pie { display: flex; justify-content: flex-end; gap: .6rem; margin-top: .4rem; }
+
+/* Origen de las lecturas: físico (dispositivo real) vs simulado (generado por el backend). */
+.origen { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 600; background: #e2e8f0; color: #334155; }
+.origen--fisico { background: #dbeafe; color: #1e40af; }
+.origen--simulado { background: #fef3c7; color: #92400e; }

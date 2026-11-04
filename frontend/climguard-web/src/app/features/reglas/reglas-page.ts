@@ -1,4 +1,4 @@
-import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { forkJoin, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 
@@ -6,6 +6,7 @@ import { ReglaAlerta } from '../../core/models/regla-alerta.model';
 import { NivelAlertaCat, TipoFenomenoCat, TipoSensorCat } from '../../core/models/catalogo.model';
 import { ReglaAlertaService } from '../../core/services/regla-alerta.service';
 import { CatalogoService } from '../../core/services/catalogo.service';
+import { PeligroService } from '../../core/services/peligro.service';
 import { SiPermisoDirective } from '../../shared/si-permiso.directive';
 import { ReglaForm } from './regla-form';
 import { detalleError } from '../../core/http-error';
@@ -31,11 +32,15 @@ import { detalleError } from '../../core/http-error';
 export class ReglasPage {
   private reglaService = inject(ReglaAlertaService);
   private catalogo = inject(CatalogoService);
+  private peligro = inject(PeligroService);
 
   reglas = signal<ReglaAlerta[]>([]);
   niveles = signal<NivelAlertaCat[]>([]);
   fenomenos = signal<TipoFenomenoCat[]>([]);
   tiposSensor = signal<TipoSensorCat[]>([]);
+
+  /** Reglas LEGADAS (semántica anterior) aún sin convertir; el backend las sigue evaluando con su semántica original. */
+  pendientes = computed(() => this.reglas().filter(r => r.requiereRevision).length);
 
   cargando = signal(true);
   error = signal<string | null>(null);
@@ -133,6 +138,7 @@ export class ReglasPage {
         this.guardando.set(false);
         this.cerrarForm();
         this.mostrarAviso(regla.reglaAlertaId === 0 ? 'Regla creada.' : 'Regla actualizada.');
+        this.peligro.recargar().subscribe();   // dashboard, mapa y sensores usan estas mismas reglas
         this.cargar();
       },
       error: (err) => {

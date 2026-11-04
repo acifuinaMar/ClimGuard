@@ -87,6 +87,8 @@ export class SensorService {
       comunidadId: s.comunidadId,
       tipoSensorId: s.tipoSensorId,
       estadoSensorId: s.estadoSensorId,
+      // Siempre se reenvía el origen: si se omitiera, el backend lo dejaría igual, pero así queda explícito.
+      origen: s.origen,
       usuarioLogeado: this.usuario
     };
   }

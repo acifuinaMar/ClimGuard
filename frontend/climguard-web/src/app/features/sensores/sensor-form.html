@@ -61,6 +61,22 @@
       </div>
 
       <div class="campo">
+        <label for="origen">Origen de las lecturas</label>
+        <select id="origen" formControlName="origen" (change)="alCambiarOrigen()"
+                [class.malo]="origenCtrl.invalid && origenCtrl.touched">
+          <option value="" disabled>Seleccione…</option>
+          @for (o of origenes; track o.valor) {
+            <option [value]="o.valor">{{ o.nombre }}</option>
+          }
+        </select>
+        @if (origenCtrl.touched && origenCtrl.hasError('required')) {
+          <span class="error">Indique si el sensor es físico o simulado.</span>
+        }
+        @if (ayudaOrigen()) { <span class="ayuda">{{ ayudaOrigen() }}</span> }
+        <span class="ayuda">No depende del estado: un sensor físico y uno simulado pueden estar activos a la vez.</span>
+      </div>
+
+      <div class="campo">
         <label for="ubicacion">Ubicación</label>
         <input id="ubicacion" type="text" formControlName="ubicacion"
                placeholder="Ej.: Orilla del río Motagua"

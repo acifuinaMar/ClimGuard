@@ -6,6 +6,15 @@ namespace ClimGuard.Sensor;
 public class SensorType { public int TipoSensorId { get; set; } public string Nombre { get; set; } = ""; public string UnidadMedida { get; set; } = ""; public bool Activo { get; set; } = true; }
 public class SensorState { public int EstadoSensorId { get; set; } public string Nombre { get; set; } = ""; public bool Activo { get; set; } = true; }
 
+/// <summary>Origen de las lecturas de un sensor. Es independiente del estado activo/inactivo.</summary>
+public static class OrigenSensor
+{
+    public const string Fisico = "FISICO";       // envía lecturas por HTTP POST /api/readings
+    public const string Simulado = "SIMULADO";   // el Simulator genera lecturas automáticas
+    public static bool EsValido(string? v) => v is Fisico or Simulado;
+    public static string? Normalizar(string? v) => string.IsNullOrWhiteSpace(v) ? null : v.Trim().ToUpperInvariant();
+}
+
 public class Sensor
 {
     public int SensorId { get; set; }
@@ -19,6 +28,8 @@ public class Sensor
     public int ComunidadId { get; set; }   // referencia lógica: la comunidad vive en Community Service
     public int TipoSensorId { get; set; }
     public int EstadoSensorId { get; set; }
+    /// <summary>FISICO | SIMULADO. Solo los SIMULADO activos reciben lecturas automáticas.</summary>
+    public string Origen { get; set; } = OrigenSensor.Fisico;
     public int UsuarioIng { get; set; }
     public DateTime FechaIng { get; set; } = DateTime.UtcNow;
     public int? UsuarioAct { get; set; }
@@ -57,6 +68,7 @@ public class SensorDb(DbContextOptions<SensorDb> o) : DbContext(o)
             e.ToTable("Sensor"); e.HasKey(x => x.SensorId);
             e.Property(x => x.Nombre).HasMaxLength(120); e.Property(x => x.Codigo).HasMaxLength(40);
             e.Property(x => x.Ubicacion).HasMaxLength(200); e.Property(x => x.Descripcion).HasMaxLength(500);
+            e.Property(x => x.Origen).HasMaxLength(10).IsRequired().HasDefaultValue(OrigenSensor.Fisico);
             e.HasIndex(x => x.Codigo).IsUnique(); e.HasIndex(x => x.ComunidadId);
             e.HasOne<SensorType>().WithMany().HasForeignKey(x => x.TipoSensorId);
             e.HasOne<SensorState>().WithMany().HasForeignKey(x => x.EstadoSensorId);
@@ -74,17 +86,21 @@ public class UtcConverter() : Microsoft.EntityFrameworkCore.Storage.ValueConvers
     v => v.Kind == DateTimeKind.Utc ? v : v.ToUniversalTime(), v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
 public record SensorDto(int SensorId, string Nombre, string Codigo, string Ubicacion, string Descripcion, DateTime FechaInstalacion,
-    DateTime FechaUltimaConexion, decimal ValorActual, int ComunidadId, int TipoSensorId, int EstadoSensorId, int UsuarioIng, DateTime FechaIng, int? UsuarioAct, DateTime? FechaAct)
+    DateTime FechaUltimaConexion, decimal ValorActual, int ComunidadId, int TipoSensorId, int EstadoSensorId, int UsuarioIng, DateTime FechaIng, int? UsuarioAct, DateTime? FechaAct, string Origen)
 {
     public static SensorDto From(Sensor s) => new(s.SensorId, s.Nombre, s.Codigo, s.Ubicacion, s.Descripcion, s.FechaInstalacion, s.FechaUltimaConexion,
-        s.ValorActual, s.ComunidadId, s.TipoSensorId, s.EstadoSensorId, s.UsuarioIng, s.FechaIng, s.UsuarioAct, s.FechaAct is { } fa ? DateTime.SpecifyKind(fa, DateTimeKind.Utc) : null);
+        s.ValorActual, s.ComunidadId, s.TipoSensorId, s.EstadoSensorId, s.UsuarioIng, s.FechaIng, s.UsuarioAct, s.FechaAct is { } fa ? DateTime.SpecifyKind(fa, DateTimeKind.Utc) : null, s.Origen);
 }
 
 public record SensorInput(string? Nombre, string? Codigo, string? Ubicacion, string? Descripcion, DateTime? FechaInstalacion,
-    int ComunidadId, int TipoSensorId, int EstadoSensorId)
+    int ComunidadId, int TipoSensorId, int EstadoSensorId, string? Origen = null)
 {
+    /// <summary>Origen ya normalizado (null = no informado).</summary>
+    public string? OrigenNormalizado => OrigenSensor.Normalizar(Origen);
+
     public string? Validate()
     {
+        if (OrigenNormalizado is { } o && !OrigenSensor.EsValido(o)) return "Origen inválido: use FISICO o SIMULADO";
         if (string.IsNullOrWhiteSpace(Nombre) || Nombre.Length > 120) return "Nombre obligatorio (máx. 120)";
         if (string.IsNullOrWhiteSpace(Codigo) || Codigo.Length > 40) return "Código obligatorio (máx. 40)";
         if (string.IsNullOrWhiteSpace(Ubicacion)) return "Ubicación obligatoria";

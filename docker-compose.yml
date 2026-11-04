@@ -107,6 +107,7 @@ services:
       Cors__Origins: ${CORS_ORIGINS:-https://localhost:8443}
       Simulator__Enabled: ${SIMULATOR_ENABLED:-false}
       Seed__Demo: ${SEED_DEMO:-false}
+      Migrations__AutoApply: ${SENSOR_MIGRATIONS_AUTOAPPLY:-true}   # false = aplicar scripts/migrations/sensor-001-origen.sql a mano
     healthcheck: *dotnet-health
     depends_on:
       sqlserver: {condition: service_healthy}
@@ -140,8 +141,15 @@ services:
       ALERT_API_URL: http://alert-service:8080
       AUDIT_API_URL: http://audit-service:8000
       REPORT_TIMEZONE: ${REPORT_TIMEZONE:-America/Guatemala}
-      REPORT_MAX_ROWS: ${REPORT_MAX_ROWS:-5000}
-      REPORT_CONCURRENCY: ${REPORT_CONCURRENCY:-2}
+      # Límites de reportes (ver RECURSOS-VPS.md). Valores iniciales CONSERVADORES, no medidos con WeasyPrint real:
+      # validar con `python -m bench.bench_report` dentro del contenedor antes de subirlos.
+      REPORT_MAX_ROWS: ${REPORT_MAX_ROWS:-100}             # tope de filas; 100 hasta medir con WeasyPrint real (RECURSOS-VPS.md)
+      REPORT_ON_LIMIT: ${REPORT_ON_LIMIT:-fail}            # fail = error claro al superar el tope | truncate = recorta y lo avisa
+      REPORT_CHUNK_ROWS: ${REPORT_CHUNK_ROWS:-250}         # filas por trozo de PDF (memoria de WeasyPrint acotada por trozo)
+      REPORT_CONCURRENCY: ${REPORT_CONCURRENCY:-1}         # PDFs generándose a la vez
+      REPORT_MAX_QUEUE: ${REPORT_MAX_QUEUE:-4}             # PENDING+PROCESSING máximos; más → HTTP 429
+      REPORT_LOOKUP_MAX_ROWS: ${REPORT_LOOKUP_MAX_ROWS:-5000}
+      MALLOC_ARENA_MAX: "2"                                # menos fragmentación de glibc con Pango/cairo
     depends_on:
       mongo: {condition: service_healthy}
     networks: [services, mongo]

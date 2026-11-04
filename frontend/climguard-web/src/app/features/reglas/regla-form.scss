@@ -110,3 +110,5 @@ form { display: flex; flex-direction: column; gap: .9rem; padding: 1.2rem 1.3rem
   color: var(--cg-texto-suave);
 }
 .btn--claro:hover:not(:disabled) { background: var(--cg-superficie-2); }
+
+.legado { background: #fff7e0; border: 1px solid #f0c36d; border-radius: 8px; padding: .6rem .8rem; margin-bottom: .8rem; font-size: .9rem; display: flex; flex-direction: column; gap: .4rem; }

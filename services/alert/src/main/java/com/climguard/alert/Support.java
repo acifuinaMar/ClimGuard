@@ -60,12 +60,20 @@ class Seed implements CommandLineRunner {
         if (phen.count() == 0) for (String n : List.of("Inundación", "Sequía", "Tormenta", "Helada", "Incendio Forestal")) { Phenomenon p = new Phenomenon(); p.nombre = n; phen.save(p); }
         if (states.count() == 0) for (String n : List.of("Activa", "Atendida", "Cerrada")) { AlertState s = new AlertState(); s.nombre = n; states.save(s); }
         if (demo && rules.count() == 0) {
+            // SEMÁNTICA v2: [min, max] es el intervalo que ACTIVA la alerta (inclusivo).
             // tipoSensorId: 1 Temperatura, 2 Humedad, 4 Lluvia, 5 Nivel de río (catálogo de Sensor Service)
-            Object[][] d = {{1, 10, 35, 3, 4, "Temperatura fuera de rango"}, {2, 20, 90, 2, 3, "Humedad fuera de rango"},
-                            {4, 0, 80, 3, 1, "Lluvia intensa"}, {5, 0, 85, 4, 1, "Nivel de río crítico"}};
+            // nivel: 1 Normal, 2 Precaución, 3 Alerta, 4 Emergencia · fenómeno: 1 Inundación, 2 Sequía, 3 Tormenta, 4 Helada, 5 Incendio Forestal
+            Object[][] d = {
+                {"Temperatura elevada", 1, 35, 100, 4, 5, "Temperatura elevada: riesgo de incendio"},
+                {"Temperatura de helada", 1, -50, 2, 3, 4, "Temperatura de helada"},
+                {"Humedad baja", 2, 0, 20, 3, 2, "Humedad baja: riesgo de sequía"},
+                {"Lluvia intensa", 4, 80, 1000, 3, 3, "Lluvia intensa"},
+                {"Nivel de río crítico", 5, 85, 1000, 4, 1, "Nivel de río crítico"}};
             for (Object[] x : d) {
-                AlertRule r = new AlertRule(); r.tipoSensorId = (Integer) x[0]; r.valorMin = BigDecimal.valueOf((Integer) x[1]); r.valorMax = BigDecimal.valueOf((Integer) x[2]);
-                r.nivelAlertaId = (Integer) x[3]; r.tipoFenomenoId = (Integer) x[4]; r.mensaje = (String) x[5]; r.usuarioIng = 1; rules.save(r);
+                AlertRule r = new AlertRule(); r.nombre = (String) x[0]; r.tipoSensorId = (Integer) x[1];
+                r.valorMin = BigDecimal.valueOf((Integer) x[2]); r.valorMax = BigDecimal.valueOf((Integer) x[3]);
+                r.nivelAlertaId = (Integer) x[4]; r.tipoFenomenoId = (Integer) x[5]; r.mensaje = (String) x[6]; r.usuarioIng = 1;
+                r.requiereRevision = false; rules.save(r);
             }
         }
     }

@@ -1,7 +1,7 @@
 <header class="cabecera">
   <div>
     <h1>Reglas de alerta</h1>
-    <p class="cabecera__sub">Umbrales que disparan cada alerta</p>
+    <p class="cabecera__sub">Las reglas nuevas se activan cuando la lectura está <strong>dentro</strong> del intervalo [mínimo, máximo] (extremos incluidos)</p>
   </div>
   <div class="cabecera__acciones">
     @if (usandoEjemplo()) {
@@ -13,6 +13,15 @@
     <button type="button" class="btn btn--primario" (click)="nuevo()" *siPermiso="'reglas.gestionar'">+ Nueva regla</button>
   </div>
 </header>
+
+@if (pendientes() > 0) {
+  <div class="aviso-mal" role="alert">
+    <strong>{{ pendientes() }} regla(s) con la semántica anterior.</strong>
+    Para ellas mínimo–máximo es el rango <em>normal</em> y la alerta se genera <em>fuera</em> de él. Siguen funcionando así, sin cambios,
+    hasta que las convierta: edite la regla, marque «Convertir a la semántica nueva» e indique el intervalo que <em>activa</em> la alerta.
+    Nunca se convierten solas.
+  </div>
+}
 
 @if (aviso()) {
   <div class="aviso-ok" role="status">{{ aviso() }}</div>
@@ -41,7 +50,7 @@
         <tr>
           <th>Regla</th>
           <th>Tipo de sensor</th>
-          <th>Rango</th>
+          <th>Intervalo</th>
           <th>Nivel</th>
           <th>Fenómeno</th>
           <th>Estado</th>
@@ -58,7 +67,10 @@
 
             <td>{{ nombreTipoSensor(r.tipoSensorId) }}</td>
 
-            <td class="num">{{ r.valorMin }} – {{ r.valorMax }}</td>
+            <td class="num">
+              @if (r.requiereRevision) { Normal {{ r.valorMin }} – {{ r.valorMax }} <span class="sub">alerta fuera del rango</span> }
+              @else { Se activa entre {{ r.valorMin }} – {{ r.valorMax }} }
+            </td>
 
             <td>
               <span class="pastel" [style.background]="colorNivel(r.nivelAlertaId)">
@@ -72,6 +84,9 @@
               <span class="estado-badge" [class.estado-badge--on]="r.activo">
                 {{ r.activo ? 'Activa' : 'Inactiva' }}
               </span>
+              @if (r.requiereRevision) {
+                <span class="estado-badge" title="Semántica anterior (alerta fuera del rango normal). Se evalúa así hasta que se convierta.">Semántica anterior</span>
+              }
             </td>
 
             <td class="der">

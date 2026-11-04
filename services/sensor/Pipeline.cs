@@ -48,6 +48,7 @@ public class ReadingPipeline(IServiceScopeFactory scopes, IHttpClientFactory htt
 
 public class SimulationState { public volatile bool Enabled; }
 
+/// <summary>Genera lecturas automáticas SOLO para sensores SIMULADOS y activos. Los FISICOS envían por POST /api/readings.</summary>
 public class Simulator(IServiceScopeFactory scopes, ReadingPipeline pipeline, SimulationState state, IConfiguration cfg, ILogger<Simulator> log) : BackgroundService
 {
     private readonly Random _rnd = new();
@@ -65,7 +66,7 @@ public class Simulator(IServiceScopeFactory scopes, ReadingPipeline pipeline, Si
                     List<int> ids;
                     using (var scope = scopes.CreateScope())
                         ids = await scope.ServiceProvider.GetRequiredService<SensorDb>().Sensors.AsNoTracking()
-                            .Where(s => s.EstadoSensorId == 1).Select(s => s.SensorId).ToListAsync(ct);
+                            .Where(s => s.EstadoSensorId == 1 && s.Origen == OrigenSensor.Simulado).Select(s => s.SensorId).ToListAsync(ct);
                     foreach (var id in ids)
                         await pipeline.RecordAsync(id, Math.Round((decimal)(_rnd.NextDouble() * 100), 2), null, 1, ct);
                 }

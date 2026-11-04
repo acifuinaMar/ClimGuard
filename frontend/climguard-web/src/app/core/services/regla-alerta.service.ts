@@ -29,7 +29,9 @@ export class ReglaAlertaService {
 
   /** PUT /api/ReglaAlerta — editar. El id viaja en el cuerpo (reglaAlertaId). */
   actualizar(regla: ReglaAlerta): Observable<ReglaAlerta> {
-    return this.http.put<ReglaAlerta>(`${this.base}/${regla.reglaAlertaId}`, this.aComando(regla, regla.reglaAlertaId, false));
+    // La conversión de una regla legada a la semántica nueva solo ocurre con confirmación explícita (query param).
+    const query = regla.convertirSemantica ? '?convertirSemantica=true' : '';
+    return this.http.put<ReglaAlerta>(`${this.base}/${regla.reglaAlertaId}${query}`, this.aComando(regla, regla.reglaAlertaId, false));
   }
 
   /** DELETE /api/ReglaAlerta/{id}?usuarioLogeado={id}. */

@@ -15,6 +15,13 @@ def _int(name: str, default: int) -> int:
         raise RuntimeError(f"Variable {name} debe ser entera, recibida: {raw!r}") from exc
 
 
+def _choice(name: str, default: str, allowed: tuple) -> str:
+    raw = (os.getenv(name) or default).strip().lower()
+    if raw not in allowed:
+        raise RuntimeError(f"Variable {name} debe ser una de {allowed}, recibida: {raw!r}")
+    return raw
+
+
 @dataclass(frozen=True)
 class Settings:
     jwt_key: str
@@ -28,8 +35,22 @@ class Settings:
     audit_api_url: str = "http://audit-service:8000"
     internal_api_key: str = ""
     page_size: int = 1000
-    max_rows: int = 5000
-    concurrency: int = 2
+    # Tope de filas del conjunto PRINCIPAL del reporte (lecturas, alertas, sensores...). Si se supera:
+    #   on_limit="fail"     -> el reporte termina FAILED con un mensaje claro (nada se trunca en silencio)  [por defecto]
+    #   on_limit="truncate" -> se genera con las primeras max_rows filas y se avisa en el PDF y en los metadatos
+    max_rows: int = 100
+    on_limit: str = "fail"
+    # Tope de los catálogos de apoyo (sensores/comunidades usados para resolver nombres). Si se supera, el reporte falla.
+    lookup_max_rows: int = 5000
+    # Filas por trozo de PDF: WeasyPrint maqueta cada trozo por separado y se liberan antes del siguiente (memoria acotada).
+    chunk_rows: int = 250
+    concurrency: int = 1
+    # Reportes simultáneamente PENDING/PROCESSING permitidos; por encima se responde 429 en vez de acumular tareas.
+    max_queue: int = 4
+    # Carpeta de archivos temporales ("" = la del sistema). Se limpian siempre al terminar y al arrancar.
+    tmp_dir: str = ""
+    # Opcional: borrar PDFs (no los metadatos) más antiguos que N días al arrancar. 0 = desactivado (no se borra nada).
+    pdf_retention_days: int = 0
     sensor_stale_minutes: int = 30
     http_timeout: int = 30
     timezone: str = "America/Guatemala"
@@ -54,8 +75,14 @@ class Settings:
             alert_api_url=os.getenv("ALERT_API_URL", d["alert_api_url"].default).rstrip("/"),
             audit_api_url=os.getenv("AUDIT_API_URL", d["audit_api_url"].default).rstrip("/"),
             internal_api_key=os.getenv("INTERNAL_API_KEY", ""),
-            page_size=_int("REPORT_PAGE_SIZE", 1000), max_rows=_int("REPORT_MAX_ROWS", 5000),
-            concurrency=max(1, _int("REPORT_CONCURRENCY", 2)),
+            page_size=max(1, _int("REPORT_PAGE_SIZE", 1000)), max_rows=max(1, _int("REPORT_MAX_ROWS", 100)),
+            on_limit=_choice("REPORT_ON_LIMIT", "fail", ("fail", "truncate")),
+            lookup_max_rows=max(1, _int("REPORT_LOOKUP_MAX_ROWS", 5000)),
+            chunk_rows=max(10, _int("REPORT_CHUNK_ROWS", 250)),
+            concurrency=max(1, _int("REPORT_CONCURRENCY", 1)),
+            max_queue=max(1, _int("REPORT_MAX_QUEUE", 4)),
+            tmp_dir=os.getenv("REPORT_TMP_DIR", "").strip(),
+            pdf_retention_days=max(0, _int("REPORT_PDF_RETENTION_DAYS", 0)),
             sensor_stale_minutes=_int("SENSOR_STALE_MINUTES", 30),
             http_timeout=_int("HTTP_TIMEOUT_SECONDS", 30),
             timezone=os.getenv("REPORT_TIMEZONE", "America/Guatemala"),

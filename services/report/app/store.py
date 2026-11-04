@@ -59,9 +59,38 @@ class MongoStore:
             self._fs.delete(old._id)
         self._fs.put(data, filename=report_id, contentType="application/pdf", reportFileName=file_name)
 
+    def save_pdf_file(self, report_id, file_name, path, chunk_size=256 * 1024):
+        """Sube a GridFS leyendo el archivo temporal por bloques (nunca el PDF completo en memoria). Reemplaza el anterior solo
+        después de subir el nuevo, para no dejar al reporte sin PDF si la subida falla."""
+        olds = [o._id for o in self._fs.find({"filename": report_id})]
+        with open(path, "rb") as src, self._fs.new_file(filename=report_id, contentType="application/pdf", reportFileName=file_name) as dst:
+            while True:
+                block = src.read(chunk_size)
+                if not block:
+                    break
+                dst.write(block)
+        for oid in olds:
+            self._fs.delete(oid)
+
     def load_pdf(self, report_id):
         f = self._fs.find_one({"filename": report_id})
         return f.read() if f else None
+
+    def open_pdf(self, report_id):
+        """GridOut para leer por bloques (descarga en streaming), o None. El llamador debe cerrarlo."""
+        return self._fs.find_one({"filename": report_id})
+
+    def purge_pdfs_older_than(self, days: int) -> int:
+        """Opcional (REPORT_PDF_RETENTION_DAYS>0): borra solo ARCHIVOS PDF antiguos, nunca los metadatos del historial."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        n = 0
+        for f in self._fs.find({"uploadDate": {"$lt": cutoff}}):
+            self._fs.delete(f._id)
+            n += 1
+        return n
+
+    def count_active(self) -> int:
+        return self._reports.count_documents({"status": {"$in": ["PENDING", "PROCESSING"]}})
 
     def register_download(self, report_id, when):
         self._reports.update_one({"reportId": report_id}, {"$inc": {"downloadCount": 1}, "$set": {"lastDownloadedAt": when}})
@@ -114,8 +143,27 @@ class MemoryStore:
     def save_pdf(self, report_id, file_name, data):
         self.pdfs[report_id] = data
 
+    def save_pdf_file(self, report_id, file_name, path, chunk_size=256 * 1024):
+        with open(path, "rb") as fh:
+            self.pdfs[report_id] = fh.read()
+
     def load_pdf(self, report_id):
         return self.pdfs.get(report_id)
+
+    def open_pdf(self, report_id):
+        import io
+        data = self.pdfs.get(report_id)
+        if data is None:
+            return None
+        buf = io.BytesIO(data)
+        buf.length = len(data)          # misma interfaz mínima que GridOut: read(n), close(), length
+        return buf
+
+    def purge_pdfs_older_than(self, days: int) -> int:
+        return 0
+
+    def count_active(self) -> int:
+        return sum(1 for r in self.reports.values() if r["status"] in ("PENDING", "PROCESSING"))
 
     def register_download(self, report_id, when):
         r = self.reports[report_id]

@@ -13,7 +13,7 @@ from app.service import ReportService
 from app.store import MemoryStore
 from tests import fixtures as fx
 
-SETTINGS = Settings(jwt_key="k" * 40, jwt_issuer="i", jwt_audience="a", page_size=1000, max_rows=5000)
+SETTINGS = Settings(jwt_key="k" * 40, jwt_issuer="i", jwt_audience="a", page_size=1000, max_rows=5000, max_queue=50)
 NOW = datetime(2026, 10, 22, 0, 0, tzinfo=timezone.utc)
 CTX = BuildContext(tz="America/Guatemala", stale_minutes=30, now=NOW, max_rows=5000)
 ADMIN = Principal("5", "admin", ("Administrador",), frozenset({"reports.generate", "reports.download", "reports.history", "dashboard.view"}), "TOKEN")
@@ -206,7 +206,7 @@ class ServiceTests(unittest.TestCase):
         big = dict(fx.ROUTES)
         big["/api/readings"] = [{"lecturaId": i, "sensorId": 10, "valor": i % 40, "fechaHora": "2026-10-21T10:00:00"} for i in range(12000)]
         st = MemoryStore()
-        s = ReportService(Settings(jwt_key="k" * 40, jwt_issuer="i", jwt_audience="a", page_size=1000, max_rows=3000), st, fx.make_fetch(big), pdf_fn=lambda h: b"%PDF")
+        s = ReportService(Settings(jwt_key="k" * 40, jwt_issuer="i", jwt_audience="a", page_size=1000, max_rows=3000, on_limit="truncate", chunk_rows=100000), st, fx.make_fetch(big), pdf_fn=lambda h: b"%PDF")
         meta = run(s.create(ADMIN, "READINGS", {"from": "2026-10-21", "to": "2026-10-21"}))
         run(s.run(meta["reportId"], ADMIN))
         saved = st.get(meta["reportId"])

@@ -45,3 +45,9 @@ Tipos: COMMUNITIES, SENSORS, READINGS, ALERTS, EVENT_HISTORY, SENSOR_STATUS, CLI
 - Sin pruebas automatizadas de Gateway/Community/Sensor/Auth (más allá de módulos puros) ni E2E.
 - El monolito de la Fase 2 (`ClimGuard Backend/`, `docker-compose.phase2.yml`) se conserva intacto como referencia; su `appsettings.json` contiene credenciales en claro (SA y clave JWT): rotarlas.
 - El usuario `admin` del script P2 usa otra contraseña que la semilla de Auth (`Admin123`).
+
+## Cambios de estabilización (noviembre 2026)
+
+Ver `CAMBIOS-REALIZADOS.md`, `MIGRACIONES.md`, `PRUEBAS.md`, `DESPLIEGUE-SEGURO.md`, `RECURSOS-VPS.md`, `REVISION-INTEGRACION.md` y `RIESGOS-PENDIENTES.md` en la raíz del proyecto.
+Resumen: sensores `FISICO`/`SIMULADO`; reglas de alerta con intervalo de peligro `[min,max]` inclusivo (las reglas previas quedan como legadas y se siguen evaluando como antes hasta una conversión explícita);
+reportes PDF por trozos con tope explícito (`REPORT_MAX_ROWS=100` inicial, `REPORT_ON_LIMIT`), cola limitada y limpieza de temporales.

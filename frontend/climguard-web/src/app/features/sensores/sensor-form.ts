@@ -1,6 +1,6 @@
-import { Component, computed, inject, input, output, effect, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, input, output, effect, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Sensor, ESTADOS_SENSOR, ESTADO_SENSOR_ACTIVO } from '../../core/models/sensor.model';
+import { Sensor, ESTADOS_SENSOR, ESTADO_SENSOR_ACTIVO, ORIGENES_SENSOR, OrigenSensor } from '../../core/models/sensor.model';
 
 /**
  * Ventana modal para crear o editar un sensor. Componente hijo: recibe un sensor
@@ -37,6 +37,9 @@ export class SensorForm {
   /** Catálogo de estados del sensor. */
   estados = ESTADOS_SENSOR;
 
+  /** Origen de las lecturas (físico o simulado). Se elige de forma explícita al crear. */
+  origenes = ORIGENES_SENSOR;
+
   formulario = this.fb.nonNullable.group({
     nombre:         ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
     codigo:         ['', [Validators.required, Validators.maxLength(40)]],
@@ -45,8 +48,16 @@ export class SensorForm {
     ubicacion:      ['', [Validators.required, Validators.maxLength(150)]],
     descripcion:    ['', [Validators.required, Validators.maxLength(250)]],
     valorActual:    [0,  [Validators.required]],
-    estadoSensorId: [ESTADO_SENSOR_ACTIVO, [Validators.required, Validators.min(1)]]
+    estadoSensorId: [ESTADO_SENSOR_ACTIVO, [Validators.required, Validators.min(1)]],
+    // Vacío al crear a propósito: obliga a decidir si es un dispositivo real o simulado.
+    origen:         ['' as OrigenSensor | '', [Validators.required]]
   });
+
+  get origenCtrl() { return this.formulario.controls.origen; }
+
+  /** Texto de ayuda del origen elegido. */
+  ayudaOrigen = computed(() => ORIGENES_SENSOR.find(o => o.valor === this.origenSel())?.ayuda ?? '');
+  private origenSel = signal<OrigenSensor | ''>('');
 
   get nombre()      { return this.formulario.controls.nombre; }
   get codigo()      { return this.formulario.controls.codigo; }
@@ -65,10 +76,16 @@ export class SensorForm {
           ubicacion: s.ubicacion,
           descripcion: s.descripcion,
           valorActual: s.valorActual,
-          estadoSensorId: s.estadoSensorId ?? ESTADO_SENSOR_ACTIVO
+          estadoSensorId: s.estadoSensorId ?? ESTADO_SENSOR_ACTIVO,
+          origen: s.origen ?? ''
         });
+        this.origenSel.set(s.origen ?? '');
       }
     });
+  }
+
+  alCambiarOrigen(): void {
+    this.origenSel.set(this.formulario.controls.origen.value);
   }
 
   enviar(): void {
@@ -91,6 +108,7 @@ export class SensorForm {
       comunidadId: Number(v.comunidadId),
       valorActual: Number(v.valorActual),
       estadoSensorId: Number(v.estadoSensorId),
+      origen: v.origen as OrigenSensor,
       fechaInstalacion: existente?.fechaInstalacion ?? ahora,
       fechaUltimaConexion: ahora,
       usuarioIng: existente?.usuarioIng,

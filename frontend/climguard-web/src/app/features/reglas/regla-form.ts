@@ -1,5 +1,5 @@
-import { Component, computed, inject, input, output, effect, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, computed, inject, input, output, effect, signal, ChangeDetectionStrategy } from '@angular/core';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ReglaAlerta } from '../../core/models/regla-alerta.model';
 import { NivelAlertaCat, TipoFenomenoCat, TipoSensorCat } from '../../core/models/catalogo.model';
 
@@ -30,6 +30,16 @@ export class ReglaForm {
   esEdicion = computed(() => this.regla() !== null);
   titulo = computed(() => this.esEdicion() ? 'Editar regla de alerta' : 'Nueva regla de alerta');
 
+  /** Regla LEGADA: creada con la semántica anterior (min/max = rango normal; alerta FUERA del rango). */
+  legado = computed(() => !!this.regla()?.requiereRevision);
+  /** Mensaje de validación al intentar convertir sin cambiar el intervalo. */
+  errorConversion = signal<string | null>(null);
+
+  /** ¿Los campos mínimo/máximo se interpretan con la semántica nueva (intervalo que ACTIVA la alerta)? */
+  semanticaNueva(): boolean {
+    return !this.legado() || this.formulario.controls.convertir.value;
+  }
+
   formulario = this.fb.nonNullable.group({
     nombre:         ['', [Validators.required, Validators.minLength(3)]],
     tipoSensorId:   [1,  [Validators.required, Validators.min(1)]],
@@ -38,8 +48,15 @@ export class ReglaForm {
     nivelAlertaId:  [1,  [Validators.required, Validators.min(1)]],
     tipoFenomenoId: [1,  [Validators.required, Validators.min(1)]],
     mensaje:        ['', [Validators.required]],
-    activo:         [true]
-  });
+    activo:         [true],
+    convertir:      [false]
+  }, { validators: [ReglaForm.rangoValido] });
+
+  /** El backend rechaza min > max; se avisa antes de enviar. */
+  static rangoValido(g: AbstractControl): ValidationErrors | null {
+    const min = Number(g.get('valorMin')?.value), max = Number(g.get('valorMax')?.value);
+    return Number.isFinite(min) && Number.isFinite(max) && min > max ? { rangoInvalido: true } : null;
+  }
 
   constructor() {
     // Cuando llega una regla a editar, se rellena el formulario. Si es null (alta
@@ -71,6 +88,14 @@ export class ReglaForm {
     const v = this.formulario.getRawValue();
     const ex = this.regla();
 
+    // Convertir una regla legada a la semántica nueva exige un intervalo NUEVO: los valores actuales son el rango NORMAL.
+    const convertir = this.legado() && v.convertir;
+    if (convertir && ex && Number(v.valorMin) === ex.valorMin && Number(v.valorMax) === ex.valorMax) {
+      this.errorConversion.set('Para convertir la regla indique el intervalo que ACTIVA la alerta: los valores actuales son el rango normal de la versión anterior.');
+      return;
+    }
+    this.errorConversion.set(null);
+
     // Los <select> devuelven texto; se convierten a número para el backend.
     this.guardar.emit({
       reglaAlertaId: ex?.reglaAlertaId ?? 0,
@@ -82,6 +107,7 @@ export class ReglaForm {
       tipoFenomenoId: Number(v.tipoFenomenoId),
       mensaje: v.mensaje.trim(),
       activo: v.activo,
+      convertirSemantica: convertir,
       // Auditoría: se conserva la original al editar; el servicio completa el resto.
       usuarioIng: ex?.usuarioIng,
       fechaIng: ex?.fechaIng,

@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Sensor } from '../../core/models/sensor.model';
 import { SensorService } from '../../core/services/sensor.service';
+import { PeligroService } from '../../core/services/peligro.service';
 import { calcularNivel, textoNivel, unidadDe, variableDe, Nivel } from '../../core/nivel-alerta';
 import { interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -29,6 +30,7 @@ interface SensorConNivel extends Sensor {
 })
 export class DashboardPage {
   private servicio = inject(SensorService);
+  private peligro = inject(PeligroService);
   private alertaService = inject(AlertaService);
   private realtime = inject(RealtimeService);
   private alarma = inject(AlarmaService);
@@ -109,7 +111,8 @@ export class DashboardPage {
   });
   private cargarSensores(): void {
 
-    this.servicio.listar().subscribe({
+    // Primero las reglas (misma fuente que el backend), luego los sensores: el nivel se calcula con ellas.
+    this.peligro.asegurar().pipe(switchMap(() => this.servicio.listar())).subscribe({
 
       next: (datos) => {
 
@@ -196,6 +199,11 @@ export class DashboardPage {
   constructor() {
    this.cargarSensores();
    this.cargarAlertas();
+
+   // Reglas: si un administrador cambia un umbral, los niveles se repintan en <= ~15 s sin esperar una lectura nueva.
+   interval(15000)
+     .pipe(switchMap(() => this.peligro.asegurar()), takeUntilDestroyed())
+     .subscribe(cambio => { if (cambio) this.cargarSensores(); });
 
    // ===== TIEMPO REAL (SignalR) =====
    // Abrimos la conexión con el Hub. Cuando el servidor empuje algo,

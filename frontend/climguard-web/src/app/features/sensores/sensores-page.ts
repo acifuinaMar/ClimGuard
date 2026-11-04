@@ -1,8 +1,10 @@
 import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
-import { of } from 'rxjs';
-import { catchError, timeout } from 'rxjs/operators';
-import { Sensor, ESTADOS_SENSOR, ESTADO_SENSOR_ACTIVO, ESTADO_SENSOR_INACTIVO } from '../../core/models/sensor.model';
+import { interval, of } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { catchError, switchMap, timeout } from 'rxjs/operators';
+import { Sensor, ESTADOS_SENSOR, ESTADO_SENSOR_ACTIVO, ESTADO_SENSOR_INACTIVO, nombreOrigen } from '../../core/models/sensor.model';
 import { SensorService } from '../../core/services/sensor.service';
+import { PeligroService } from '../../core/services/peligro.service';
 import { calcularNivel, textoNivel, unidadDe, variableDe, Nivel } from '../../core/nivel-alerta';
 import { SensorForm } from './sensor-form';
 import { SiPermisoDirective } from '../../shared/si-permiso.directive';
@@ -24,6 +26,7 @@ interface SensorVista extends Sensor {
 })
 export class SensoresPage {
   private servicio = inject(SensorService);
+  private peligro = inject(PeligroService);
 
   sensores = signal<SensorVista[]>([]);
   cargando = signal(true);
@@ -50,8 +53,16 @@ export class SensoresPage {
     return ESTADOS_SENSOR.find(e => e.estadoSensorId === id)?.nombre ?? 'Desconocido';
   }
 
+  /** «Físico» / «Simulado» (o «Sin definir» si el backend no lo informa). */
+  origenTexto = nombreOrigen;
+
   constructor() {
     this.cargar();
+
+    // Si un administrador cambia un umbral, los niveles se repintan en <= ~15 s.
+    interval(15000)
+      .pipe(switchMap(() => this.peligro.asegurar()), takeUntilDestroyed())
+      .subscribe(cambio => { if (cambio) this.cargar(); });
   }
 
   // ==================== LEER ====================
@@ -62,7 +73,8 @@ export class SensoresPage {
 
     // Si el backend no responde en 5s, caemos a datos de ejemplo para poder ver
     // la pantalla. Al conectarlo, usa los sensores reales sin tocar nada.
-    this.servicio.listar().pipe(
+    this.peligro.asegurar().pipe(
+      switchMap(() => this.servicio.listar()),
       timeout(5000),
       catchError(() => of<Sensor[]>([]))
     ).subscribe((datos) => {

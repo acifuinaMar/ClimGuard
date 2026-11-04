@@ -9,13 +9,13 @@ from tests.fixtures import make_fetch
 run = asyncio.run
 
 
-def client(data, page_size=1000, max_rows=5000, headers=True, unpaged=False):
+def client(data, page_size=1000, max_rows=5000, headers=True, unpaged=False, on_limit="truncate"):
     async def fetch(url, params, h):
         if unpaged:
             return FetchResult(200, data, {})
         ps, pg = int(params["pageSize"]), int(params["page"])
         return FetchResult(200, data[(pg - 1) * ps: pg * ps], {"x-total-count": str(len(data))} if headers else {})
-    return ApiClient("svc", "http://x", fetch, {}, page_size, max_rows)
+    return ApiClient("svc", "http://x", fetch, {}, page_size, max_rows, on_limit=on_limit)
 
 
 class ClientTests(unittest.TestCase):

@@ -3,11 +3,13 @@ import {
   signal, ChangeDetectionStrategy, OnDestroy
 } from '@angular/core';
 import * as L from 'leaflet';
-import { forkJoin, of } from 'rxjs';
-import { catchError, timeout } from 'rxjs/operators';
+import { forkJoin, interval, of } from 'rxjs';
+import { catchError, switchMap, timeout } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { ComunidadService } from '../../core/services/comunidad.service';
 import { SensorService } from '../../core/services/sensor.service';
+import { PeligroService } from '../../core/services/peligro.service';
 import { Comunidad } from '../../core/models/comunidad.model';
 import { Sensor } from '../../core/models/sensor.model';
 import { calcularNivel, textoNivel, unidadDe, Nivel } from '../../core/nivel-alerta';
@@ -34,6 +36,7 @@ import { calcularNivel, textoNivel, unidadDe, Nivel } from '../../core/nivel-ale
 export class MapaPage implements OnDestroy {
   private comunidadService = inject(ComunidadService);
   private sensorService = inject(SensorService);
+  private peligro = inject(PeligroService);
 
   /** El <div> donde Leaflet dibuja el mapa. */
   private contenedor = viewChild.required<ElementRef<HTMLDivElement>>('mapa');
@@ -48,6 +51,11 @@ export class MapaPage implements OnDestroy {
   constructor() {
     // afterNextRender corre cuando el <div> ya existe en el navegador.
     afterNextRender(() => this.iniciar());
+
+    // Si un administrador cambia un umbral, los marcadores se repintan en <= ~15 s.
+    interval(15000)
+      .pipe(switchMap(() => this.peligro.asegurar()), takeUntilDestroyed())
+      .subscribe(cambio => { if (cambio && this.mapa) this.cargarDatos(); });
   }
 
   private iniciar(): void {
@@ -69,7 +77,7 @@ export class MapaPage implements OnDestroy {
     // dejamos el mapa colgado — caemos al ejemplo. También protege en producción.
     forkJoin({
       comunidades: this.comunidadService.listar().pipe(timeout(5000), catchError(() => of<Comunidad[]>([]))),
-      sensores: this.sensorService.listar().pipe(timeout(5000), catchError(() => of<Sensor[]>([])))
+      sensores: this.peligro.asegurar().pipe(switchMap(() => this.sensorService.listar()), timeout(5000), catchError(() => of<Sensor[]>([])))
     }).subscribe(({ comunidades, sensores }) => {
       let coms = comunidades;
       let sens = sensores;

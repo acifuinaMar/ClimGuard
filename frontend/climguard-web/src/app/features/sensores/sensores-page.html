@@ -43,6 +43,7 @@
       <thead>
         <tr>
           <th>Sensor</th>
+          <th>Origen</th>
           <th>Variable</th>
           <th>Lectura</th>
           <th>Nivel</th>
@@ -56,6 +57,10 @@
             <td>
               <span class="nombre">{{ s.nombre }}</span>
               <span class="sub">{{ s.codigo }} · #{{ s.sensorId }} · comunidad {{ s.comunidadId }}</span>
+            </td>
+
+            <td>
+              <span class="origen" [class.origen--fisico]="s.origen === 'FISICO'" [class.origen--simulado]="s.origen === 'SIMULADO'">{{ origenTexto(s.origen) }}</span>
             </td>
 
             <td>{{ s.variable }}</td>
