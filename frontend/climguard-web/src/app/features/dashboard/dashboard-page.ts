@@ -12,6 +12,7 @@ import { AlarmaService } from '../../core/services/alarma.service';
 import { DatePipe } from '@angular/common';
 import { IndicadoresEjecutivos } from './indicadores-ejecutivos';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AuthService } from '../../core/services/auth.service';
 
 /** Un sensor con su nivel ya calculado, listo para pintar. */
 interface SensorConNivel extends Sensor {
@@ -34,6 +35,7 @@ export class DashboardPage {
   private alertaService = inject(AlertaService);
   private realtime = inject(RealtimeService);
   private alarma = inject(AlarmaService);
+  private auth = inject(AuthService);
 
   /** true cuando el Hub de SignalR está conectado (para el indicador en vivo). */
   tiempoReal = this.realtime.conectado;
@@ -286,6 +288,18 @@ interval(10000)
     }).join(' ');
 
 });
+vincularGoogle(): void {
+  this.auth.vincularOAuth('google').subscribe({
+    error: (err) => {
+      console.error('Error al vincular Google:', err);
+      alert(
+        err?.error?.mensaje ||
+        err?.error?.message ||
+        'No se pudo iniciar la vinculación con Google.'
+      );
+    }
+  });
+}
 
 tipoFenomeno(id: number): string {
 

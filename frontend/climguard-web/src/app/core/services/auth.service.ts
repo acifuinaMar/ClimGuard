@@ -3,7 +3,7 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { map, Observable, switchMap, of, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CredencialesLogin, RespuestaLogin, Sesion } from '../models/sesion.model';
+import { CredencialesLogin, ProveedorOAuth, RespuestaLogin, Sesion } from '../models/sesion.model';
 import { Usuario } from '../models/usuario.model';
 import { Rol, Permiso, normalizarRol, rolTienePermiso, etiquetaRol } from '../roles';
 
@@ -87,6 +87,52 @@ export class AuthService {
         );
       })
     );
+  }
+
+  // ==========================================================
+  //  INICIO DE SESIÓN EXTERNO (Google / GitHub) — Fase 4
+  //  El navegador NUNCA ve secretos de OAuth ni recibe el JWT por la URL:
+  //  el servidor redirige a /auth/callback#code=… (código de un solo uso)
+  //  y aquí se canjea por POST, con la cookie httpOnly del flujo.
+  // ==========================================================
+
+  /** Proveedores habilitados en el servidor. Si falla o no hay ninguno, el login local sigue igual. */
+  proveedoresOAuth(): Observable<ProveedorOAuth[]> {
+    return this.http.get<{ providers: ProveedorOAuth[] }>(`${environment.apiUrl}/auth/oauth/providers`).pipe(
+      map(r => r?.providers ?? []),
+      catchError(() => of([] as ProveedorOAuth[]))
+    );
+  }
+
+  /** Navegación completa hacia el servidor, que redirige al proveedor (no es una llamada AJAX). */
+  iniciarOAuth(proveedor: string): void {
+    window.location.assign(`${environment.apiUrl}/auth/oauth/${encodeURIComponent(proveedor)}/start`);
+  }
+
+  /** Canjea el código temporal por la sesión de ClimGuard (mismo JWT y roles que el login local). */
+  canjearCodigoOAuth(code: string): Observable<Sesion> {
+    return this.http.post<RespuestaLogin>(`${environment.apiUrl}/auth/oauth/exchange`, { code }, { withCredentials: true }).pipe(
+      map(r => {
+        if (!r.token) throw new Error(r.mensaje || 'No se pudo completar el inicio de sesión.');
+        const datos = this.leerToken(r.token);
+        const sesion: Sesion = {
+          usuarioId: r.usuarioId, nombreUsuario: r.usuario,
+          nombreMostrado: r.nombreCompleto || r.usuario, rol: datos.rol, token: r.token
+        };
+        this.guardarSesion(sesion);
+        return sesion;
+      })
+    );
+  }
+
+  /** Vincula Google/GitHub a la cuenta con la sesión actual (el servidor exige el Bearer). */
+  vincularOAuth(proveedor: string): Observable<void> {
+    return this.http.post<{ authorizationUrl: string }>(
+      `${environment.apiUrl}/auth/oauth/${encodeURIComponent(proveedor)}/link`, {}, { withCredentials: true }
+    ).pipe(map(r => {
+      if (!r.authorizationUrl?.startsWith('https://')) throw new Error('Respuesta inesperada del servidor.');
+      window.location.assign(r.authorizationUrl);
+    }));
   }
 
   /**

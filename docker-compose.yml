@@ -78,8 +78,20 @@ services:
       POSTGRES_DB: climguard_auth
       AUDIT_API_URL: http://audit-service:8000
       SEED_DEFAULT_USERS: ${SEED_DEFAULT_USERS:-false}
+      # Esquema: true (local) lo crea TypeORM; false (producción) → aplicar scripts/migrations/auth-*.sql a mano.
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}
+      # Fase 4 · OAuth/OIDC. Vacío = proveedor deshabilitado (el login local no cambia). Ver FASE4_CAMBIOS.md.
+      OAUTH_PUBLIC_BASE_URL: ${OAUTH_PUBLIC_BASE_URL:-}
+      OAUTH_FRONTEND_URL: ${OAUTH_FRONTEND_URL:-}
+      OAUTH_AUTO_PROVISION: ${OAUTH_AUTO_PROVISION:-false}
+      OAUTH_ALLOWED_EMAIL_DOMAINS: ${OAUTH_ALLOWED_EMAIL_DOMAINS:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
     depends_on:
       postgres: {condition: service_healthy}
+    # Sin salida a Internet por diseño (red `services` es internal). Para OAuth real, ver docker-compose.oauth.yml.
     networks: [services, pg]
     mem_limit: 256m
 

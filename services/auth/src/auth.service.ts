@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuditClient } from './audit';
 import { DEFAULT_ROLES } from './common/legacy';
-import { signToken } from './common/jwt';
+import { buildSession } from './common/session';
 import { DUMMY_HASH, hashPassword, isLegacyHash, verifyPassword } from './common/password';
 import { Config } from './config';
 import { Role } from './entities/role.entity';
@@ -30,13 +30,21 @@ export class AuthService {
     const patch: Partial<User> = { lastAccess: new Date() };
     if (user.passwordHash && isLegacyHash(user.passwordHash)) patch.passwordHash = hashPassword(password);
     await this.users.update(user.id, patch);
-    const { token, expiresAt } = signToken({
-      sub: String(user.id), username: user.username, role: user.role.name, permissions: user.role.permissions,
-      issuer: this.cfg.issuer, audience: this.cfg.audience, ttlSeconds: this.cfg.ttlSeconds, key: this.cfg.jwtKey,
-    });
     this.audit.emit('LOGIN', 'Auth', { id: user.id, username: user.username }, { descripcion: 'Inicio de sesión' });
-    return { usuarioId: user.id, usuario: user.username, token, mensaje: 'Inicio de sesión correcto.', rol: user.role.name,
-             permissions: user.role.permissions, expiresAt: expiresAt.toISOString() };
+    return this.issueSession(user);
+  }
+
+  /** Emite el JWT de ClimGuard y el payload de sesión. Lo comparten el login local y el canje OAuth (mismos claims/roles). */
+  issueSession(user: User) {
+    return buildSession(user, { issuer: this.cfg.issuer, audience: this.cfg.audience, ttlSeconds: this.cfg.ttlSeconds, key: this.cfg.jwtKey });
+  }
+
+  async issueSessionById(id: number) {
+    const user = await this.users.findOne({ where: { id } });
+    if (!user || !user.active) return null;
+    await this.users.update(id, { lastAccess: new Date() });
+    // `nombreCompleto` solo se añade en el canje OAuth (el login local conserva su JSON exacto, p. ej. para el ESP8266).
+    return { ...this.issueSession(user), nombreCompleto: user.fullName };
   }
 
   list() { return this.users.find({ order: { id: 'ASC' } }); }

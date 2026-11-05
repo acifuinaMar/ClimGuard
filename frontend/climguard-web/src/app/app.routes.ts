@@ -3,6 +3,7 @@ import { authGuard, adminGuard, permisoGuard } from './core/guards/auth.guard';
 import { MainLayout } from './layout/main-layout';
 import { DashboardPage } from './features/dashboard/dashboard-page';
 import { LoginPage } from './features/auth/login-page';
+import { OauthCallbackPage } from './features/auth/oauth-callback-page';
 import { SensoresPage } from './features/sensores/sensores-page';
 import { UsuariosPage } from './features/usuarios/usuarios-page';
 import { ComunidadesPage } from './features/comunidades/comunidades-page';
@@ -17,6 +18,9 @@ export const routes: Routes = [
   /* El inicio de sesión va FUERA del marco: no debe mostrar el menú
      lateral ni el encabezado, porque todavía no hay sesión. */
   { path: 'login', component: LoginPage },
+
+  /* Retorno de Google/GitHub: canjea el código de un solo uso. También fuera del marco. */
+  { path: 'auth/callback', component: OauthCallbackPage },
 
   /* Todo lo demás vive dentro del marco y exige haber entrado.
      canActivate se evalúa ANTES de construir la pantalla. */

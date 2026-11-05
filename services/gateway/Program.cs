@@ -48,6 +48,7 @@ builder.Services.AddCors(o => o.AddPolicy("web", p => p.WithOrigins(origins).All
 
 int limit = int.TryParse(builder.Configuration["RateLimit:PerMinute"], out var l) ? l : 300;
 int loginLimit = int.TryParse(builder.Configuration["RateLimit:LoginPerMinute"], out var ll) ? ll : 10;
+int oauthLimit = int.TryParse(builder.Configuration["RateLimit:OAuthPerMinute"], out var ol) ? ol : 30;
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -56,6 +57,9 @@ builder.Services.AddRateLimiter(o =>
             _ => new FixedWindowRateLimiterOptions { PermitLimit = limit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     o.AddPolicy("login", ctx => RateLimitPartition.GetFixedWindowLimiter(ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = loginLimit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+    // Fase 4: rutas anónimas de OAuth (inicio, callback, canje de código, lista de proveedores).
+    o.AddPolicy("oauth", ctx => RateLimitPartition.GetFixedWindowLimiter(ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = oauthLimit, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 });
 
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));

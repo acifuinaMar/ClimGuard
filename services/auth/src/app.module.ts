@@ -8,6 +8,9 @@ import { Config, loadConfig } from './config';
 import { ExternalIdentity, User } from './entities/user.entity';
 import { Role } from './entities/role.entity';
 import { JwtGuard } from './guards';
+import { OauthFlow, OauthLoginCode } from './oauth/oauth.entities';
+import { OAuthController } from './oauth/oauth.controller';
+import { OAuthService } from './oauth/oauth.service';
 
 @Controller()
 class HealthController {
@@ -25,15 +28,15 @@ const cfg = loadConfig();
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres', host: cfg.db.host, port: cfg.db.port, username: cfg.db.user, password: cfg.db.password,
-      database: cfg.db.database, ssl: cfg.db.ssl, entities: [User, Role, ExternalIdentity],
-      // Esquema pequeño y propio del servicio; en producción real se usarían migraciones.
+      database: cfg.db.database, ssl: cfg.db.ssl, entities: [User, Role, ExternalIdentity, OauthFlow, OauthLoginCode],
+      // Local/desarrollo: true (por defecto). Producción: DB_SYNCHRONIZE=false y aplicar scripts/migrations/auth-*.sql.
       synchronize: process.env.DB_SYNCHRONIZE !== 'false', retryAttempts: 15, retryDelay: 3000,
     }),
     TypeOrmModule.forFeature([User, Role]),
   ],
-  controllers: [AuthController, HealthController],
+  controllers: [AuthController, OAuthController, HealthController],
   providers: [
-    { provide: Config, useValue: cfg }, AuditClient, AuthService, JwtGuard,
+    { provide: Config, useValue: cfg }, AuditClient, AuthService, JwtGuard, OAuthService,
   ],
 })
 export class AppModule implements OnApplicationBootstrap {

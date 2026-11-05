@@ -30,4 +30,13 @@ export interface RespuestaLogin {
 
   mensaje: string;
 
+  /** Solo en el canje OAuth: nombre completo para mostrar (el login local no lo envía). */
+  nombreCompleto?: string;
+
+}
+
+/** Proveedor de inicio de sesión externo habilitado en el servidor (Google, GitHub…). */
+export interface ProveedorOAuth {
+  id: string;
+  label: string;
 }

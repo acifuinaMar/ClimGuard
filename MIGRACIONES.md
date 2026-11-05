@@ -8,6 +8,11 @@ Los comandos con el proyecto `climguard3` están en `DESPLIEGUE-SEGURO.md`.
 | `scripts/migrations/sensor-001-origen.sql` | SQL Server | **No** (no había SQL Server). El mismo SQL lo aplica `SchemaUpgrades.cs` al arrancar el sensor (sin compilar). |
 | `scripts/migrations/alert-001-rule-semantics.sql` | PostgreSQL | Sí, en un PostgreSQL 16 temporal con el esquema anterior simulado: se aplica dos veces sin error; deja las reglas como legadas y las alertas históricas con `semantica_regla = 1`. **No** contra el esquema real de Hibernate. |
 | `scripts/migrations/alert-002-draft-rules.sql` | PostgreSQL | Sí, mismo clúster temporal: idempotente (2ª ejecución no duplica), 0 borradores activos, equivalencia con la lógica anterior comprobada en 160.004 comparaciones (valores de -200 a 200 con 2 decimales, 4 reglas) con 0 discrepancias; corte y reversión probados. |
+| `scripts/migrations/auth-000-baseline.sql` | PostgreSQL | Sí, en un PostgreSQL temporal: base nueva, dos ejecuciones sin error. Solo para bases nuevas con `DB_SYNCHRONIZE=false`; **no** comparado columna a columna contra lo que genera TypeORM. |
+| `scripts/migrations/auth-001-external-identities.sql` | PostgreSQL | Sí, en un PostgreSQL temporal: sobre base nueva y sobre un esquema Fase 3 simulado con una fila en `external_identities` (se conserva); idempotente (2ª ejecución sin cambios); unicidad `(provider, subject)` y consumo atómico de códigos probados con 8 sesiones concurrentes. **No** contra la base real. |
+
+## 0. Auth (Fase 4): identidades externas OAuth
+Detalle en `FASE4_CAMBIOS.md`. Aditiva: completa `external_identities` y crea `oauth_flows` y `oauth_login_codes`. No toca `users` ni `roles`.
 
 ## 1. Sensores: físico vs simulado
 - Agrega `dbo.Sensor.Origen NVARCHAR(10) NOT NULL DEFAULT 'FISICO'` + check `FISICO|SIMULADO`.

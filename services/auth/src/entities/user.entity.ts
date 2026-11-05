@@ -20,13 +20,20 @@ passwordHash: string | null;
   @OneToMany(() => ExternalIdentity, (e) => e.user) identities: ExternalIdentity[];
 }
 
-/** Preparado para OAuth2/OIDC (Fase 4): un usuario local puede vincular identidades de un IdP externo. */
+/** Identidad en un proveedor externo (Google, GitHub…) vinculada a un usuario local. Se identifica por (provider, subject), nunca por correo. */
 @Entity('external_identities')
 @Unique(['provider', 'subject'])
 export class ExternalIdentity {
   @PrimaryGeneratedColumn() id: number;
-  @Column({ length: 60 }) provider: string;   // p. ej. 'google', 'azuread'
-  @Column({ length: 200 }) subject: string;   // claim `sub` del IdP
-  @Column({ name: 'user_id' }) userId: number;
+  @Column({ length: 60 }) provider: string;   // 'google' | 'github' | ...
+  @Column({ length: 200 }) subject: string;   // `sub` (OIDC) o id numérico (GitHub): estable, no cambia con el correo
+  @Index() @Column({ name: 'user_id' }) userId: number;
   @ManyToOne(() => User, (u) => u.identities, { onDelete: 'CASCADE' }) @JoinColumn({ name: 'user_id' }) user: User;
+  /** Informativos (último valor visto). No se usan para autorizar. */
+  @Column({ type: 'varchar', length: 320, nullable: true }) email: string | null;
+  @Column({ name: 'email_verified', default: false }) emailVerified: boolean;
+  @Column({ name: 'display_name', type: 'varchar', length: 200, nullable: true }) displayName: string | null;
+  @Column({ name: 'avatar_url', type: 'varchar', length: 500, nullable: true }) avatarUrl: string | null;
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' }) createdAt: Date;
+  @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true }) lastLoginAt: Date | null;
 }

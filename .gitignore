@@ -32,3 +32,10 @@ nginx/certs/
 # Cachés generadas por Python
 __pycache__/
 *.py[cod]
+
+# Respaldos locales y bases de datos
+/backups/
+*.dump
+
+# Archivos generados por las pruebas de Auth
+/services/auth/dist-test/
