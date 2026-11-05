@@ -301,6 +301,21 @@ vincularGoogle(): void {
   });
 }
 
+
+vincularGithub(): void {
+  this.auth.vincularOAuth('github').subscribe({
+    error: (err) => {
+      console.error('Error al vincular GitHub:', err);
+      alert(
+        err?.error?.mensaje ||
+        err?.error?.message ||
+        'No se pudo iniciar la vinculación con GitHub.'
+      );
+    }
+  });
+}
+
+
 tipoFenomeno(id: number): string {
 
   switch (id) {

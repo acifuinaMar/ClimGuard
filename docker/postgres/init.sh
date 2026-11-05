@@ -11,3 +11,19 @@ SQL
 create climguard_auth      auth      "$AUTH_DB_PASSWORD"
 create climguard_community community "$COMMUNITY_DB_PASSWORD"
 create climguard_alert     alert     "$ALERT_DB_PASSWORD"
+
+# Inicializar el esquema de Auth Service en instalaciones nuevas.
+psql -v ON_ERROR_STOP=1 \
+  --username "$POSTGRES_USER" \
+  --dbname climguard_auth \
+  -f /opt/climguard/migrations/auth-000-baseline.sql
+
+psql -v ON_ERROR_STOP=1 \
+  --username "$POSTGRES_USER" \
+  --dbname climguard_auth \
+  -f /opt/climguard/migrations/auth-001-external-identities.sql
+
+psql -v ON_ERROR_STOP=1 \
+  --username "$POSTGRES_USER" \
+  --dbname climguard_auth \
+  -c "REASSIGN OWNED BY postgres TO auth;"

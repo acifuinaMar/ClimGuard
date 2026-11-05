@@ -6,15 +6,24 @@
 <section class="vinculacion-google">
   <div>
     <strong>Mi cuenta</strong>
-    <p>Vincula tu cuenta de Google para iniciar sesión más fácilmente.</p>
+    <p>Vincula tus cuentas externas para iniciar sesión más fácilmente.</p>
   </div>
 
-  <button
-    type="button"
-    class="boton-vincular-google"
-    (click)="vincularGoogle()">
-    Vincular con Google
-  </button>
+  <div class="botones-vinculacion">
+    <button
+      type="button"
+      class="boton-vincular-google"
+      (click)="vincularGoogle()">
+      Vincular con Google
+    </button>
+
+    <button
+      type="button"
+      class="boton-vincular-google"
+      (click)="vincularGithub()">
+      Vincular con GitHub
+    </button>
+  </div>
 </section>
 
 <app-indicadores-ejecutivos />
