@@ -1,5 +1,5 @@
 # Generado por scripts/gen-k8s.py — NO editar a mano. Sin secretos: ver scripts/k8s-secrets.sh.
-# Dominio: climguard.acifuina.online · Imágenes: climguard/*:4.0.0 (importadas al containerd de K3s)
+# Dominio: climguard.acifuina.online · Imágenes: climguard/*:4.0.0, climguard/frontend:4.1.0 (importadas al containerd de K3s)
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -638,8 +638,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 0
-      maxUnavailable: 1
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
       labels:
@@ -648,7 +648,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
       - name: frontend
-        image: climguard/frontend:4.0.0
+        image: climguard/frontend:4.1.0
         imagePullPolicy: Never
         ports:
         - containerPort: 80

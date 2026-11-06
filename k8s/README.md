@@ -72,6 +72,11 @@ k set image deploy/auth-service auth-service=climguard/auth-service:4.0.1
 ```
 (`imagePullPolicy: Never`: K3s solo usa imágenes importadas a su containerd; no hay registry.)
 
+Después, fijar la misma etiqueta en el generador para que `k8s/climguard.yaml` siga igual a producción:
+`--tag` (backend, hoy `4.0.0`) y `--frontend-tag` (hoy `4.1.0`) — cambie el valor por defecto en `scripts/gen-k8s.py`.
+El frontend se actualiza sin corte (`maxSurge: 1`, `maxUnavailable: 0`); el backend usa `maxSurge: 0` para no duplicar RAM.
+Volver a la versión anterior de un Deployment: `k rollout undo deploy/frontend` (la imagen previa sigue en containerd).
+
 ## 5. Respaldos
 ```bash
 B=/opt/climguard-backups/k3s_$(date +%Y%m%d_%H%M); sudo mkdir -p $B && sudo chmod 700 $B

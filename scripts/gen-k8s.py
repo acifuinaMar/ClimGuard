@@ -11,7 +11,9 @@ Salida:
 NO contiene secretos: el Secret `climguard-secrets` se crea con scripts/k8s-secrets.sh desde un .env
 y el Secret TLS `climguard-tls` desde el certificado de Let's Encrypt del host (ver k8s/README.md).
 
-Uso:  python scripts/gen-k8s.py [--domain climguard.acifuina.online] [--tag 4.0.0]
+Uso:  python scripts/gen-k8s.py [--domain climguard.acifuina.online] [--tag 4.0.0] [--frontend-tag 4.1.0]
+      Los valores por defecto reflejan lo que corre en producción: regenerar sin argumentos no debe
+      cambiar ninguna imagen desplegada.
 """
 import argparse
 import os
@@ -20,7 +22,8 @@ import yaml
 
 p = argparse.ArgumentParser()
 p.add_argument("--domain", default="climguard.acifuina.online")
-p.add_argument("--tag", default="4.0.0")
+p.add_argument("--tag", default="4.0.0", help="etiqueta de las imágenes del backend (gateway y microservicios)")
+p.add_argument("--frontend-tag", default="4.1.0", help="etiqueta de la imagen del frontend (se publica por separado)")
 args = p.parse_args()
 
 NS = "climguard"
@@ -28,6 +31,7 @@ SECRET = "climguard-secrets"
 CONFIG = "climguard-config"
 DOMAIN = args.domain
 TAG = args.tag
+FRONTEND_TAG = args.frontend_tag
 PUBLIC_URL = f"https://{DOMAIN}"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -220,7 +224,8 @@ docs += [
 
 # ---------------------------------------------------------------- aplicaciones
 for name, port, env, mem_limit, mem_request, startup in APPS:
-    container = {"name": name, "image": f"climguard/{name}:{TAG}", "imagePullPolicy": "Never",
+    tag = FRONTEND_TAG if name == "frontend" else TAG
+    container = {"name": name, "image": f"climguard/{name}:{tag}", "imagePullPolicy": "Never",
                  "ports": [{"containerPort": port}], "env": env,
                  "resources": resources(mem_limit, mem_request),
                  "securityContext": {"allowPrivilegeEscalation": False}}
@@ -233,8 +238,11 @@ for name, port, env, mem_limit, mem_request, startup in APPS:
         container.update(http_probes(port, startup))
     docs.append({"apiVersion": "apps/v1", "kind": "Deployment", "metadata": meta(name, {"app": name}),
                  "spec": {"replicas": 1, "revisionHistoryLimit": 3, "selector": {"matchLabels": {"app": name}},
-                          # maxSurge 0: no duplica la RAM durante una actualización (un solo nodo de 8 GB).
-                          "strategy": {"type": "RollingUpdate", "rollingUpdate": {"maxSurge": 0, "maxUnavailable": 1}},
+                          # Backend: maxSurge 0 → no duplica la RAM durante una actualización (un solo nodo de 8 GB).
+                          # Frontend: maxSurge 1 / maxUnavailable 0 → sin corte; la copia temporal pide 32Mi (límite 128Mi).
+                          "strategy": {"type": "RollingUpdate", "rollingUpdate":
+                                       {"maxSurge": 1, "maxUnavailable": 0} if name == "frontend"
+                                       else {"maxSurge": 0, "maxUnavailable": 1}},
                           "template": {"metadata": {"labels": {"app": name}},
                                        "spec": {"terminationGracePeriodSeconds": 30, "containers": [container]}}}})
     docs.append(service(name, port))
@@ -269,7 +277,8 @@ TRAEFIK = {"apiVersion": "helm.cattle.io/v1", "kind": "HelmChartConfig",
 
 os.makedirs(os.path.join(ROOT, "k8s"), exist_ok=True)
 header = ("# Generado por scripts/gen-k8s.py — NO editar a mano. Sin secretos: ver scripts/k8s-secrets.sh.\n"
-          f"# Dominio: {DOMAIN} · Imágenes: climguard/*:{TAG} (importadas al containerd de K3s)\n")
+          f"# Dominio: {DOMAIN} · Imágenes: climguard/*:{TAG}, climguard/frontend:{FRONTEND_TAG} "
+          "(importadas al containerd de K3s)\n")
 with open(os.path.join(ROOT, "k8s/climguard.yaml"), "w", encoding="utf-8", newline="\n") as f:
     f.write(header + yaml.safe_dump_all(docs, sort_keys=False, allow_unicode=True))
 with open(os.path.join(ROOT, "k8s/traefik-config.yaml"), "w", encoding="utf-8", newline="\n") as f:
