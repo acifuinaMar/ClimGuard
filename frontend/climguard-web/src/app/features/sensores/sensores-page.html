@@ -56,7 +56,7 @@
           <tr [class.fila--inactiva]="!s.activo">
             <td>
               <span class="nombre">{{ s.nombre }}</span>
-              <span class="sub">{{ s.codigo }} · #{{ s.sensorId }} · comunidad {{ s.comunidadId }}</span>
+              <span class="sub">{{ s.codigo }} · #{{ s.sensorId }} · {{ nombreComunidad(s.comunidadId) }}</span>
             </td>
 
             <td>
@@ -120,6 +120,7 @@
   <app-sensor-form
     [sensor]="sensorEditando()"
     [guardando]="guardando()"
+    [comunidades]="comunidades()"
     (guardar)="onGuardar($event)"
     (cancelar)="cerrarForm()" />
 }

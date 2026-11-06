@@ -46,8 +46,24 @@
 
       <div class="fila">
         <div class="campo">
-          <label for="comunidad">Comunidad (id)</label>
-          <input id="comunidad" type="number" min="1" formControlName="comunidadId">
+          <label for="comunidad">Comunidad</label>
+          <select id="comunidad" formControlName="comunidadId"
+                  [class.malo]="comunidad.invalid && comunidad.touched">
+            <option [value]="0" disabled>Seleccione…</option>
+            @if (comunidadFaltante(); as id) {
+              <option [value]="id">Comunidad #{{ id }} (no disponible)</option>
+            }
+            @for (c of opcionesComunidad(); track c.comunidadId) {
+              <option [value]="c.comunidadId">
+                {{ c.nombreComunidad }} — {{ c.municipio }}{{ c.activo ? '' : ' (inactiva)' }}
+              </option>
+            }
+          </select>
+          @if (comunidad.touched && comunidad.invalid) {
+            <span class="error">Seleccione una comunidad.</span>
+          } @else if (opcionesComunidad().length === 0 && !comunidadFaltante()) {
+            <span class="ayuda">No hay comunidades activas. Registre una primero.</span>
+          }
         </div>
 
         <div class="campo">
