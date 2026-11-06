@@ -171,6 +171,23 @@ El sistema fue diseñado para facilitar futuras ampliaciones, entre ellas:
 
 ---
 
+# Declaración de uso de inteligencia artificial
+
+En el desarrollo de este proyecto el equipo utilizó herramientas de IA generativa como **asistentes**. Las decisiones de diseño, la revisión del código y la aprobación de cada cambio fueron responsabilidad del equipo.
+
+| Herramienta | Uso |
+|---|---|
+| **ChatGPT** (OpenAI) | Apoyo de consulta durante el desarrollo. *(El equipo completa aquí en qué partes se usó.)* |
+| **Claude Code** (Anthropic) | En la Fase 4, bajo instrucciones y aprobación del equipo en cada etapa: diagnóstico de la VPS, generación de los manifiestos Kubernetes (`scripts/gen-k8s.py`), scripts de secretos, restauración y recuperación (`scripts/k8s-*.sh`, `scripts/rollback-fase3.sh`), ejecución del despliegue en K3s y de la migración de datos, y redacción de `K3S_PROGRESS.md` y `k8s/README.md`. También en los commits que lo declaran con `Co-Authored-By: Claude` (por ejemplo `9179568`, `cb42ef6`, `dea5c12`). |
+
+Qué **no** hizo la IA:
+- Las pruebas funcionales en el navegador (login local, Google y GitHub, dashboard, sensores ESP8266 físicos y simulados) las realizó el equipo.
+- La configuración de las aplicaciones OAuth en Google Cloud y GitHub, el registro de sus credenciales y la clasificación de los sensores como *Físico* o *Simulado* los hizo el equipo.
+- Las credenciales no se escribieron en las conversaciones. Claude Code ejecutó en la VPS los scripts que crean los Secrets de Kubernetes, diseñados para no imprimir valores. Una excepción quedó documentada en `K3S_PROGRESS.md`: la contraseña `sa` de proyecto2 apareció en una salida y se eliminó junto con ese despliegue.
+- El código y la documentación generados con ayuda de IA fueron revisados por el equipo antes de incorporarlos.
+
+---
+
 # Equipo de desarrollo
 
 - **Dalila Nineth Zacarías de León**

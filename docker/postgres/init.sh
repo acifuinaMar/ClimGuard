@@ -13,9 +13,11 @@ create climguard_community community "$COMMUNITY_DB_PASSWORD"
 create climguard_alert     alert     "$ALERT_DB_PASSWORD"
 
 # Inicializar el esquema de Auth Service en instalaciones nuevas.
-# Se ejecuta COMO `auth` (dueño de la base; en PG15+ puede crear en `public`), así las tablas
-# nacen con el dueño correcto. Antes se usaba `REASSIGN OWNED BY postgres TO auth`, que en
-# PostgreSQL 16 falla ("required by the database system") y abortaba la inicialización.
+# Se ejecuta COMO `auth` (dueño de la base; en PG15+ puede crear en `public`), así tablas,
+# secuencias e índices nacen con dueño `auth`. Antes se usaba `REASSIGN OWNED BY postgres TO auth`,
+# que en PostgreSQL 16 falla ("required by the database system") y abortaba la inicialización.
+# (La rama fase4-correcciones-y-formularios corrigió lo mismo con `SET ROLE auth`; se conserva esta
+#  variante porque es la que inicializó la base de producción en K3s. Ambas dejan el mismo resultado.)
 psql -v ON_ERROR_STOP=1 \
   --username auth \
   --dbname climguard_auth \

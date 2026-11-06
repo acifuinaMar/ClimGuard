@@ -4,6 +4,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, switchMap, timeout } from 'rxjs/operators';
 import { Sensor, ESTADOS_SENSOR, ESTADO_SENSOR_ACTIVO, ESTADO_SENSOR_INACTIVO, nombreOrigen } from '../../core/models/sensor.model';
 import { SensorService } from '../../core/services/sensor.service';
+import { ComunidadService } from '../../core/services/comunidad.service';
+import { Comunidad } from '../../core/models/comunidad.model';
 import { PeligroService } from '../../core/services/peligro.service';
 import { calcularNivel, textoNivel, unidadDe, variableDe, Nivel } from '../../core/nivel-alerta';
 import { SensorForm } from './sensor-form';
@@ -27,8 +29,11 @@ interface SensorVista extends Sensor {
 export class SensoresPage {
   private servicio = inject(SensorService);
   private peligro = inject(PeligroService);
+  private comunidadServicio = inject(ComunidadService);
 
   sensores = signal<SensorVista[]>([]);
+  /** Comunidades registradas: alimentan el desplegable del formulario y el nombre en la tabla. */
+  comunidades = signal<Comunidad[]>([]);
   cargando = signal(true);
   error = signal<string | null>(null);
   /** true si el backend no respondió y mostramos sensores de ejemplo. */
@@ -56,8 +61,14 @@ export class SensoresPage {
   /** «Físico» / «Simulado» (o «Sin definir» si el backend no lo informa). */
   origenTexto = nombreOrigen;
 
+  /** Nombre de la comunidad para la tabla; si no se pudo cargar, se muestra el id como antes. */
+  nombreComunidad(id: number): string {
+    return this.comunidades().find(c => c.comunidadId === id)?.nombreComunidad ?? `comunidad ${id}`;
+  }
+
   constructor() {
     this.cargar();
+    this.cargarComunidades();
 
     // Si un administrador cambia un umbral, los niveles se repintan en <= ~15 s.
     interval(15000)
@@ -85,6 +96,14 @@ export class SensoresPage {
     });
   }
 
+  /** Si Community Service no responde, la lista queda vacía y la tabla muestra el id. */
+  private cargarComunidades(): void {
+    this.comunidadServicio.listar().pipe(
+      timeout(5000),
+      catchError(() => of<Comunidad[]>([]))
+    ).subscribe(lista => this.comunidades.set(lista));
+  }
+
   /** Le agrega al sensor su nivel, unidad y nombre de variable, ya calculados. */
   private decorar(s: Sensor): SensorVista {
     const nivel = calcularNivel(s.tipoSensorId, s.valorActual);
@@ -101,6 +120,7 @@ export class SensoresPage {
   // ==================== CREAR Y EDITAR ====================
 
   nuevo(): void {
+    this.cargarComunidades(); // por si se registró una comunidad en otra pestaña
     this.sensorEditando.set(null);
     this.formAbierto.set(true);
   }

@@ -23,22 +23,54 @@
 
       <div class="campo">
         <label for="pais">País</label>
-        <input id="pais" type="text" formControlName="pais" placeholder="Ej.: Guatemala">
+        <input id="pais" type="text" formControlName="pais" placeholder="Ej.: Guatemala"
+               (input)="alCambiarPais()">
+        @if (!usaCatalogo()) {
+          <span class="ayuda">Fuera de Guatemala, departamento y municipio se escriben a mano.</span>
+        }
       </div>
 
       <div class="fila">
         <div class="campo">
           <label for="depto">Departamento</label>
-          <input id="depto" type="text" formControlName="departamento" placeholder="Ej.: Izabal"
-                 [class.malo]="departamento.invalid && departamento.touched">
+          @if (usaCatalogo()) {
+            <select id="depto" formControlName="departamento" (change)="alCambiarDepartamento()"
+                    [class.malo]="departamento.invalid && departamento.touched">
+              <option value="" disabled>Seleccione…</option>
+              @if (deptoFueraDeCatalogo(); as d) {
+                <option [value]="d">{{ d }} (valor guardado)</option>
+              }
+              @for (d of departamentos; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+          } @else {
+            <input id="depto" type="text" formControlName="departamento" placeholder="Ej.: Izabal"
+                   [class.malo]="departamento.invalid && departamento.touched">
+          }
           @if (departamento.touched && departamento.hasError('required')) {
             <span class="error">Obligatorio.</span>
           }
         </div>
         <div class="campo">
           <label for="muni">Municipio</label>
-          <input id="muni" type="text" formControlName="municipio" placeholder="Ej.: Puerto Barrios"
-                 [class.malo]="municipio.invalid && municipio.touched">
+          @if (usaCatalogo()) {
+            <select id="muni" formControlName="municipio"
+                    [class.malo]="municipio.invalid && municipio.touched">
+              <option value="" disabled>
+                {{ municipios().length || muniFueraDeCatalogo() ? 'Seleccione…' : 'Elija primero el departamento' }}
+              </option>
+              @if (muniFueraDeCatalogo(); as m) {
+                <option [value]="m">{{ m }} (valor guardado)</option>
+              }
+              @for (m of municipios(); track m) {
+                <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          } @else {
+            <input id="muni" type="text" formControlName="municipio" placeholder="Ej.: Puerto Barrios"
+                   [class.malo]="municipio.invalid && municipio.touched">
+          }
           @if (municipio.touched && municipio.hasError('required')) {
             <span class="error">Obligatorio.</span>
           }
