@@ -1,6 +1,7 @@
 import { Component, computed, inject, input, output, effect, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Sensor, ESTADOS_SENSOR, ESTADO_SENSOR_ACTIVO, ORIGENES_SENSOR, OrigenSensor } from '../../core/models/sensor.model';
+import { Comunidad } from '../../core/models/comunidad.model';
 
 /**
  * Ventana modal para crear o editar un sensor. Componente hijo: recibe un sensor
@@ -18,6 +19,8 @@ export class SensorForm {
 
   sensor = input<Sensor | null>(null);
   guardando = input<boolean>(false);
+  /** Comunidades registradas (las carga la página). El sensor guarda solo el id. */
+  comunidades = input<Comunidad[]>([]);
 
   guardar = output<Sensor>();
   cancelar = output<void>();
@@ -44,7 +47,8 @@ export class SensorForm {
     nombre:         ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
     codigo:         ['', [Validators.required, Validators.maxLength(40)]],
     tipoSensorId:   [1,  [Validators.required, Validators.min(1)]],
-    comunidadId:    [1,  [Validators.required, Validators.min(1)]],
+    // 0 = sin elegir: obliga a seleccionar una comunidad del desplegable.
+    comunidadId:    [0,  [Validators.required, Validators.min(1)]],
     ubicacion:      ['', [Validators.required, Validators.maxLength(150)]],
     descripcion:    ['', [Validators.required, Validators.maxLength(250)]],
     valorActual:    [0,  [Validators.required]],
@@ -59,6 +63,24 @@ export class SensorForm {
   ayudaOrigen = computed(() => ORIGENES_SENSOR.find(o => o.valor === this.origenSel())?.ayuda ?? '');
   private origenSel = signal<OrigenSensor | ''>('');
 
+  /**
+   * Opciones del desplegable: comunidades activas, ordenadas por nombre. Al editar, la comunidad
+   * actual del sensor se incluye aunque esté inactiva, para no cambiarla sin querer.
+   */
+  opcionesComunidad = computed(() => {
+    const actual = this.sensor()?.comunidadId;
+    return this.comunidades()
+      .filter(c => c.activo || c.comunidadId === actual)
+      .sort((a, b) => a.nombreComunidad.localeCompare(b.nombreComunidad, 'es'));
+  });
+
+  /** Id del sensor en edición que no aparece en la lista (borrada o no se pudo cargar). */
+  comunidadFaltante = computed(() => {
+    const actual = this.sensor()?.comunidadId;
+    return actual && !this.comunidades().some(c => c.comunidadId === actual) ? actual : null;
+  });
+
+  get comunidad()   { return this.formulario.controls.comunidadId; }
   get nombre()      { return this.formulario.controls.nombre; }
   get codigo()      { return this.formulario.controls.codigo; }
   get ubicacion()   { return this.formulario.controls.ubicacion; }

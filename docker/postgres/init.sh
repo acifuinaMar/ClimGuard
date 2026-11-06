@@ -13,17 +13,12 @@ create climguard_community community "$COMMUNITY_DB_PASSWORD"
 create climguard_alert     alert     "$ALERT_DB_PASSWORD"
 
 # Inicializar el esquema de Auth Service en instalaciones nuevas.
+# SET ROLE auth: las tablas, secuencias e índices se crean directamente con dueño `auth`.
+# (No usar REASSIGN OWNED BY postgres: falla porque postgres es dueño de objetos del sistema.)
+# psql ejecuta los -c/-f en orden y en la misma sesión, así que el SET ROLE aplica a ambos scripts.
 psql -v ON_ERROR_STOP=1 \
   --username "$POSTGRES_USER" \
   --dbname climguard_auth \
-  -f /opt/climguard/migrations/auth-000-baseline.sql
-
-psql -v ON_ERROR_STOP=1 \
-  --username "$POSTGRES_USER" \
-  --dbname climguard_auth \
+  -c "SET ROLE auth;" \
+  -f /opt/climguard/migrations/auth-000-baseline.sql \
   -f /opt/climguard/migrations/auth-001-external-identities.sql
-
-psql -v ON_ERROR_STOP=1 \
-  --username "$POSTGRES_USER" \
-  --dbname climguard_auth \
-  -c "REASSIGN OWNED BY postgres TO auth;"
