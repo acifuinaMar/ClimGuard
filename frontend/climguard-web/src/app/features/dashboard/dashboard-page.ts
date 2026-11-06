@@ -1,12 +1,18 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { Sensor } from '../../core/models/sensor.model';
 import { SensorService } from '../../core/services/sensor.service';
+import { PeligroService } from '../../core/services/peligro.service';
 import { calcularNivel, textoNivel, unidadDe, variableDe, Nivel } from '../../core/nivel-alerta';
 import { interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 import { Alerta } from '../../core/models/alerta.model';
 import { AlertaService } from '../../core/services/alerta.service';
+import { RealtimeService } from '../../core/services/realtime.service';
+import { AlarmaService } from '../../core/services/alarma.service';
 import { DatePipe } from '@angular/common';
+import { IndicadoresEjecutivos } from './indicadores-ejecutivos';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AuthService } from '../../core/services/auth.service';
 
 /** Un sensor con su nivel ya calculado, listo para pintar. */
 interface SensorConNivel extends Sensor {
@@ -20,11 +26,36 @@ interface SensorConNivel extends Sensor {
   selector: 'app-dashboard-page',
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.scss',
-  imports: [DatePipe]
+  changeDetection: ChangeDetectionStrategy.Eager,
+  imports: [DatePipe, IndicadoresEjecutivos]
 })
 export class DashboardPage {
   private servicio = inject(SensorService);
+  private peligro = inject(PeligroService);
   private alertaService = inject(AlertaService);
+  private realtime = inject(RealtimeService);
+  private alarma = inject(AlarmaService);
+  private auth = inject(AuthService);
+
+  /** true cuando el Hub de SignalR está conectado (para el indicador en vivo). */
+  tiempoReal = this.realtime.conectado;
+
+  /** Cuántas emergencias había la última vez, para detectar si apareció una nueva. */
+  private emergenciasPrevias = 0;
+
+  /**
+   * Vigila el número de sensores en emergencia. Si SUBE (apareció una nueva),
+   * dispara la alarma visual y sonora. Un effect se re-ejecuta solo cuando
+   * cambia la señal que lee dentro (emergencia).
+   */
+  private vigilarEmergencias = effect(() => {
+    const ahora = this.emergencia();
+    if (ahora > this.emergenciasPrevias) {
+      this.alarma.disparar(`¡Emergencia! ${ahora} sensor(es) en nivel crítico.`);
+    }
+    this.emergenciasPrevias = ahora;
+  });
+
   cargando = signal(true);
   error = signal<string | null>(null);
   sensores = signal<SensorConNivel[]>([]);
@@ -65,7 +96,7 @@ export class DashboardPage {
       return '--';
 
     const fechas = this.sensores()
-      .map(s => new Date(s.ultimaActualizacion));
+      .map(s => new Date(s.fechaUltimaConexion));
 
     const ultima = new Date(
       Math.max(...fechas.map(f => f.getTime()))
@@ -82,7 +113,8 @@ export class DashboardPage {
   });
   private cargarSensores(): void {
 
-    this.servicio.listar().subscribe({
+    // Primero las reglas (misma fuente que el backend), luego los sensores: el nivel se calcula con ellas.
+    this.peligro.asegurar().pipe(switchMap(() => this.servicio.listar())).subscribe({
 
       next: (datos) => {
 
@@ -145,7 +177,7 @@ export class DashboardPage {
       next: datos => {
 
         const activas = datos
-            .filter(a => a.activa)
+            .filter(a => a.activo)
             .sort(
                 (a, b) =>
                     new Date(b.fechaHora).getTime() -
@@ -169,17 +201,39 @@ export class DashboardPage {
   constructor() {
    this.cargarSensores();
    this.cargarAlertas();
-   // Cada 5 segundos:
-  // 1. Simula nuevos valores
-  // 2. Vuelve a cargar los sensores
-  interval(5000)
-    .pipe(
-      switchMap(() => this.servicio.simular())
-    )
-    .subscribe({
-      next: () => this.cargarSensores(),
-      error: (err) => console.error('Error al simular sensores', err)
-    });
+
+   // Reglas: si un administrador cambia un umbral, los niveles se repintan en <= ~15 s sin esperar una lectura nueva.
+   interval(15000)
+     .pipe(switchMap(() => this.peligro.asegurar()), takeUntilDestroyed())
+     .subscribe(cambio => { if (cambio) this.cargarSensores(); });
+
+   // ===== TIEMPO REAL (SignalR) =====
+   // Abrimos la conexión con el Hub. Cuando el servidor empuje algo,
+   // actualizamos AL INSTANTE, sin esperar al polling.
+   this.realtime.conectar();
+   // Actualizaciones recibidas por SignalR.
+this.realtime.nuevaAlerta$
+  .pipe(takeUntilDestroyed())
+  .subscribe(() => this.cargarAlertas());
+
+this.realtime.nuevaLectura$
+  .pipe(takeUntilDestroyed())
+  .subscribe(() => this.cargarSensores());
+
+this.realtime.sensorActualizado$
+  .pipe(takeUntilDestroyed())
+  .subscribe(() => this.cargarSensores());
+
+// Polling de respaldo.
+// Solo consulta sensores cuando SignalR no está conectado.
+interval(10000)
+  .pipe(takeUntilDestroyed())
+  .subscribe(() => {
+    if (!this.tiempoReal()) {
+      this.cargarSensores();
+      this.cargarAlertas();
+    }
+  });
     /*this.servicio.listar().subscribe({
       next: (datos) => {
         this.sensores.set(datos.map(s => {
@@ -234,6 +288,33 @@ export class DashboardPage {
     }).join(' ');
 
 });
+vincularGoogle(): void {
+  this.auth.vincularOAuth('google').subscribe({
+    error: (err) => {
+      console.error('Error al vincular Google:', err);
+      alert(
+        err?.error?.mensaje ||
+        err?.error?.message ||
+        'No se pudo iniciar la vinculación con Google.'
+      );
+    }
+  });
+}
+
+
+vincularGithub(): void {
+  this.auth.vincularOAuth('github').subscribe({
+    error: (err) => {
+      console.error('Error al vincular GitHub:', err);
+      alert(
+        err?.error?.mensaje ||
+        err?.error?.message ||
+        'No se pudo iniciar la vinculación con GitHub.'
+      );
+    }
+  });
+}
+
 
 tipoFenomeno(id: number): string {
 

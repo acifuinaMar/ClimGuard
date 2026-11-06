@@ -1,5 +1,5 @@
 ﻿using MediatR;
-using Services.Services.Interfaces;
+using Domain.Interfaces;
 
 namespace Application.Usuario.Service.Queries
 {
@@ -16,17 +16,21 @@ namespace Application.Usuario.Service.Queries
         {
             var usuario = await _repository.GetById(request.id);
 
+            if(usuario == null)
+                return null;
+
             return new UsuarioResultDto(
                 usuario.UsuarioId,
-                usuario.Apellido2,
-                usuario.Apellido1,
-                usuario.Nombre2,
-                usuario.Nombre1,
+                usuario.NombreCompleto,
                 usuario.NombreUsuario,
-                usuario.Rol,
+                usuario.UltimoAcceso,
                 usuario.Activo,
-                usuario.FechaRegistro
-                );
+                usuario.RolId,
+                usuario.UsuarioIng,
+                usuario.FechaIng,
+                usuario.UsuarioAct,
+                usuario.FechaAct
+            );
         }
     }
 }

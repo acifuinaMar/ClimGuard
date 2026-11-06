@@ -49,7 +49,7 @@ namespace Application.JWT
 
                 //configuracion de firma
                 var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:key"]!));//crea la la clave de firma usando la clave secreta
-                var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);//usa el algoritmo HmacSha256Signature para firmar el token
+                var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);//usa el algoritmo HmacSha256Signature para firmar el token
 
                 //create detail token
                 var jwtConfig = new JwtSecurityToken(

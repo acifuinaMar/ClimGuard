@@ -1,0 +1,36 @@
+<div class="fondo" (click)="cancelar.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <header class="modal__cabecera">
+      <h2>{{ titulo() }}</h2>
+      <button type="button" class="modal__cerrar" (click)="cancelar.emit()" aria-label="Cerrar">✕</button>
+    </header>
+
+    <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+
+      <div class="campo">
+        <label for="nombre">Nombre del fenómeno</label>
+        <input id="nombre" type="text" formControlName="nombre" placeholder="Ej.: Deslizamiento"
+               [class.malo]="nombre.invalid && nombre.touched">
+        @if (nombre.touched && nombre.hasError('required')) {
+          <span class="error">El nombre es obligatorio.</span>
+        } @else if (nombre.touched && nombre.hasError('minlength')) {
+          <span class="error">Debe tener al menos 3 caracteres.</span>
+        }
+      </div>
+
+      <label class="interruptor">
+        <input type="checkbox" formControlName="activo">
+        Activo
+      </label>
+
+      <footer class="modal__pie">
+        <button type="button" class="btn btn--claro" (click)="cancelar.emit()" [disabled]="guardando()">Cancelar</button>
+        <button type="submit" class="btn btn--primario" [disabled]="guardando()">
+          @if (guardando()) { Guardando… } @else { Guardar }
+        </button>
+      </footer>
+
+    </form>
+  </div>
+</div>

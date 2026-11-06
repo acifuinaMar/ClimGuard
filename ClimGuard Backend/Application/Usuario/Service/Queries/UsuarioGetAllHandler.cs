@@ -1,32 +1,34 @@
 ﻿using MediatR;
-using Services.Services.Interfaces;
+using Domain.Interfaces;
 
 namespace Application.Usuario.Service.Queries
 {
     public sealed class UsuarioGetAllHandler : IRequestHandler<GetAllUsuarioQuery, IReadOnlyList<UsuarioResultDto>>
     {
-        public readonly IUsuario _repository;
+        private readonly IUsuario _repository;
 
         public UsuarioGetAllHandler(IUsuario repository)
         {
             _repository = repository;
         }
 
-        public async Task<IReadOnlyList<UsuarioResultDto>> Handle(GetAllUsuarioQuery request, CancellationToken cancellationToken)
+        public async Task<IReadOnlyList<UsuarioResultDto>> Handle(
+            GetAllUsuarioQuery request,
+            CancellationToken cancellationToken)
         {
-            var comunidades = await _repository.GetAll();
+            var usuarios = await _repository.GetAll();
 
-            return comunidades.Select(a => new UsuarioResultDto
-            (
+            return usuarios.Select(a => new UsuarioResultDto(
                 a.UsuarioId,
-                a.Apellido2,
-                a.Apellido1,
-                a.Nombre2,
-                a.Nombre1,
+                a.NombreCompleto,
                 a.NombreUsuario,
-                a.Rol,
+                a.UltimoAcceso,
                 a.Activo,
-                a.FechaRegistro
+                a.RolId,
+                a.UsuarioIng,
+                a.FechaIng,
+                a.UsuarioAct,
+                a.FechaAct
             )).ToList();
         }
     }

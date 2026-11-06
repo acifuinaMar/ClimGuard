@@ -5,13 +5,19 @@ namespace Infraestructure.Models;
 
 public partial class Bitacora
 {
-    public int BitacoraId { get; set; }
+    public long BitacoraId { get; set; }
 
-    public int UsuarioId { get; set; }
+    public string NombreEntidad { get; set; } = null!;
+
+    public long EntidadId { get; set; }
 
     public string Accion { get; set; } = null!;
 
-    public DateTime FechaRegistro { get; set; }
+    public string Descripcion { get; set; } = null!;
+
+    public DateTime FechaHora { get; set; }
+
+    public int UsuarioId { get; set; }
 
     public virtual Usuario Usuario { get; set; } = null!;
 }

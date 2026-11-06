@@ -17,9 +17,12 @@ namespace Application.Bitacora.Sevice.Query
             return list.Select(a => new BitacoraResultDto
             (
                 a.BitacoraId,
-                a.UsuarioId,
+                a.NombreEntidad,
+                a.EntidadId,
                 a.Accion,
-                a.FechaRegistro
+                a.Descripcion,
+                a.FechaHora,
+                a.UsuarioId
             )).ToList();
         }
     }

@@ -5,16 +5,16 @@
 |-----------|-----------|
 | Documento | Diagrama de Clases |
 | Código | DOC-09 |
-| Versión | 1.0 |
+| Versión | 2.0 |
 | Estado | Finalizado |
 
 ---
 
 # Objetivo
 
-El presente documento describe el modelo de clases del dominio del sistema ClimGuard, representando las principales entidades, catálogos, atributos y relaciones implementadas en la aplicación.
+El presente documento describe el modelo de clases implementado en la versión final de ClimGuard. El diagrama representa las entidades del dominio, catálogos y relaciones persistidas en la base de datos, permitiendo comprender la organización de la información utilizada por el sistema para el monitoreo climático, la simulación de lecturas, la generación de alertas y la administración de los diferentes módulos.
 
-El diagrama constituye una vista conceptual del dominio y sirve como base para comprender la estructura de los datos y la interacción entre las entidades del sistema.
+A diferencia de las versiones iniciales, el modelo incorpora la persistencia de lecturas históricas mediante la entidad **LecturaSensor** y el uso de **snapshots** dentro de las alertas, con el propósito de conservar la información que dio origen a cada evento aun cuando las reglas sean modificadas posteriormente.
 
 ---
 
@@ -29,29 +29,41 @@ direction LR
 %%========================
 
 class Rol{
-    +idRol:int
-    +nombre:String
-    +descripcion:String
+    +RolId:int
+    +Nombre:string
+    +Descripcion:string
 }
 
 class TipoSensor{
-    +idTipoSensor:int
-    +nombre:String
-    +unidadMedida:String
+    +TipoSensorId:int
+    +Nombre:string
+    +UnidadMedida:string
+    +Activo:boolean
 }
-
-%%========================
-%% ENUMERACIONES
-%%========================
 
 class EstadoSensor{
     +EstadoSensorId:int
-    +Estado:String
+    +Nombre:string
+    +Activo:boolean
 }
 
 class EstadoAlerta{
     +EstadoAlertaId:int
-    +Estado:String
+    +Nombre:string
+    +Activo:boolean
+}
+
+class NivelAlerta{
+    +NivelAlertaId:int
+    +Nombre:string
+    +ColorHex:string
+    +Activo:boolean
+}
+
+class TipoFenomeno{
+    +TipoFenomenoId:int
+    +Nombre:string
+    +Activo:boolean
 }
 
 %%========================
@@ -60,75 +72,58 @@ class EstadoAlerta{
 
 class Usuario{
     +UsuarioId:int
-    +Nombre1:String
-    +Nombre2:String
-    +Apellido1:String
-    +Apellido2:String
-    +NombreUsuario:String
-    +PasswordHash:String
+    +NombreUsuario:string
     +Activo:boolean
 }
 
 class Comunidad{
     +ComunidadId:int
-    +Nombre:String
+    +Nombre:string
     +Latitud:decimal
     +Longitud:decimal
-    +Descripcion:String
+    +Descripcion:string
 }
 
 class Sensor{
     +SensorId:int
-    +Nombre:String
+    +Nombre:string
+    +Codigo:string
+    +Ubicacion:string
+    +Descripcion:string
     +ValorActual:decimal
+    +FechaInstalacion:DateTime
+    +FechaUltimaConexion:DateTime
+}
+
+class ReglaAlerta{
+    +ReglaAlertaId:int
+    +Nombre:string
+    +ValorMin:decimal
+    +ValorMax:decimal
+    +Mensaje:string
     +Activo:boolean
-    +FechaInstalacion:Date
-    +UltimaActualizacion:Date
 }
 
-class Umbral{
-    +idUmbral:int
-    +valorPrecaucion:decimal
-    +valorAlerta:decimal
-    +valorEmergencia:decimal
-}
-
-class Lectura{
-    +idLectura:int
-    +valor:decimal
-    +fechaHora:DateTime
+class LecturaSensor{
+    +LecturaId:long
+    +Valor:decimal
+    +FechaHora:DateTime
 }
 
 class Alerta{
-    +AlertaId:int
-    +Mensaje:String
+    +AlertaId:long
+    +ValorDetectado:decimal
+    +MensajeSnap:string
+    +NivelAlertaIdSnap:int
+    +TipoFenomenoIdSnap:int
     +FechaHora:DateTime
-    +FechaResolucion:DateTime
-    +Activa:boolean
-}
-
-class Notificacion{
-    +idNotificacion:int
-    +fechaEnvio:DateTime
-    +leida:boolean
+    +Activo:boolean
 }
 
 class Bitacora{
-    +idBitacora:int
-    +accion:String
-    +fechaHora:DateTime
-}
-
-class NivelAlerta{
-    +NivelAlertaId:int
-    +Nombre:String
-    +ColorHex:String
-    +Orden:int
-}
-
-class TipoFenomeno{
-    +TipoFenomenoId:int
-    +Nombre:String
+    +BitacoraId:long
+    +Accion:string
+    +FechaHora:DateTime
 }
 
 %%========================
@@ -139,32 +134,38 @@ Rol "1" <-- "*" Usuario
 
 Usuario "1" --> "*" Bitacora
 
-Comunidad "1" <-- "0..*" Sensor : monitorea >
+Comunidad "1" <-- "*" Sensor
 
-TipoSensor "1" <-- "0..*" Sensor
-
-TipoSensor "1" <-- "*" Umbral
-
-Sensor "1" *-- "0..*" Lectura
-
-Sensor "1" <-- "0..*" Alerta
+TipoSensor "1" <-- "*" Sensor
 
 EstadoSensor "1" <-- "*" Sensor
 
-EstadoAlerta "1" <-- "*" Alerta
+Sensor "1" --> "*" LecturaSensor
 
-NivelAlerta "1" <-- "*" Alerta
+Sensor "1" --> "*" Alerta
 
-TipoFenomeno "1" <-- "*" Alerta
+Sensor "*" --> "1" Comunidad
 
-Comunidad "1" <-- "*" Alerta
+ReglaAlerta "*" --> "1" TipoSensor
+
+ReglaAlerta "*" --> "1" TipoFenomeno
+
+ReglaAlerta "*" --> "1" NivelAlerta
+
+Alerta "*" --> "1" ReglaAlerta
+
+Alerta "*" --> "1" EstadoAlerta
+
+Alerta "*" --> "1" Comunidad
 ```
 
 ---
 
 # Observaciones
 
-- El diagrama representa únicamente las clases pertenecientes al dominio del negocio.
-- Los componentes de infraestructura (Controllers, Services, Repositories, SignalR y Base de Datos) no forman parte de este modelo, ya que corresponden a la arquitectura de software.
-- Las entidades del dominio representan la información persistida por el sistema. La lógica de negocio asociada a la evaluación de lecturas, generación de alertas y notificaciones se implementa en la capa de servicios del backend.
-- Los estados y catálogos del sistema (Rol, TipoSensor, EstadoSensor, EstadoAlerta, NivelAlerta y TipoFenomeno) se representan como clases debido a que son administrados mediante tablas de catálogo en la base de datos.
+- El modelo representa exclusivamente las entidades del dominio persistidas en la base de datos.
+- La generación de lecturas es realizada automáticamente por un **Background Service**, el cual crea registros en **LecturaSensor** y actualiza el valor actual de cada sensor.
+- La evaluación de reglas se realiza utilizando la entidad **ReglaAlerta**, sustituyendo el modelo anterior basado en umbrales independientes.
+- La entidad **Alerta** almacena snapshots del mensaje, nivel de alerta y tipo de fenómeno (`MensajeSnap`, `NivelAlertaIdSnap` y `TipoFenomenoIdSnap`), garantizando la integridad histórica de cada alerta aun cuando las reglas sean modificadas posteriormente.
+- Las entidades principales incorporan auditoría mediante los campos de usuario y fecha de creación/modificación.
+- Los componentes de infraestructura (Controllers, Repositories, Background Services, SignalR, Docker y Base de Datos) no forman parte del modelo de clases, ya que pertenecen a la arquitectura de implementación.

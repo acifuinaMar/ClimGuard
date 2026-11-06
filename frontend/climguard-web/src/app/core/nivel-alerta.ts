@@ -1,106 +1,49 @@
 /* ============================================================
-   Cálculo del nivel de peligro de una lectura.
+   Nivel de peligro de una lectura, para pintar semáforos, mapa y panel.
 
-   ⚠️ TEMPORAL — leer esto antes de tocarlo:
+   Ya NO hay umbrales escritos en el navegador. El nivel sale de las reglas de
+   alerta del servidor (las mismas que usa el backend para crear alertas),
+   evaluadas con core/peligro.ts. PeligroService carga las reglas y las deja
+   aquí con fijarReglas().
 
-   Estos umbrales están escritos aquí porque la API todavía no expone
-   el endpoint /api/Umbral. En cuanto Mahuerk lo publique, este archivo
-   se BORRA y los umbrales se leen del servidor.
-
-   ¿Por qué no dejarlo así? Porque el enunciado exige poder configurar
-   los umbrales desde la aplicación (CFG-RF-001). Si viven en el código
-   del navegador, cambiarlos obliga a recompilar y desplegar, y además
-   cada usuario podría tener valores distintos. Es una muleta, no la
-   solución.
+   Qué es cada cosa (no confundir):
+   - NIVEL DE PELIGRO de la lectura: existe mientras el valor esté dentro del
+     intervalo [min, max] de alguna regla activa. Es lo que muestra este archivo.
+   - ALERTA creada: la crea el backend al detectar la condición, pero el
+     enfriamiento (cooldown, 60 s por sensor y regla por defecto) puede evitar
+     una alerta nueva mientras la condición de peligro sigue vigente.
    ============================================================ */
+
+import { evaluarPeligro, type ReglaPeligro } from './peligro';
 
 export type Nivel = 'verde' | 'amarillo' | 'naranja' | 'rojo';
 
-/** Hacia dónde se vigila la variable. */
-type Direccion = 'sube' | 'baja';
+let reglasVigentes: ReglaPeligro[] = [];
+let nivelPorId = new Map<number, Nivel>();
 
-interface ReglaLocal {
-  nombre: string;
-  unidad: string;
-  direccion: Direccion;
-  precaucion: number;
-  alerta: number;
-  emergencia: number;
-  fenomeno: string;
+const POR_DEFECTO_ID: Record<number, Nivel> = { 1: 'verde', 2: 'amarillo', 3: 'naranja', 4: 'rojo' };
+const POR_COLOR: Record<string, Nivel> = { '#28A745': 'verde', '#FFC107': 'amarillo', '#FD7E14': 'naranja', '#DC3545': 'rojo' };
+
+/** Reemplaza las reglas con las que se calcula el nivel (las entrega PeligroService). */
+export function fijarReglas(reglas: ReglaPeligro[]): void {
+  reglasVigentes = reglas;
 }
 
-/**
- * Una regla por tipo de sensor. El id corresponde al TipoSensorId del backend.
- * Fíjate en que Temperatura y Humedad vigilan HACIA ABAJO ('baja'): son los
- * casos de helada y sequía, los que el modelo original no podía detectar.
- */
-const REGLAS: Record<number, ReglaLocal> = {
+/** Asocia cada nivelAlertaId del servidor con el color del semáforo (por su colorHex; si no, por id 1..4). */
+export function fijarNiveles(niveles: { nivelAlertaId: number; colorHex: string }[]): void {
+  nivelPorId = new Map(niveles.map(n => [n.nivelAlertaId, POR_COLOR[n.colorHex?.toUpperCase()] ?? POR_DEFECTO_ID[n.nivelAlertaId] ?? 'verde']));
+}
 
-  1: {
-    nombre: 'Temperatura',
-    unidad: '°C',
-    direccion: 'baja',
-    precaucion: 5, alerta: 2, emergencia: 0,
-    fenomeno: 'Helada'
-  },
+/** Regla que provoca la condición de peligro de la lectura (o null). */
+export function reglaDePeligro(tipoSensorId: number, valor: number): ReglaPeligro | null {
+  return evaluarPeligro(reglasVigentes, tipoSensorId, Number(valor));
+}
 
-  2: {
-    nombre: 'Humedad',
-    unidad: '%',
-    direccion: 'baja',
-    precaucion: 30, alerta: 20, emergencia: 12,
-    fenomeno: 'Incendio forestal'
-  },
-
-  3: {
-    nombre: 'Viento',
-    unidad: 'km/h',
-    direccion: 'sube',
-    precaucion: 40, alerta: 60, emergencia: 80,
-    fenomeno: 'Tormenta'
-  },
-
-  4: {
-    nombre: 'Lluvia',
-    unidad: 'mm',
-    direccion: 'sube',
-    precaucion: 20, alerta: 50, emergencia: 100,
-    fenomeno: 'Tormenta'
-  },
-
-  5: {
-    nombre: 'Nivel de río',
-    unidad: 'm',
-    direccion: 'sube',
-    precaucion: 3.0, alerta: 3.8, emergencia: 4.5,
-    fenomeno: 'Inundación'
-  }
-
-};
-
-/**
- * Convierte un valor crudo en uno de los CUATRO niveles del enunciado.
- *
- * El orden de las comparaciones va siempre de lo más grave a lo menos
- * grave. Si se preguntara primero por "precaución", una lectura de
- * emergencia entraría por esa rama y saldría mal clasificada.
- */
+/** Nivel de semáforo de la lectura: 'verde' si no hay condición de peligro. */
 export function calcularNivel(tipoSensorId: number, valor: number): Nivel {
-  const r = REGLAS[tipoSensorId];
+  const r = reglaDePeligro(tipoSensorId, valor);
   if (!r) return 'verde';
-
-  if (r.direccion === 'sube') {
-    if (valor >= r.emergencia) return 'rojo';
-    if (valor >= r.alerta)     return 'naranja';
-    if (valor >= r.precaucion) return 'amarillo';
-    return 'verde';
-  }
-
-  // Vigilancia hacia abajo: cuanto MÁS BAJO, más grave.
-  if (valor <= r.emergencia) return 'rojo';
-  if (valor <= r.alerta)     return 'naranja';
-  if (valor <= r.precaucion) return 'amarillo';
-  return 'verde';
+  return nivelPorId.get(r.nivelAlertaId) ?? POR_DEFECTO_ID[r.nivelAlertaId] ?? 'verde';
 }
 
 /** Texto que se muestra en la insignia de color. */
@@ -108,17 +51,29 @@ export function textoNivel(nivel: Nivel): string {
   return { verde: 'Normal', amarillo: 'Precaución', naranja: 'Alerta', rojo: 'Emergencia' }[nivel];
 }
 
+/* ---- Metadatos de presentación por tipo de sensor (NO son umbrales) ---- */
+const META: Record<number, { nombre: string; unidad: string; fenomeno: string }> = {
+  1: { nombre: 'Temperatura',         unidad: '°C',   fenomeno: 'Helada / Incendio forestal' },
+  2: { nombre: 'Humedad',             unidad: '%',    fenomeno: 'Sequía' },
+  3: { nombre: 'Viento',              unidad: 'km/h', fenomeno: 'Tormenta' },
+  4: { nombre: 'Lluvia',              unidad: 'mm',   fenomeno: 'Tormenta' },
+  5: { nombre: 'Nivel de río',        unidad: 'm',    fenomeno: 'Inundación' },
+  6: { nombre: 'Nivel de reservorio', unidad: 'm',    fenomeno: '' },
+  7: { nombre: 'Humo / Incendio',     unidad: 'ppm',  fenomeno: 'Incendio forestal' },
+  8: { nombre: 'Otro',                unidad: '',     fenomeno: '' }
+};
+
 /** Unidad de medida del sensor, para no mostrar números sueltos. */
 export function unidadDe(tipoSensorId: number): string {
-  return REGLAS[tipoSensorId]?.unidad ?? '';
+  return META[tipoSensorId]?.unidad ?? '';
 }
 
 /** Nombre legible de la variable climática. */
 export function variableDe(tipoSensorId: number): string {
-  return REGLAS[tipoSensorId]?.nombre ?? 'Desconocida';
+  return META[tipoSensorId]?.nombre ?? 'Desconocida';
 }
 
-/** Fenómeno que representa esta variable cuando se dispara. */
+/** Fenómeno asociado a la variable (solo orientativo; el real lo define cada regla). */
 export function fenomenoDe(tipoSensorId: number): string {
-  return REGLAS[tipoSensorId]?.fenomeno ?? '';
+  return META[tipoSensorId]?.fenomeno ?? '';
 }

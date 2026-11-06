@@ -1,8 +1,4 @@
-﻿using Application.Comunidad;
-using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using MediatR;
 
 namespace Application.LecturaSensor.Service
 {
@@ -11,7 +7,7 @@ namespace Application.LecturaSensor.Service
         int sensorId, 
         decimal valor, 
         DateTime fechaHora,
-        int UsuarioLogeado
+        int usuarioIng
     ) : IRequest<LecturaSensorResultDto>;
 
 

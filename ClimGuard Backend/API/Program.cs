@@ -13,6 +13,15 @@ var miorigen = builder.Configuration["Origin:miorigen"]!;
 
 // Add services to the container.
 builder.Services.AddControllers();
+builder.Services.AddHttpClient("AuditService", client =>
+{
+    client.BaseAddress = new Uri(
+        builder.Configuration["AuditService:BaseUrl"]
+        ?? "http://audit-service:8000"
+    );
+
+    client.Timeout = TimeSpan.FromSeconds(3);
+});
 
 // Configuración de CORS permisivo (Cualquier origen, método y encabezado)
 //builder.Services.AddCors(options =>
@@ -100,19 +109,17 @@ builder.Services.AddMediatR(config =>
 var app = builder.Build();
 
 // OpenAPI JSON
-if (app.Environment.IsDevelopment())
+// OpenAPI JSON
+app.MapOpenApi();
+
+// Swagger JSON + Swagger UI
+app.UseSwagger();
+
+app.UseSwaggerUI(options =>
 {
-    app.MapOpenApi();
-
-    // Swagger JSON + Swagger UI
-    app.UseSwagger();
-
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Mi API v1");
-        options.RoutePrefix = "swagger";
-    });
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Mi API v1");
+    options.RoutePrefix = "swagger";
+});
 
 // Activar el middleware de CORS antes de autorización y controladores
 app.UseCors(miorigen);

@@ -4,12 +4,18 @@ namespace Domain.Entities.SensorReading;
 
 public partial class LecturaSensorDomain
 {
-    public LecturaSensorDomain(int lecturaId, int sensorId, decimal valor, DateTime fechaHora)
+    public LecturaSensorDomain(
+        int lecturaId,
+        int sensorId,
+        decimal valor,
+        DateTime fechaHora,
+        int usuarioIng)
     {
         LecturaId = lecturaId;
         SensorId = sensorId;
         Valor = valor;
         FechaHora = fechaHora;
+        UsuarioIng = usuarioIng;
     }
 
     public int LecturaId { get; set; }
@@ -19,6 +25,8 @@ public partial class LecturaSensorDomain
     public decimal Valor { get; set; }
 
     public DateTime FechaHora { get; set; }
+
+    public int UsuarioIng { get; set; }
 
     public virtual SensorDomain Sensor { get; set; } = null!;
 }

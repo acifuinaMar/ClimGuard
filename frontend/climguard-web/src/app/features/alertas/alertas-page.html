@@ -1,0 +1,68 @@
+<header class="cabecera">
+  <div>
+    <h1>Alertas</h1>
+    <p class="cabecera__sub">Alertas activas que requieren atención</p>
+  </div>
+  <div class="cabecera__acciones">
+    @if (usandoEjemplo()) {
+      <span class="aviso-ejemplo" title="El backend no respondió; se muestran alertas de ejemplo.">Datos de ejemplo</span>
+    }
+    @if (!cargando()) {
+      <span class="cuenta">{{ activas().length }} activas</span>
+    }
+  </div>
+</header>
+
+@if (aviso()) {
+  <div class="aviso-ok" role="status">{{ aviso() }}</div>
+}
+@if (error()) {
+  <div class="aviso-mal" role="alert">
+    {{ error() }}
+    <button type="button" class="enlace" (click)="cargar()">Reintentar</button>
+  </div>
+}
+
+@if (cargando()) {
+  <div class="estado"><span class="estado__titulo">Cargando alertas…</span></div>
+}
+
+@else if (activas().length === 0) {
+  <div class="estado">
+    <span class="estado__titulo">No hay alertas activas</span>
+    <span>Todo en calma por ahora. 🌤️</span>
+  </div>
+}
+
+@else {
+  <div class="tarjetas">
+    @for (a of activas(); track a.alertaId) {
+      <article class="alerta" [style.border-left-color]="colorNivel(a.nivelAlertaIdSnap)">
+
+        <div class="alerta__alto">
+          <span class="pastel" [style.background]="colorNivel(a.nivelAlertaIdSnap)">
+            {{ nombreNivel(a.nivelAlertaIdSnap) }}
+          </span>
+          <span class="alerta__fecha">{{ a.fechaHora | date:'dd/MM/yy HH:mm' }}</span>
+        </div>
+
+        <h3 class="alerta__fen">{{ nombreFenomeno(a.tipoFenomenoIdSnap) }}</h3>
+        <p class="alerta__msg">{{ a.mensajeSnap }}</p>
+
+        <div class="alerta__meta">
+          <span>◈ {{ nombreComunidad(a.comunidadId) }}</span>
+          <span>▤ Sensor #{{ a.sensorId }}</span>
+          <span>Valor: <strong>{{ a.valorDetectado }}</strong></span>
+        </div>
+
+        <div class="alerta__pie" *siPermiso="'alertas.atender'">
+          <button type="button" class="btn btn--primario btn--chico"
+                  (click)="atender(a)" [disabled]="atendiendoId() === a.alertaId">
+            @if (atendiendoId() === a.alertaId) { Atendiendo… } @else { Atender }
+          </button>
+        </div>
+
+      </article>
+    }
+  </div>
+}

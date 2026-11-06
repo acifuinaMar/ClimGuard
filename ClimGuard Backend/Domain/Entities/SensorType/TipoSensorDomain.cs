@@ -4,6 +4,16 @@ namespace Domain.Entities.SensorType;
 
 public partial class TipoSensorDomain
 {
+    public TipoSensorDomain(
+        int tipoSensorId,
+        string nombre,
+        string unidadMedida)
+    {
+        TipoSensorId = tipoSensorId;
+        Nombre = nombre;
+        UnidadMedida = unidadMedida;
+    }
+
     public int TipoSensorId { get; set; }
 
     public string Nombre { get; set; } = null!;

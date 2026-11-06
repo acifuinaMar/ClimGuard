@@ -11,5 +11,9 @@ export const environment = {
   // la página (nginx), y nginx lo reenvía al contenedor de la API.
   // Un solo origen: sin problemas de CORS.
   apiUrl: '/api',
-  sufijoArchivo: ''
+  sufijoArchivo: '',
+
+  // El Hub va por el mismo origen; nginx lo reenvía (incluye el WebSocket).
+  // Ruta confirmada en el backend: app.MapHub<MonitoreoHub>("/hubs/monitoreo").
+  hubUrl: '/hubs/monitoreo'
 };

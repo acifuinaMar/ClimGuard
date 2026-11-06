@@ -1,7 +1,6 @@
 ﻿using Domain.Bitacora;
 using Domain.Interfaces;
 using MediatR;
-using Services.Services.Interfaces;
 using tickets.Application.Common.UnitOfWork;
 
 namespace Application.Usuario.Service.Commands
@@ -21,7 +20,7 @@ namespace Application.Usuario.Service.Commands
         public async Task<bool> Handle(DeleteUsuarioCommand request, CancellationToken cancellationToken)
         {
             // Buscar usuario
-            var usuario = await _repository.GetById(request.id);
+            var usuario = await _repository.GetById(request.Id);
 
             if (usuario == null)
             {
@@ -31,10 +30,13 @@ namespace Application.Usuario.Service.Commands
             // Guardado de bitacor
             var bitacora = new BitacoraDomain(
                 0,
-                request.UsuarioLogeado,
-                $"Eliminacion de usuario {request.id}",
-                DateTime.Now
-                );
+                "Usuario",
+                usuario.UsuarioId,
+                "Eliminar",
+                $"Eliminación del usuario {usuario.NombreCompleto}",
+                DateTime.Now,
+                request.UsuarioLogeado
+            );
             await _repositoryBitacora.Create(bitacora);
 
             // Eliminar

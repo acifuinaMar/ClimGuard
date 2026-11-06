@@ -1,0 +1,28 @@
+server:
+  port: 8080
+  shutdown: graceful
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 25s
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://alert-db:5432/climguard_alert}
+    username: ${DB_USER:climguard}
+    password: ${DB_PASSWORD:}
+    hikari:
+      connection-timeout: 5000
+      initialization-fail-timeout: -1   # no abortar si la BD aún no está lista; /ready reportará 503
+  jpa:
+    hibernate:
+      ddl-auto: ${DB_DDL_AUTO:update}
+    open-in-view: false
+  jackson:
+    default-property-inclusion: always
+climguard:
+  jwt:
+    key: ${JWT_KEY}
+    issuer: ${JWT_ISSUER}
+    audience: ${JWT_AUDIENCE}
+  internal-api-key: ${INTERNAL_API_KEY:}
+  audit-url: ${AUDIT_API_URL:}
+  cooldown-seconds: ${ALERT_COOLDOWN_SECONDS:60}
+  seed-demo: ${SEED_DEMO:false}

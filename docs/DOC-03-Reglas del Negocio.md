@@ -168,3 +168,10 @@ La consulta de la bitácora únicamente podrá ser realizada por usuarios con ro
 # Relación con los Requerimientos Funcionales
 
 Las reglas aquí descritas complementan los requerimientos funcionales y establecen las condiciones que deben cumplirse durante la ejecución de las funcionalidades implementadas por ClimGuard.
+---
+
+## Actualización Fase 3 (noviembre 2026) – semántica de reglas y origen del sensor
+
+**RN-0xx – Semántica de las reglas de alerta.** `valorMin` y `valorMax` delimitan el intervalo que **activa** la regla (zona de peligro), con extremos incluidos: la condición se cumple cuando `valor >= valorMin && valor <= valorMax`. Ya no representan el rango normal. Con varias reglas coincidentes se aplica la de **mayor nivel**; a igual nivel, la de menor id. Un valor fuera de todos los intervalos, o un sensor sin reglas para su tipo, no tiene condición de peligro. El enfriamiento (por sensor y regla) solo evita crear una alerta repetida; no elimina la condición de peligro. Las reglas anteriores al cambio se marcan como LEGADAS (`requiereRevision`) y siguen evaluándose con su semántica original (alerta fuera de `[min,max]`) para no dejar el sistema sin alertas; solo pasan a la semántica nueva por una conversión explícita de un administrador (ver `MIGRACIONES.md`).
+
+**RN-0xx – Origen del sensor.** Todo sensor es `FISICO` (envía lecturas por HTTP POST `/api/readings`) o `SIMULADO` (el simulador le genera lecturas mientras esté activo y la simulación encendida). El origen es independiente del estado activo/inactivo.

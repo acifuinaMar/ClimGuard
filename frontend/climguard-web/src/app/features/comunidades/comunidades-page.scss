@@ -19,6 +19,17 @@
   white-space: nowrap;
 }
 
+.aviso-ejemplo {
+  background: var(--cg-amarillo-fondo);
+  color: var(--cg-amarillo);
+  border: 1px solid var(--cg-amarillo);
+  border-radius: 999px;
+  padding: .28rem .75rem;
+  font-size: .76rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .aviso-ok, .aviso-mal {
   padding: .65rem .9rem;
   border-radius: 7px;
@@ -88,6 +99,18 @@
   flex-wrap: wrap;
 }
 .tarjeta__fecha { font-size: .74rem; color: var(--cg-texto-tenue); }
+.tarjeta__ubic { font-size: .8rem; color: var(--cg-texto-suave); font-weight: 600; margin-top: -.2rem; }
+.estado-badge {
+  display: inline-block;
+  padding: .18rem .6rem;
+  border-radius: 999px;
+  font-size: .74rem;
+  font-weight: 600;
+  background: var(--cg-superficie-2);
+  color: var(--cg-texto-tenue);
+  border: 1px solid var(--cg-borde);
+}
+.estado-badge--on { background: var(--cg-verde-fondo); color: var(--cg-verde); border-color: var(--cg-verde); }
 .tarjeta__acciones { display: flex; gap: .35rem; }
 
 /* ================= BOTONES ================= */

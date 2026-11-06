@@ -24,7 +24,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const token = auth.token();
 
   // No le pegamos el token a la propia petición de login: todavía no hay.
-  const esLogin = req.url.includes('/login');
+  // Tampoco a las rutas públicas de OAuth (proveedores y canje): un 401 ahí no debe cerrar la sesión.
+  // /auth/oauth/{proveedor}/link SÍ lleva el token (exige sesión).
+  const esLogin = req.url.includes('/auth/login')
+    || req.url.includes('/auth/oauth/exchange')
+    || req.url.includes('/auth/oauth/providers');
 
   const peticion = (token && !esLogin)
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })

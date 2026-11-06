@@ -1,11 +1,15 @@
 /**
- * Un registro de la bitácora: qué acción hizo un usuario y cuándo.
- * Forma verificada contra la API real:
- *   { bitacoraId, usuarioId, accion, fechaRegistro }
+ * Un registro de la bitácora, alineado con BitacoraResultDto del backend de Fase 2.
+ *   { bitacoraId, nombreEntidad, entidadId, accion, descripcion, fechaHora, usuarioId }
+ * (Antes el front usaba `fechaRegistro`; ahora es `fechaHora`, y hay campos nuevos:
+ *  nombreEntidad, entidadId y descripcion.)
  */
 export interface Bitacora {
   bitacoraId: number;
-  usuarioId: number;
+  nombreEntidad: string;
+  entidadId: number;
   accion: string;
-  fechaRegistro: string;
+  descripcion: string;
+  fechaHora: string;
+  usuarioId: number;
 }

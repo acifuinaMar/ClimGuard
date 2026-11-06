@@ -5,7 +5,7 @@
 |-----------|-----------|
 | Documento | Manual de Usuario |
 | Código | DOC-14 |
-| Versión | 1.0 |
+| Versión | 2.0 |
 | Estado | Finalizado |
 
 ---
@@ -29,7 +29,7 @@
 
 # 1. Introducción
 
-El presente manual describe el funcionamiento general del sistema **ClimGuard**, proporcionando al usuario las instrucciones necesarias para utilizar las funcionalidades implementadas en el primer release.
+El presente manual describe el funcionamiento general del sistema **ClimGuard**, proporcionando al usuario las instrucciones necesarias para utilizar las funcionalidades implementadas en el segundo release.
 
 ClimGuard es una plataforma web orientada al monitoreo climático en tiempo real, permitiendo visualizar información proveniente de sensores ambientales, detectar condiciones de riesgo y administrar la información relacionada con comunidades, sensores y alertas.
 
@@ -72,8 +72,7 @@ Desde esta vista el usuario podrá visualizar:
 - Alertas activas.
 
 La información mostrada se actualiza automáticamente mediante SignalR.
-
-Durante el primer release la gráfica utiliza datos simulados con fines demostrativos.
+La información presentada en el Dashboard se actualiza automáticamente mediante SignalR y refleja las lecturas generadas por el servicio de simulación integrado en el sistema.
 
 ---
 
@@ -120,6 +119,8 @@ Las operaciones disponibles son:
 - Activar sensores.
 - Desactivar sensores.
 
+> Antes de registrar un sensor deben existir previamente una comunidad, un tipo de sensor y un estado de sensor registrados en el sistema.
+
 ## Registrar un sensor
 
 1. Acceder al módulo **Sensores**.
@@ -137,27 +138,29 @@ Los sensores no son eliminados físicamente del sistema.
 
 ---
 
-# 7. Configuración de Umbrales
+# 7. Configuración de Reglas de Alerta
+Las reglas de alerta determinan las condiciones bajo las cuales el sistema generará automáticamente una alerta.
 
-Los umbrales determinan cuándo una lectura representa una condición de riesgo.
+Para configurar una regla:
 
-Para modificar un umbral:
-
-1. Acceder al módulo **Configuración**.
+1. Acceder al módulo **Reglas de Alerta**.
 2. Seleccionar el tipo de sensor.
-3. Modificar los valores de:
-   - Precaución
-   - Alerta
-   - Emergencia
+3. Definir:
+   - Valor mínimo.
+   - Valor máximo.
+   - Nivel de alerta.
+   - Tipo de fenómeno.
+   - Mensaje.
 4. Guardar los cambios.
 
-Las modificaciones únicamente afectarán las lecturas procesadas posteriormente.
+> Las modificaciones afectarán únicamente las lecturas procesadas posteriormente, manteniendo intactas las alertas históricas gracias al uso de snapshots.
 
 ---
 
 # 8. Alertas
 
 Cuando una lectura supera los valores configurados, el sistema genera automáticamente una alerta.
+Las alertas son generadas automáticamente por el servicio de simulación del sistema, el cual evalúa periódicamente las reglas configuradas para cada tipo de sensor.
 
 Cada alerta muestra información como:
 
@@ -213,7 +216,7 @@ Se recomienda:
 
 - Mantener actualizada la información de comunidades y sensores.
 - Revisar periódicamente las alertas activas.
-- Verificar los umbrales configurados antes de iniciar el monitoreo.
+- Verificar periódicamente las reglas de alerta configuradas para cada tipo de sensor.
 - Cerrar la sesión al finalizar el uso del sistema.
 - Utilizar navegadores actualizados para garantizar el correcto funcionamiento de la aplicación.
 
@@ -237,7 +240,7 @@ Verifique que existan sensores registrados y que se encuentren activos.
 
 ## No se generan alertas
 
-Revise la configuración de los umbrales y confirme que las lecturas superen los valores establecidos.
+Revise la configuración de las reglas de alerta y confirme que las lecturas se encuentren dentro del rango definido para generar una alerta.
 
 ---
 
@@ -247,8 +250,14 @@ Verifique la conexión con el servidor y actualice la página si el problema per
 
 ---
 
+## No puedo registrar un sensor
+
+Verifique que existan previamente comunidades, tipos de sensor y estados de sensor registrados en el sistema, ya que estos son requisitos para la creación de un nuevo sensor.
+
+---
+
 # Observaciones
 
-- El presente manual corresponde al primer release del sistema ClimGuard.
-- Algunas funcionalidades utilizan datos simulados con fines demostrativos.
+- El presente manual corresponde al segundo release del sistema ClimGuard.
+- Las lecturas son generadas automáticamente mediante un Background Service que simula el comportamiento de los sensores registrados.
 - Las futuras versiones incorporarán integración con sensores físicos y nuevas opciones de monitoreo.

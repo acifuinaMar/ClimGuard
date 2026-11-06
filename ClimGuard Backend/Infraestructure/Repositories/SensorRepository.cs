@@ -19,24 +19,37 @@ namespace Services.Services{
                     ComunidadId = sensor.ComunidadId,
                     TipoSensorId = sensor.TipoSensorId,
                     Nombre = sensor.Nombre,
-                    ValorActual = sensor.ValorActual,
-                    Activo = sensor.Activo,
+                    Codigo = sensor.Codigo,
+                    Ubicacion = sensor.Ubicacion,
+                    Descripcion = sensor.Descripcion,
                     FechaInstalacion = sensor.FechaInstalacion,
-                    UltimaActualizacion = sensor.UltimaActualizacion
+                    FechaUltimaConexion = sensor.FechaUltimaConexion,
+                    ValorActual = sensor.ValorActual,
+                    EstadoSensorId = sensor.EstadoSensorId,
+                    UsuarioIng = sensor.UsuarioIng,
+                    FechaIng = sensor.FechaIng,
+                    UsuarioAct = sensor.UsuarioAct,
+                    FechaAct = sensor.FechaAct
                 };
                 _context.Sensors.Add(obj);
                 await _context.SaveChangesAsync();
 
-                return new SensorDomain
-                (
-                    sensor.SensorId,
+                return new SensorDomain(
+                    obj.SensorId,
+                    sensor.Nombre,
+                    sensor.Codigo,
+                    sensor.Ubicacion,
+                    sensor.Descripcion,
+                    sensor.FechaInstalacion,
+                    sensor.FechaUltimaConexion,
+                    sensor.ValorActual,
                     sensor.ComunidadId,
                     sensor.TipoSensorId,
-                    sensor.Nombre,
-                    sensor.ValorActual,
-                    sensor.Activo,
-                    sensor.FechaInstalacion,
-                    sensor.UltimaActualizacion
+                    sensor.EstadoSensorId,
+                    sensor.UsuarioIng,
+                    sensor.FechaIng,
+                    sensor.UsuarioAct,
+                    sensor.FechaAct
                 );
             }
             catch (Exception)
@@ -65,16 +78,22 @@ namespace Services.Services{
             {
                 var obj = await _context.Sensors.ToListAsync();
 
-                return obj.Select(a => new SensorDomain
-                (
+                return obj.Select(a => new SensorDomain(
                     a.SensorId,
+                    a.Nombre,
+                    a.Codigo,
+                    a.Ubicacion,
+                    a.Descripcion,
+                    a.FechaInstalacion,
+                    a.FechaUltimaConexion,
+                    a.ValorActual,
                     a.ComunidadId,
                     a.TipoSensorId,
-                    a.Nombre,
-                    a.ValorActual,
-                    a.Activo,
-                    a.FechaInstalacion,
-                    a.UltimaActualizacion
+                    a.EstadoSensorId,
+                    a.UsuarioIng,
+                    a.FechaIng,
+                    a.UsuarioAct,
+                    a.FechaAct
                 )).ToList();
             }
             catch (Exception)
@@ -90,16 +109,25 @@ namespace Services.Services{
                 var obj = await _context.Sensors
                     .Where(a => a.SensorId == sensor).FirstOrDefaultAsync();
 
-                return new SensorDomain
-                (
+                if (obj == null)
+                    return null;
+
+                return new SensorDomain(
                     obj.SensorId,
+                    obj.Nombre,
+                    obj.Codigo,
+                    obj.Ubicacion,
+                    obj.Descripcion,
+                    obj.FechaInstalacion,
+                    obj.FechaUltimaConexion,
+                    obj.ValorActual,
                     obj.ComunidadId,
                     obj.TipoSensorId,
-                    obj.Nombre,
-                    obj.ValorActual,
-                    obj.Activo,
-                    obj.FechaInstalacion,
-                    obj.UltimaActualizacion
+                    obj.EstadoSensorId,
+                    obj.UsuarioIng,
+                    obj.FechaIng,
+                    obj.UsuarioAct,
+                    obj.FechaAct
                 );
             }
             catch (Exception)
@@ -119,13 +147,19 @@ namespace Services.Services{
                     return false;
 
                 obj.SensorId = sensor.SensorId;
+                obj.Nombre = sensor.Nombre;
+                obj.Codigo = sensor.Codigo;
+                obj.Ubicacion = sensor.Ubicacion;
+                obj.Descripcion = sensor.Descripcion;
+                obj.FechaInstalacion = sensor.FechaInstalacion;
+                obj.FechaUltimaConexion = sensor.FechaUltimaConexion;
                 obj.ComunidadId = sensor.ComunidadId;
                 obj.TipoSensorId = sensor.TipoSensorId;
-                obj.Nombre = sensor.Nombre;
-                obj.ValorActual = sensor.ValorActual;
-                obj.Activo = sensor.Activo;
-                obj.FechaInstalacion = sensor.FechaInstalacion;
-                obj.UltimaActualizacion = sensor.UltimaActualizacion;
+                obj.EstadoSensorId = sensor.EstadoSensorId;
+                obj.UsuarioIng = sensor.UsuarioIng;
+                obj.FechaIng = sensor.FechaIng;
+                obj.UsuarioAct = sensor.UsuarioAct;
+                obj.FechaAct = sensor.FechaAct;
 
                 await _context.SaveChangesAsync();
 
@@ -137,7 +171,7 @@ namespace Services.Services{
             }
         }
 
-        public async Task<bool> SimularSensores()
+        /*public async Task<bool> SimularSensores()
         {
             var random = new Random();
 
@@ -183,6 +217,73 @@ namespace Services.Services{
 
             return true;
         }
-    }
+    }*/
 
+        public async Task<bool> SimularSensores()
+        {
+            var random = new Random();
+
+            var sensores = await _context.Sensors
+                .Where(s => s.EstadoSensorId == 1)
+                .ToListAsync();
+
+            foreach (var sensor in sensores)
+            {
+                decimal nuevoValor = sensor.ValorActual;
+
+                switch (sensor.TipoSensorId)
+                {
+                    case 1: // Temperatura (°C)
+                        nuevoValor += (decimal)(random.NextDouble() * 4 - 2);
+                        nuevoValor = Math.Clamp(nuevoValor, -10m, 45m);
+                        break;
+
+                    case 2: // Humedad (%)
+                        nuevoValor += (decimal)(random.NextDouble() * 10 - 5);
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 100m);
+                        break;
+
+                    case 3: // Viento (km/h)
+                        nuevoValor += ((decimal)random.NextDouble() * 15m) - 7.5m;
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 150m);
+                        break;
+
+                    case 4: // Lluvia (mm)
+                        nuevoValor += (decimal)(random.NextDouble() * 20 - 10);
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 300m);
+                        break;
+
+                    case 5: // Nivel del río (m)
+                        nuevoValor += (decimal)(random.NextDouble() * 2 - 1);
+                        nuevoValor = Math.Clamp(nuevoValor, 0m, 20m);
+                        break;
+
+                    default:
+                        nuevoValor += (decimal)(random.NextDouble() * 4 - 2);
+                        break;
+                }
+
+                nuevoValor = Math.Round(nuevoValor, 2);
+
+                // Actualiza el sensor
+                sensor.ValorActual = nuevoValor;
+                sensor.FechaUltimaConexion = DateTime.Now;
+                sensor.UsuarioAct = 1;
+                sensor.FechaAct = DateTime.Now;
+
+                // Crea la lectura
+                _context.LecturaSensors.Add(new LecturaSensor
+                {
+                    SensorId = sensor.SensorId,
+                    Valor = nuevoValor,
+                    FechaHora = DateTime.Now,
+                    UsuarioIng = 1
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+}
 }

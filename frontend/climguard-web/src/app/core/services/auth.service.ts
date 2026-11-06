@@ -3,8 +3,9 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { map, Observable, switchMap, of, catchError } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { CredencialesLogin, RespuestaLogin, Sesion } from '../models/sesion.model';
+import { CredencialesLogin, ProveedorOAuth, RespuestaLogin, Sesion } from '../models/sesion.model';
 import { Usuario } from '../models/usuario.model';
+import { Rol, Permiso, normalizarRol, rolTienePermiso, etiquetaRol } from '../roles';
 
 const CLAVE_ALMACEN = 'climguard.sesion';
 
@@ -18,9 +19,26 @@ export class AuthService {
 
   /** Atajos que las pantallas y las guardas consultan. */
   autenticado = computed(() => this.sesion() !== null);
-  esAdministrador = computed(() =>
-    (this.sesion()?.rol ?? '').toLowerCase() === 'administrador'
-  );
+
+  /** El rol actual, ya normalizado a uno de los tres (Administrador/Operador/Consulta). */
+  rol = computed<Rol>(() => normalizarRol(this.sesion()?.rol));
+
+  /** Etiqueta para mostrar (ej: "Usuario de consulta"). */
+  rolEtiqueta = computed(() => etiquetaRol(this.rol()));
+
+  /** Atajos por rol. */
+  esAdministrador = computed(() => this.rol() === 'Administrador');
+  esOperador      = computed(() => this.rol() === 'Operador');
+  esConsulta      = computed(() => this.rol() === 'Consulta');
+
+  /**
+   * LA PREGUNTA CLAVE que usa toda la app: "¿el usuario puede hacer esto?"
+   * En vez de preguntar por el rol, se pregunta por el permiso. El mapa de
+   * quién puede qué vive en core/roles.ts, en un solo lugar.
+   */
+  puede(permiso: Permiso): boolean {
+    return rolTienePermiso(this.rol(), permiso);
+  }
 
   /** El token, para que el interceptor lo pegue a cada petición. */
   token = computed(() => this.sesion()?.token ?? null);
@@ -36,7 +54,7 @@ export class AuthService {
       'contraseña': cred.password
     };
 
-    return this.http.post<RespuestaLogin>(`${environment.apiUrl}/login`, cuerpo).pipe(
+    return this.http.post<RespuestaLogin>(`${environment.apiUrl}/auth/login`, cuerpo).pipe(
       switchMap(respuesta => {
         if (!respuesta.token) {
           // Login rechazado: el backend manda 200 con token vacío y un mensaje.
@@ -52,7 +70,9 @@ export class AuthService {
         // necesitan ese id para la bitácora: si mandan 0, el servidor da error
         // porque el usuario 0 no existe.
         // Por eso lo buscamos en /api/Usuario cruzando por el nombre.
-        return this.buscarIdUsuario(nombre, respuesta.token).pipe(
+        // Fase 3: Auth Service ya devuelve el id; la búsqueda solo queda como respaldo.
+        const id$ = respuesta.usuarioId > 0 ? of(respuesta.usuarioId) : this.buscarIdUsuario(nombre, respuesta.token);
+        return id$.pipe(
           map(usuarioId => {
             const sesion: Sesion = {
               usuarioId,
@@ -67,6 +87,52 @@ export class AuthService {
         );
       })
     );
+  }
+
+  // ==========================================================
+  //  INICIO DE SESIÓN EXTERNO (Google / GitHub) — Fase 4
+  //  El navegador NUNCA ve secretos de OAuth ni recibe el JWT por la URL:
+  //  el servidor redirige a /auth/callback#code=… (código de un solo uso)
+  //  y aquí se canjea por POST, con la cookie httpOnly del flujo.
+  // ==========================================================
+
+  /** Proveedores habilitados en el servidor. Si falla o no hay ninguno, el login local sigue igual. */
+  proveedoresOAuth(): Observable<ProveedorOAuth[]> {
+    return this.http.get<{ providers: ProveedorOAuth[] }>(`${environment.apiUrl}/auth/oauth/providers`).pipe(
+      map(r => r?.providers ?? []),
+      catchError(() => of([] as ProveedorOAuth[]))
+    );
+  }
+
+  /** Navegación completa hacia el servidor, que redirige al proveedor (no es una llamada AJAX). */
+  iniciarOAuth(proveedor: string): void {
+    window.location.assign(`${environment.apiUrl}/auth/oauth/${encodeURIComponent(proveedor)}/start`);
+  }
+
+  /** Canjea el código temporal por la sesión de ClimGuard (mismo JWT y roles que el login local). */
+  canjearCodigoOAuth(code: string): Observable<Sesion> {
+    return this.http.post<RespuestaLogin>(`${environment.apiUrl}/auth/oauth/exchange`, { code }, { withCredentials: true }).pipe(
+      map(r => {
+        if (!r.token) throw new Error(r.mensaje || 'No se pudo completar el inicio de sesión.');
+        const datos = this.leerToken(r.token);
+        const sesion: Sesion = {
+          usuarioId: r.usuarioId, nombreUsuario: r.usuario,
+          nombreMostrado: r.nombreCompleto || r.usuario, rol: datos.rol, token: r.token
+        };
+        this.guardarSesion(sesion);
+        return sesion;
+      })
+    );
+  }
+
+  /** Vincula Google/GitHub a la cuenta con la sesión actual (el servidor exige el Bearer). */
+  vincularOAuth(proveedor: string): Observable<void> {
+    return this.http.post<{ authorizationUrl: string }>(
+      `${environment.apiUrl}/auth/oauth/${encodeURIComponent(proveedor)}/link`, {}, { withCredentials: true }
+    ).pipe(map(r => {
+      if (!r.authorizationUrl?.startsWith('https://')) throw new Error('Respuesta inesperada del servidor.');
+      window.location.assign(r.authorizationUrl);
+    }));
   }
 
   /**

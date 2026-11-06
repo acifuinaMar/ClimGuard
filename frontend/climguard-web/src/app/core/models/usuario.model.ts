@@ -1,26 +1,45 @@
-/* Forma de un usuario, verificada llamando a la API real.
+/* Forma de un usuario, alineada con UsuarioResultDto del backend de Fase 2.
  *
- * ⚠️ DECISIÓN DE SEGURIDAD, deliberada:
+ * OJO (cambios de Fase 2): el backend ahora devuelve `nombreCompleto` (un solo
+ * campo, ya no nombre1/nombre2/apellido1/apellido2) y `rolId` (número, no el
+ * texto del rol). También `ultimoAcceso` en vez de fechaRegistro.
  *
- * La API hoy devuelve además un campo "passwordHash". Ese campo
- * NO está declarado aquí, y es a propósito.
- *
- * Al no existir en la interfaz, TypeScript impide que cualquier pantalla
- * lo muestre por accidente: si alguien escribe {{ usuario.passwordHash }}
- * el proyecto deja de compilar.
- *
- * Esto NO arregla el problema de fondo — la API no debería enviarlo, y eso
- * lo tiene que corregir el backend — pero evita que se filtre a la interfaz.
- * Se llama defensa en profundidad: cada capa se protege por su cuenta.
+ * Nota de seguridad: NO declaramos ningún campo de contraseña aquí. Si el
+ * backend algún día devolviera un hash, al no existir en esta interfaz,
+ * TypeScript impide mostrarlo por accidente (defensa en profundidad).
  */
 export interface Usuario {
   usuarioId: number;
-  nombre1: string;
-  nombre2: string;
-  apellido1: string;
-  apellido2: string;
+  nombreCompleto: string;
   nombreUsuario: string;
-  rol: string;
+  ultimoAcceso: string | null;
   activo: boolean;
-  fechaRegistro: string;
+  rolId: number;
+
+  // Auditoría del backend.
+  usuarioIng?: number;
+  fechaIng?: string;
+  usuarioAct?: number | null;
+  fechaAct?: string | null;
+}
+
+/** Catálogo de roles (seed del backend): 1 Administrador, 2 Operador, 3 Consulta. */
+export const ROLES = [
+  { rolId: 1, nombre: 'Administrador' },
+  { rolId: 2, nombre: 'Operador' },
+  { rolId: 3, nombre: 'Consulta' }
+];
+
+/**
+ * Lo que el formulario envía al crear o editar un usuario. Incluye la contraseña
+ * EN CLARO: el backend la encripta (SHA256). Por eso nunca se guarda ni se
+ * muestra; solo se manda una vez.
+ */
+export interface GuardarUsuario {
+  usuarioId: number;
+  nombreCompleto: string;
+  nombreUsuario: string;
+  password: string;
+  rolId: number;
+  activo: boolean;
 }

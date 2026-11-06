@@ -1,0 +1,1618 @@
+# Generado por scripts/gen-k8s.py — NO editar a mano. Sin secretos: ver scripts/k8s-secrets.sh.
+# Dominio: climguard.acifuina.online · Imágenes: climguard/*:4.0.0, climguard/frontend:4.1.0 (importadas al containerd de K3s)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: climguard
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: climguard-config
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+data:
+  JWT_ISSUER: climguard-auth
+  JWT_AUDIENCE: climguard-api
+  JWT_EXPIRATION_MINUTES: '30'
+  CORS_ORIGINS: https://climguard.acifuina.online
+  OAUTH_PUBLIC_BASE_URL: https://climguard.acifuina.online
+  OAUTH_FRONTEND_URL: https://climguard.acifuina.online
+  OAUTH_AUTO_PROVISION: "true"
+  OAUTH_ALLOWED_EMAIL_DOMAINS: ''
+  DB_SYNCHRONIZE: "false"
+  SEED_DEFAULT_USERS: "false"
+  SEED_DEMO: "false"
+  SIMULATOR_ENABLED: "true"
+  SENSOR_MIGRATIONS_AUTOAPPLY: "true"
+  REPORT_TIMEZONE: America/Guatemala
+  REPORT_MAX_ROWS: '5000'
+  REPORT_ON_LIMIT: fail
+  REPORT_CHUNK_ROWS: '250'
+  REPORT_CONCURRENCY: '2'
+  REPORT_MAX_QUEUE: '4'
+  REPORT_LOOKUP_MAX_ROWS: '5000'
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+data:
+  10-init.sh: |
+    #!/bin/bash
+    # Una base y un usuario por servicio: cada servicio solo puede ver SU base (§16/§17).
+    set -euo pipefail
+    create() {  # $1=db $2=user $3=password
+      psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres <<SQL
+    CREATE ROLE $2 LOGIN PASSWORD '$3';
+    CREATE DATABASE $1 OWNER $2;
+    REVOKE ALL ON DATABASE $1 FROM PUBLIC;
+    SQL
+    }
+    create climguard_auth      auth      "$AUTH_DB_PASSWORD"
+    create climguard_community community "$COMMUNITY_DB_PASSWORD"
+    create climguard_alert     alert     "$ALERT_DB_PASSWORD"
+
+    # Inicializar el esquema de Auth Service en instalaciones nuevas.
+    # Se ejecuta COMO `auth` (dueño de la base; en PG15+ puede crear en `public`), así tablas,
+    # secuencias e índices nacen con dueño `auth`. Antes se usaba `REASSIGN OWNED BY postgres TO auth`,
+    # que en PostgreSQL 16 falla ("required by the database system") y abortaba la inicialización.
+    # (La rama fase4-correcciones-y-formularios corrigió lo mismo con `SET ROLE auth`; se conserva esta
+    #  variante porque es la que inicializó la base de producción en K3s. Ambas dejan el mismo resultado.)
+    psql -v ON_ERROR_STOP=1 \
+      --username auth \
+      --dbname climguard_auth \
+      -f /opt/climguard/migrations/auth-000-baseline.sql
+
+    psql -v ON_ERROR_STOP=1 \
+      --username auth \
+      --dbname climguard_auth \
+      -f /opt/climguard/migrations/auth-001-external-identities.sql
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-migrations
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+data:
+  alert-001-rule-semantics.sql: |
+    -- =====================================================================================================
+    -- alert-001-rule-semantics.sql  ·  PostgreSQL (base climguard_alert)  ·  ADITIVA e IDEMPOTENTE
+    -- Cambio de semántica: min/max dejan de ser el rango NORMAL y pasan a ser el intervalo que ACTIVA la alerta
+    -- (valor >= min AND valor <= max, extremos incluidos).
+    --
+    -- Hibernate (DB_DDL_AUTO=update) crea estas dos columnas solo al arrancar la nueva versión. Use este script si prefiere
+    -- aplicarlas a mano antes de desplegar. NO se ejecutó contra ninguna base real.
+    -- Antes: respaldo (ver DESPLIEGUE-SEGURO.md).
+    --
+    -- IMPORTANTE: NO reinterpreta ni modifica valor_min/valor_max. Las reglas existentes quedan marcadas requiere_revision = true
+    -- («LEGADAS») y SIGUEN EVALUÁNDOSE con su semántica original (alerta FUERA de [min,max]), de modo que el sistema no se queda sin
+    -- alertas durante la transición. Nunca se evalúan con la semántica nueva salvo conversión explícita de un administrador
+    -- (UI: casilla «Convertir a la semántica nueva»; API: PUT /api/rules/{id}?convertirSemantica=true) o corte SQL manual
+    -- (alert-002-draft-rules.sql). Probado contra PostgreSQL 16 en un clúster temporal (ver PRUEBAS.md); NO contra su base real.
+    -- =====================================================================================================
+    BEGIN;
+
+    -- 1) Reglas: las existentes quedan como LEGADAS (se evalúan como antes); las nuevas las crea la API con false (semántica nueva).
+    ALTER TABLE regla_alerta ADD COLUMN IF NOT EXISTS requiere_revision boolean DEFAULT true;
+    UPDATE regla_alerta SET requiere_revision = true WHERE requiere_revision IS NULL;
+
+    -- 2) Alertas históricas: se generaron con la semántica anterior (1 = "fuera del rango normal"); las nuevas llevan 2.
+    ALTER TABLE alerta ADD COLUMN IF NOT EXISTS semantica_regla smallint DEFAULT 1;
+    UPDATE alerta SET semantica_regla = 1 WHERE semantica_regla IS NULL;
+
+    COMMIT;
+
+    -- 3) REVISIÓN (solo lectura): reglas legadas y una PROPUESTA de zonas de peligro equivalentes a la lógica anterior.
+    --    Antes: alerta si valor < min  o  valor > max.   Ahora cada zona es un intervalo cerrado. Las cotas ±1000000 son un
+    --    "infinito práctico"; ajústelas al rango físico del sensor. Es solo una sugerencia: alert-002-draft-rules.sql la convierte en BORRADORES inactivos, o créelas desde la UI.
+    SELECT regla_alerta_id AS regla_id, nombre, tipo_sensor_id, valor_min AS min_anterior, valor_max AS max_anterior,
+           nivel_alerta_id, activo,
+           -1000000.00::numeric       AS propuesta_bajo_desde,  (valor_min - 0.01) AS propuesta_bajo_hasta,
+           (valor_max + 0.01)         AS propuesta_alto_desde,  1000000.00::numeric AS propuesta_alto_hasta
+    FROM regla_alerta
+    WHERE requiere_revision
+    ORDER BY regla_alerta_id;
+
+    -- 4) Estado final esperado tras convertir/retirar todas las legadas (pendientes = 0):
+    -- SELECT count(*) FILTER (WHERE requiere_revision) AS pendientes, count(*) AS total FROM regla_alerta;
+
+    -- =====================================================================================================
+    -- ROLLBACK
+    -- La versión anterior de la aplicación interpreta min/max como rango NORMAL. Si ya revisó reglas bajo la nueva semántica, esas
+    -- reglas quedarían INVERTIDAS en la versión anterior. Por eso el rollback correcto es restaurar el respaldo de regla_alerta
+    -- tomado antes del despliegue (DESPLIEGUE-SEGURO.md). Las columnas nuevas son inofensivas para la versión anterior:
+    --   ALTER TABLE regla_alerta DROP COLUMN IF EXISTS requiere_revision;   -- opcional
+    --   ALTER TABLE alerta       DROP COLUMN IF EXISTS semantica_regla;      -- opcional
+    -- =====================================================================================================
+  alert-002-draft-rules.sql: |
+    -- =====================================================================================================
+    -- alert-002-draft-rules.sql  ·  PostgreSQL (base climguard_alert)  ·  IDEMPOTENTE · NO ACTIVA NADA
+    -- Estrategia de transición SIN hueco de alertas (ver MIGRACIONES.md):
+    --   · Las reglas LEGADAS (requiere_revision = true) siguen evaluándose con su semántica original (alerta FUERA de [min,max]).
+    --   · Este script crea, para cada regla legada, hasta DOS reglas BORRADOR con la semántica nueva (intervalo que ACTIVA):
+    --       zona baja  = [-1000000.00, min - 0.01]      zona alta = [max + 0.01, 1000000.00]
+    --     Son equivalentes a la lógica anterior para lecturas con 2 decimales. Los borradores nacen INACTIVOS (activo = false):
+    --     no generan alertas ni cambian nada hasta que un administrador los revise y los active.
+    --   · NO modifica ni desactiva reglas existentes. Ajuste el 0.01 y las cotas ±1000000 a la precisión y al rango físico del sensor.
+    --   · Las cotas extremas son un «infinito práctico»; si el sensor nunca llega a ese valor, la zona queda efectivamente abierta.
+    -- Requiere haber ejecutado antes alert-001-rule-semantics.sql. NO se ejecutó contra ninguna base real.
+    -- =====================================================================================================
+    BEGIN;
+
+    INSERT INTO regla_alerta (nombre, tipo_sensor_id, valor_min, valor_max, nivel_alerta_id, tipo_fenomeno_id, mensaje, activo, requiere_revision, usuario_ing, fecha_ing)
+    SELECT '[BORRADOR] ' || left(coalesce(r.nombre, r.mensaje), 60) || ' - zona baja (reemplaza #' || r.regla_alerta_id || ')',
+           r.tipo_sensor_id, -1000000.00, r.valor_min - 0.01, r.nivel_alerta_id, r.tipo_fenomeno_id, r.mensaje, false, false, NULL, now()
+    FROM regla_alerta r
+    WHERE r.requiere_revision
+      AND NOT EXISTS (SELECT 1 FROM regla_alerta d WHERE d.nombre LIKE '[BORRADOR]%- zona baja (reemplaza #' || r.regla_alerta_id || ')');
+
+    INSERT INTO regla_alerta (nombre, tipo_sensor_id, valor_min, valor_max, nivel_alerta_id, tipo_fenomeno_id, mensaje, activo, requiere_revision, usuario_ing, fecha_ing)
+    SELECT '[BORRADOR] ' || left(coalesce(r.nombre, r.mensaje), 60) || ' - zona alta (reemplaza #' || r.regla_alerta_id || ')',
+           r.tipo_sensor_id, r.valor_max + 0.01, 1000000.00, r.nivel_alerta_id, r.tipo_fenomeno_id, r.mensaje, false, false, NULL, now()
+    FROM regla_alerta r
+    WHERE r.requiere_revision
+      AND NOT EXISTS (SELECT 1 FROM regla_alerta d WHERE d.nombre LIKE '[BORRADOR]%- zona alta (reemplaza #' || r.regla_alerta_id || ')');
+
+    COMMIT;
+
+    -- 1) REVISIÓN (solo lectura): cada regla legada y sus borradores. Nada de esto está activo todavía.
+    SELECT r.regla_alerta_id AS legada_id, r.nombre AS legada, r.activo AS legada_activa,
+           r.valor_min AS normal_min, r.valor_max AS normal_max, d.regla_alerta_id AS borrador_id, d.nombre AS borrador,
+           d.valor_min AS zona_min, d.valor_max AS zona_max, d.activo AS borrador_activo
+    FROM regla_alerta r
+    JOIN regla_alerta d ON d.nombre LIKE '[BORRADOR]%(reemplaza #' || r.regla_alerta_id || ')'
+    WHERE r.requiere_revision
+    ORDER BY r.regla_alerta_id, d.regla_alerta_id;
+
+    -- 2) CORTE por regla (PLANTILLA, no se ejecuta sola). Una sola transacción: activa los borradores revisados y retira la legada
+    --    a la vez, así nunca hay un hueco ni dos reglas con el mismo significado. Sustituya los ids por los de la consulta anterior.
+    --    La regla legada NO se borra: queda inactiva (el historial de alertas conserva su snapshot). Reversible: reactivar la legada.
+    -- BEGIN;
+    --   UPDATE regla_alerta SET activo = true  WHERE regla_alerta_id IN (/* ids de borradores revisados */) AND NOT requiere_revision;
+    --   UPDATE regla_alerta SET activo = false WHERE regla_alerta_id = /* id de la legada */ AND requiere_revision;
+    -- COMMIT;
+
+    -- 3) REVERSIÓN del corte (plantilla): vuelve a la regla legada y desactiva los borradores.
+    -- BEGIN;
+    --   UPDATE regla_alerta SET activo = true  WHERE regla_alerta_id = /* id de la legada */ AND requiere_revision;
+    --   UPDATE regla_alerta SET activo = false WHERE regla_alerta_id IN (/* ids de borradores */);
+    -- COMMIT;
+
+    -- 4) VERIFICACIÓN de cobertura (solo lectura): reglas que hoy evalúan alertas, por tipo de sensor y semántica.
+    -- SELECT tipo_sensor_id, CASE WHEN requiere_revision THEN 'legada (fuera de min-max)' ELSE 'nueva (dentro de min-max)' END AS semantica,
+    --        count(*) AS reglas_activas
+    -- FROM regla_alerta WHERE activo GROUP BY 1, 2 ORDER BY 1, 2;
+
+    -- 5) LIMPIEZA de borradores que no se vayan a usar (solo si están inactivos): DELETE FROM regla_alerta WHERE nombre LIKE '[BORRADOR]%' AND NOT activo;
+  auth-000-baseline.sql: |
+    -- ClimGuard · Auth Service (PostgreSQL, base climguard_auth) — ESQUEMA BASE (users, roles)
+    -- Solo para una base NUEVA con DB_SYNCHRONIZE=false (hasta ahora lo creaba TypeORM con synchronize).
+    -- Idempotente (CREATE … IF NOT EXISTS): en una base que ya tiene estas tablas no cambia nada.
+    -- Debe reflejar src/entities/{user,role}.entity.ts. Los roles/permisos los siembra el servicio al arrancar.
+    BEGIN;
+    CREATE TABLE IF NOT EXISTS roles (
+        id          INTEGER PRIMARY KEY,           -- sin autoincremento: lo asigna el seed (1,2,3)
+        name        VARCHAR(50) NOT NULL UNIQUE,
+        permissions TEXT[]  NOT NULL DEFAULT '{}'
+    );
+    CREATE TABLE IF NOT EXISTS users (
+        id            SERIAL PRIMARY KEY,
+        username      VARCHAR(60)  NOT NULL,
+        full_name     VARCHAR(200) NOT NULL,
+        password_hash VARCHAR(300),
+        active        BOOLEAN      NOT NULL DEFAULT TRUE,
+        role_id       INTEGER      NOT NULL REFERENCES roles(id),
+        last_access   TIMESTAMPTZ,
+        created_by    INTEGER,
+        created_at    TIMESTAMPTZ  NOT NULL DEFAULT now(),
+        updated_by    INTEGER,
+        updated_at    TIMESTAMPTZ
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_users_username ON users (username);
+    COMMIT;
+  auth-001-external-identities.sql: |
+    -- ClimGuard Fase 4 · Auth Service (PostgreSQL, base climguard_auth)
+    -- Identidades externas (Google/GitHub) + flujos y códigos temporales de OAuth.
+    -- ADITIVA e IDEMPOTENTE: no borra ni reescribe datos; se puede ejecutar varias veces.
+    -- Requiere que existan `users` y `roles` (Auth Service ya arrancado alguna vez, o auth-000-baseline.sql).
+    -- Aplicar con el usuario dueño de la base, p. ej.:
+    --   docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U postgres -d climguard_auth < scripts/migrations/auth-001-external-identities.sql
+    BEGIN;
+
+    CREATE TABLE IF NOT EXISTS external_identities (
+        id            SERIAL PRIMARY KEY,
+        provider      VARCHAR(60)  NOT NULL,
+        subject       VARCHAR(200) NOT NULL,
+        user_id       INTEGER      NOT NULL REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    -- Si la tabla ya existía (Fase 3, vacía), se completan las columnas nuevas.
+    ALTER TABLE external_identities ADD COLUMN IF NOT EXISTS email          VARCHAR(320);
+    ALTER TABLE external_identities ADD COLUMN IF NOT EXISTS email_verified BOOLEAN      NOT NULL DEFAULT FALSE;
+    ALTER TABLE external_identities ADD COLUMN IF NOT EXISTS display_name   VARCHAR(200);
+    ALTER TABLE external_identities ADD COLUMN IF NOT EXISTS avatar_url     VARCHAR(500);
+    ALTER TABLE external_identities ADD COLUMN IF NOT EXISTS created_at     TIMESTAMPTZ  NOT NULL DEFAULT now();
+    ALTER TABLE external_identities ADD COLUMN IF NOT EXISTS last_login_at  TIMESTAMPTZ;
+
+    -- Una identidad externa pertenece a UN solo usuario (nunca se identifica por correo).
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_external_identities_provider_subject ON external_identities (provider, subject);
+    CREATE INDEX        IF NOT EXISTS ix_external_identities_user_id          ON external_identities (user_id);
+
+    -- Flujo de autorización en curso (state hasheado, nonce, PKCE verifier). Vida corta.
+    CREATE TABLE IF NOT EXISTS oauth_flows (
+        state_hash    VARCHAR(64)  PRIMARY KEY,
+        provider      VARCHAR(30)  NOT NULL,
+        nonce         VARCHAR(100) NOT NULL,
+        code_verifier VARCHAR(128) NOT NULL,
+        binding_hash  VARCHAR(64)  NOT NULL,
+        link_user_id  INTEGER,
+        expires_at    TIMESTAMPTZ  NOT NULL,
+        consumed_at   TIMESTAMPTZ,
+        created_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS ix_oauth_flows_expires_at ON oauth_flows (expires_at);
+
+    -- Código temporal de un solo uso (hasheado) que se canjea por el JWT de ClimGuard.
+    CREATE TABLE IF NOT EXISTS oauth_login_codes (
+        code_hash     VARCHAR(64)  PRIMARY KEY,
+        user_id       INTEGER      NOT NULL,
+        binding_hash  VARCHAR(64)  NOT NULL,
+        expires_at    TIMESTAMPTZ  NOT NULL,
+        consumed_at   TIMESTAMPTZ,
+        created_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS ix_oauth_login_codes_expires_at ON oauth_login_codes (expires_at);
+
+    COMMIT;
+  sensor-001-origen.sql: |
+    -- =====================================================================================================
+    -- sensor-001-origen.sql  ·  SQL Server (base del Sensor Service)  ·  ADITIVA e IDEMPOTENTE
+    -- Agrega Sensor.Origen ('FISICO' | 'SIMULADO'). No borra ni modifica filas existentes.
+    --
+    -- La aplicación ya lo hace sola al arrancar (SchemaUpgrades.cs, Migrations__AutoApply=true). Use este script si
+    -- prefiere aplicarlo a mano ANTES de desplegar (con Migrations__AutoApply=false). NO se ejecutó contra ninguna base real.
+    -- Antes: respaldo (ver DESPLIEGUE-SEGURO.md).  Ejecutar con sqlcmd dentro del contenedor o con SSMS.
+    -- =====================================================================================================
+
+    -- 1) Columna (los sensores EXISTENTES quedan como FISICO: el simulador deja de generarles lecturas)
+    IF COL_LENGTH('dbo.Sensor', 'Origen') IS NULL
+    BEGIN
+        ALTER TABLE dbo.Sensor ADD Origen NVARCHAR(10) NOT NULL CONSTRAINT DF_Sensor_Origen DEFAULT 'FISICO';
+    END
+    GO
+
+    -- 2) Restricción de valores permitidos
+    IF COL_LENGTH('dbo.Sensor', 'Origen') IS NOT NULL
+       AND NOT EXISTS (SELECT 1 FROM sys.check_constraints WHERE name = 'CK_Sensor_Origen')
+    BEGIN
+        EXEC('ALTER TABLE dbo.Sensor ADD CONSTRAINT CK_Sensor_Origen CHECK (Origen IN (''FISICO'',''SIMULADO''))');
+    END
+    GO
+
+    -- 3) REVISIÓN (solo lectura): ¿qué sensores recibían lecturas automáticas? Los que sigan llegando a ritmo
+    --    del simulador (cada ~5 s) y NO sean dispositivos reales deberían pasar a SIMULADO.
+    SELECT s.SensorId, s.Codigo, s.Nombre, s.EstadoSensorId, s.Origen,
+           COUNT(l.LecturaId) AS LecturasUltimaHora, MAX(l.FechaHora) AS UltimaLectura
+    FROM dbo.Sensor s
+    LEFT JOIN dbo.LecturaSensor l ON l.SensorId = s.SensorId AND l.FechaHora >= DATEADD(HOUR, -1, SYSUTCDATETIME())
+    GROUP BY s.SensorId, s.Codigo, s.Nombre, s.EstadoSensorId, s.Origen
+    ORDER BY s.SensorId;
+    GO
+
+    -- 4) DECISIÓN MANUAL (comentado a propósito): marcar como SIMULADO los sensores de demostración.
+    --    Sustituya la lista por los códigos que usted sabe que NO son dispositivos reales.
+    -- UPDATE dbo.Sensor SET Origen = 'SIMULADO', FechaAct = SYSUTCDATETIME() WHERE Codigo IN ('TMP-001', 'LLV-001', 'NVL-001');
+
+    -- =====================================================================================================
+    -- ROLLBACK (opcional; la versión anterior de la aplicación ignora la columna, por lo que NO es necesario para volver atrás)
+    -- =====================================================================================================
+    -- ALTER TABLE dbo.Sensor DROP CONSTRAINT CK_Sensor_Origen;
+    -- ALTER TABLE dbo.Sensor DROP CONSTRAINT DF_Sensor_Origen;
+    -- ALTER TABLE dbo.Sensor DROP COLUMN Origen;
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: POSTGRES_SUPERUSER_PASSWORD
+        - name: AUTH_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: AUTH_DB_PASSWORD
+        - name: COMMUNITY_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: COMMUNITY_DB_PASSWORD
+        - name: ALERT_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: ALERT_DB_PASSWORD
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+        - name: init
+          mountPath: /docker-entrypoint-initdb.d
+          readOnly: true
+        - name: migrations
+          mountPath: /opt/climguard/migrations
+          readOnly: true
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 100m
+          limits:
+            memory: 384Mi
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - pg_isready -U postgres
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 6
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - pg_isready -U postgres
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 6
+          initialDelaySeconds: 30
+      volumes:
+      - name: init
+        configMap:
+          name: postgres-init
+          defaultMode: 365
+      - name: migrations
+        configMap:
+          name: postgres-migrations
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 5Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sqlserver
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: sqlserver
+spec:
+  serviceName: sqlserver
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqlserver
+  template:
+    metadata:
+      labels:
+        app: sqlserver
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: sqlserver
+        image: mcr.microsoft.com/mssql/server:2022-latest
+        ports:
+        - containerPort: 1433
+        env:
+        - name: ACCEPT_EULA
+          value: "Y"
+        - name: MSSQL_PID
+          value: Developer
+        - name: MSSQL_SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: MSSQL_SA_PASSWORD
+        - name: MSSQL_MEMORY_LIMIT_MB
+          value: '1536'
+        volumeMounts:
+        - name: data
+          mountPath: /var/opt/mssql
+        resources:
+          requests:
+            memory: 1536Mi
+            cpu: 100m
+          limits:
+            memory: 2Gi
+        startupProbe:
+          tcpSocket:
+            port: 1433
+          periodSeconds: 5
+          failureThreshold: 36
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD"
+              -C -Q 'SELECT 1' -b -o /dev/null
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 4
+        livenessProbe:
+          tcpSocket:
+            port: 1433
+          periodSeconds: 20
+          failureThreshold: 6
+      volumes: []
+      securityContext:
+        fsGroup: 10001
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 10Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: mongo
+spec:
+  serviceName: mongo
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: mongo
+        image: mongo:7
+        ports:
+        - containerPort: 27017
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: root
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: MONGO_ROOT_PASSWORD
+        volumeMounts:
+        - name: data
+          mountPath: /data/db
+        resources:
+          requests:
+            memory: 384Mi
+            cpu: 100m
+          limits:
+            memory: 512Mi
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - mongosh --quiet -u root -p "$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase
+              admin --eval 'db.adminCommand("ping").ok' | grep -q 1
+          periodSeconds: 30
+          timeoutSeconds: 15
+          failureThreshold: 4
+        livenessProbe:
+          tcpSocket:
+            port: 27017
+          periodSeconds: 20
+          failureThreshold: 6
+          initialDelaySeconds: 20
+        args:
+        - --wiredTigerCacheSizeGB
+        - '0.25'
+      volumes: []
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: local-path
+      resources:
+        requests:
+          storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+  - name: tcp
+    port: 5432
+    targetPort: 5432
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sqlserver
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: sqlserver
+spec:
+  selector:
+    app: sqlserver
+  ports:
+  - name: tcp
+    port: 1433
+    targetPort: 1433
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: mongo
+spec:
+  selector:
+    app: mongo
+  ports:
+  - name: tcp
+    port: 27017
+    targetPort: 27017
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: frontend
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: frontend
+        image: climguard/frontend:4.1.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+        env: []
+        resources:
+          requests:
+            memory: 32Mi
+            cpu: 50m
+          limits:
+            memory: 128Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        startupProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 5
+          failureThreshold: 12
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: gateway
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: gateway
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: gateway
+        image: climguard/gateway:4.0.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: JWT_KEY
+        - name: Jwt__Issuer
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_ISSUER
+        - name: Jwt__Audience
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_AUDIENCE
+        - name: Cors__Origins
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: CORS_ORIGINS
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 50m
+          limits:
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 24
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: gateway
+spec:
+  selector:
+    app: gateway
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: auth-service
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: auth-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: auth-service
+        image: climguard/auth-service:4.0.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+        env:
+        - name: JWT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: JWT_KEY
+        - name: JWT_ISSUER
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_ISSUER
+        - name: JWT_AUDIENCE
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_AUDIENCE
+        - name: INTERNAL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: INTERNAL_API_KEY
+        - name: JWT_EXPIRATION_MINUTES
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_EXPIRATION_MINUTES
+        - name: POSTGRES_HOST
+          value: postgres
+        - name: POSTGRES_USER
+          value: auth
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: AUTH_DB_PASSWORD
+        - name: POSTGRES_DB
+          value: climguard_auth
+        - name: AUDIT_API_URL
+          value: http://audit-service:8000
+        - name: SEED_DEFAULT_USERS
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: SEED_DEFAULT_USERS
+        - name: DB_SYNCHRONIZE
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: DB_SYNCHRONIZE
+        - name: OAUTH_PUBLIC_BASE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: OAUTH_PUBLIC_BASE_URL
+        - name: OAUTH_FRONTEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: OAUTH_FRONTEND_URL
+        - name: OAUTH_AUTO_PROVISION
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: OAUTH_AUTO_PROVISION
+        - name: OAUTH_ALLOWED_EMAIL_DOMAINS
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: OAUTH_ALLOWED_EMAIL_DOMAINS
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: GOOGLE_CLIENT_ID
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: GOOGLE_CLIENT_SECRET
+        - name: GITHUB_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: GITHUB_CLIENT_ID
+        - name: GITHUB_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: GITHUB_CLIENT_SECRET
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 50m
+          limits:
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          periodSeconds: 5
+          failureThreshold: 24
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+  - name: http
+    port: 3000
+    targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: community-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: community-service
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: community-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: community-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: community-service
+        image: climguard/community-service:4.0.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: JWT_KEY
+        - name: Jwt__Issuer
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_ISSUER
+        - name: Jwt__Audience
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_AUDIENCE
+        - name: COMMUNITY_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: COMMUNITY_DB_PASSWORD
+        - name: ConnectionStrings__Default
+          value: Host=postgres;Database=climguard_community;Username=community;Password=$(COMMUNITY_DB_PASSWORD)
+        - name: InternalApiKey
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: INTERNAL_API_KEY
+        - name: Seed__Demo
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: SEED_DEMO
+        resources:
+          requests:
+            memory: 128Mi
+            cpu: 50m
+          limits:
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 24
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: community-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: community-service
+spec:
+  selector:
+    app: community-service
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sensor-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: sensor-service
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: sensor-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: sensor-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: sensor-service
+        image: climguard/sensor-service:4.0.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: Jwt__Key
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: JWT_KEY
+        - name: Jwt__Issuer
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_ISSUER
+        - name: Jwt__Audience
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_AUDIENCE
+        - name: MSSQL_SA_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: MSSQL_SA_PASSWORD
+        - name: ConnectionStrings__Default
+          value: Server=sqlserver;Database=ClimGuardSensor;User Id=sa;Password=$(MSSQL_SA_PASSWORD);TrustServerCertificate=True
+        - name: InternalApiKey
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: INTERNAL_API_KEY
+        - name: Cors__Origins
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: CORS_ORIGINS
+        - name: Simulator__Enabled
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: SIMULATOR_ENABLED
+        - name: Seed__Demo
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: SEED_DEMO
+        - name: Migrations__AutoApply
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: SENSOR_MIGRATIONS_AUTOAPPLY
+        resources:
+          requests:
+            memory: 192Mi
+            cpu: 50m
+          limits:
+            memory: 384Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 36
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sensor-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: sensor-service
+spec:
+  selector:
+    app: sensor-service
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: alert-service
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: alert-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: alert-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: alert-service
+        image: climguard/alert-service:4.0.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: JWT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: JWT_KEY
+        - name: JWT_ISSUER
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_ISSUER
+        - name: JWT_AUDIENCE
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_AUDIENCE
+        - name: INTERNAL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: INTERNAL_API_KEY
+        - name: DB_URL
+          value: jdbc:postgresql://postgres:5432/climguard_alert
+        - name: DB_USER
+          value: alert
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: ALERT_DB_PASSWORD
+        - name: AUDIT_API_URL
+          value: http://audit-service:8000
+        - name: SEED_DEMO
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: SEED_DEMO
+        resources:
+          requests:
+            memory: 320Mi
+            cpu: 50m
+          limits:
+            memory: 512Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 5
+          failureThreshold: 48
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alert-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: alert-service
+spec:
+  selector:
+    app: alert-service
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: report-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: report-service
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: report-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: report-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: report-service
+        image: climguard/report-service:4.0.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        env:
+        - name: JWT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: JWT_KEY
+        - name: JWT_ISSUER
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_ISSUER
+        - name: JWT_AUDIENCE
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_AUDIENCE
+        - name: INTERNAL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: INTERNAL_API_KEY
+        - name: MONGO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: MONGO_ROOT_PASSWORD
+        - name: MONGO_URL
+          value: mongodb://root:$(MONGO_ROOT_PASSWORD)@mongo:27017/?authSource=admin
+        - name: MONGO_DB
+          value: climguard_reports
+        - name: COMMUNITY_API_URL
+          value: http://community-service:8080
+        - name: SENSOR_API_URL
+          value: http://sensor-service:8080
+        - name: ALERT_API_URL
+          value: http://alert-service:8080
+        - name: AUDIT_API_URL
+          value: http://audit-service:8000
+        - name: REPORT_TIMEZONE
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: REPORT_TIMEZONE
+        - name: REPORT_MAX_ROWS
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: REPORT_MAX_ROWS
+        - name: REPORT_ON_LIMIT
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: REPORT_ON_LIMIT
+        - name: REPORT_CHUNK_ROWS
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: REPORT_CHUNK_ROWS
+        - name: REPORT_CONCURRENCY
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: REPORT_CONCURRENCY
+        - name: REPORT_MAX_QUEUE
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: REPORT_MAX_QUEUE
+        - name: REPORT_LOOKUP_MAX_ROWS
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: REPORT_LOOKUP_MAX_ROWS
+        - name: MALLOC_ARENA_MAX
+          value: '2'
+        resources:
+          requests:
+            memory: 256Mi
+            cpu: 50m
+          limits:
+            memory: 768Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          periodSeconds: 5
+          failureThreshold: 24
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: report-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: report-service
+spec:
+  selector:
+    app: report-service
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: audit-service
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: audit-service
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: audit-service
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: audit-service
+        image: climguard/audit-service:4.0.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8000
+        env:
+        - name: JWT_KEY
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: JWT_KEY
+        - name: JWT_ISSUER
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_ISSUER
+        - name: JWT_AUDIENCE
+          valueFrom:
+            configMapKeyRef:
+              name: climguard-config
+              key: JWT_AUDIENCE
+        - name: INTERNAL_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: INTERNAL_API_KEY
+        - name: MONGO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: climguard-secrets
+              key: MONGO_ROOT_PASSWORD
+        - name: MONGO_URL
+          value: mongodb://root:$(MONGO_ROOT_PASSWORD)@mongo:27017/?authSource=admin
+        - name: MONGO_DB
+          value: climguard_audit
+        resources:
+          requests:
+            memory: 96Mi
+            cpu: 50m
+          limits:
+            memory: 256Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          periodSeconds: 5
+          failureThreshold: 24
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-service
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+    app: audit-service
+spec:
+  selector:
+    app: audit-service
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: security-headers
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+spec:
+  headers:
+    stsSeconds: 31536000
+    contentTypeNosniff: true
+    frameDeny: false
+    customFrameOptionsValue: SAMEORIGIN
+    referrerPolicy: strict-origin-when-cross-origin
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: climguard
+  namespace: climguard
+  labels:
+    app.kubernetes.io/part-of: climguard
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    traefik.ingress.kubernetes.io/router.middlewares: climguard-security-headers@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - climguard.acifuina.online
+    secretName: climguard-tls
+  rules:
+  - host: climguard.acifuina.online
+    http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8080
+      - path: /hubs
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend
+            port:
+              number: 80

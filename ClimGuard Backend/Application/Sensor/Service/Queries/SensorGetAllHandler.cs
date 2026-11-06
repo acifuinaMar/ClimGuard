@@ -19,13 +19,20 @@ namespace Application.Sensor.Service.Queries
             return sensores.Select(a => new SensorResultDto
             (
                 a.SensorId,
+                a.Nombre,
+                a.Codigo,
+                a.Ubicacion,
+                a.Descripcion,
+                a.FechaInstalacion,
+                a.FechaUltimaConexion,
+                a.ValorActual,
                 a.ComunidadId,
                 a.TipoSensorId,
-                a.Nombre,
-                a.ValorActual,
-                a.Activo,
-                a.FechaInstalacion,
-                a.UltimaActualizacion
+                a.EstadoSensorId,
+                a.UsuarioIng,
+                a.FechaIng,
+                a.UsuarioAct,
+                a.FechaAct
             )).ToList();
         }
     }

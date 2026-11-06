@@ -2,13 +2,14 @@
 {
     public record UsuarioResultDto(
         int UsuarioId,
-        string Apellido2,
-        string Apellido1,
-        string Nombre2,
-        string Nombre1,
+        string NombreCompleto,
         string NombreUsuario,
-        string Rol,
+        DateTime? UltimoAcceso,
         bool Activo,
-        DateTime FechaRegistro
-        );
+        int RolId,
+        int UsuarioIng,
+        DateTime FechaIng,
+        int? UsuarioAct,
+        DateTime? FechaAct
+    );
 }

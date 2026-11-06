@@ -3,7 +3,7 @@ using Domain.Bitacora;
 using Domain.Entities.User;
 using Domain.Interfaces;
 using MediatR;
-using Services.Services.Interfaces;
+using Domain.Interfaces;
 using tickets.Application.Common.UnitOfWork;
 
 namespace Application.Usuario.Service.Commands
@@ -24,32 +24,30 @@ namespace Application.Usuario.Service.Commands
         }
         public async Task<UsuarioResultDto> Handle(CreateUsuarioCommand request, CancellationToken cancellationToken)
         {
-            var nombreUsuario = !string.IsNullOrWhiteSpace(request.Nombre1) && !string.IsNullOrWhiteSpace(request.Apellido1)
-                ? $"{char.ToUpper(request.Nombre1.Trim()[0])}{request.Apellido1.Trim()}"
-                : "" ?? string.Empty;
-
-
             var usuario = new UsuarioDomain(
                 0,
-                request.Apellido2,
-                request.Apellido1, //Doe
-                request.Nombre2,
-                request.Nombre1, // Jane
-                nombreUsuario.ToLower(), // Aqui debe ser JDoe
+                request.NombreCompleto,
+                request.NombreUsuario,
                 _encrypt.encryptSHA256(request.PasswordHash),
-                //request.PasswordHash,
-                request.Rol,
+                null,                    // UltimoAcceso
                 request.Activo,
-                request.FechaRegistro.ToDateTime(TimeOnly.MinValue)
+                request.RolId,
+                request.UsuarioLogeado,  // UsuarioIng
+                DateTime.Now,            // FechaIng
+                null,                    // UsuarioAct
+                null                     // FechaAct
             );
 
 
             var bitacora = new BitacoraDomain(
                 0,
-                request.UsuarioLogeado,
-                $"Registro de usuario {request.Nombre1} {request.Apellido1}",
-                DateTime.Now
-                );
+                "Usuario",
+                usuario.UsuarioId,
+                "Crear",
+                $"Creación del usuario {usuario.NombreCompleto}",
+                DateTime.Now,
+                request.UsuarioLogeado
+            );
             await _repositoryBitacora.Create(bitacora);
 
             await _repository.Create(usuario);
@@ -57,15 +55,16 @@ namespace Application.Usuario.Service.Commands
 
             return new UsuarioResultDto(
                 usuario.UsuarioId,
-                usuario.Apellido2,
-                usuario.Apellido1,
-                usuario.Nombre2,
-                usuario.Nombre1,
+                usuario.NombreCompleto,
                 usuario.NombreUsuario,
-                usuario.Rol,
+                usuario.UltimoAcceso,
                 usuario.Activo,
-                usuario.FechaRegistro
-                );
+                usuario.RolId,
+                usuario.UsuarioIng,
+                usuario.FechaIng,
+                usuario.UsuarioAct,
+                usuario.FechaAct
+            );
         }
     }
 }

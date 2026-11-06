@@ -14,17 +14,27 @@ namespace Application.Alerta.Service.Queries
         {
             var alerta = await _repository.GetById(request.id);
 
+            if(alerta == null)
+                return null;
+
             return new AlertaResultDto(
                 alerta.AlertaId,
-                alerta.ComunidadId,
-                alerta.SensorId,
-                alerta.TipoFenomenoId,
-                alerta.NivelAlertaId,
-                alerta.Mensaje,
+                alerta.ValorDetectado,
+                alerta.MensajeSnap,
+                alerta.NivelAlertaIdSnap,
+                alerta.TipoFenomenoIdSnap,
                 alerta.FechaHora,
-                alerta.Activa,
-                alerta.FechaResolucion
-                );
+                alerta.Activo,
+                alerta.SensorId,
+                alerta.ComunidadId,
+                alerta.ReglaAlertaId,
+                alerta.EstadoAlertaId,
+                alerta.UsuarioResponsableId,
+                alerta.UsuarioIng,
+                alerta.FechaIng,
+                alerta.UsuarioAct,
+                alerta.FechaAct
+            );
         }
     }
 }

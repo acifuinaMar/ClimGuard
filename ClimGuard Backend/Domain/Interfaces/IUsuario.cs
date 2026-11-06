@@ -1,6 +1,6 @@
 ﻿using Domain.Entities.User;
 
-namespace Services.Services.Interfaces
+namespace Domain.Interfaces
 {
     public interface IUsuario
     {

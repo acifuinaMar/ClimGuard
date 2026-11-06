@@ -368,3 +368,79 @@
   font-size:.78rem;
 
 }
+/* Indicador de tiempo real (SignalR) */
+.vivo {
+  margin-left: .6rem;
+  font-size: .72rem;
+  font-weight: 700;
+  color: #16a34a;
+}
+.vivo--off { color: #9ca3af; }
+
+
+/* Vinculación de cuenta con Google */
+.vinculacion-google {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  padding: 18px 22px;
+  margin-bottom: 24px;
+
+  background: var(--surface, #ffffff);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+  }
+}
+
+.boton-vincular-google {
+  padding: 11px 18px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: background 0.2s, border-color 0.2s;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 2px;
+  }
+}
+
+@media (max-width: 600px) {
+  .boton-vincular-google {
+    width: 100%;
+  }
+}
+
+.botones-vinculacion {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}

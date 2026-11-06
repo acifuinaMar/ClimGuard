@@ -1,0 +1,11 @@
+# ClimGuard Fase 4 — salida a Internet SOLO para el Auth Service (opt-in).
+# El Auth Service debe llamar a accounts.google.com / oauth2.googleapis.com / www.googleapis.com / github.com / api.github.com
+# y la red `services` es `internal` (sin salida). Este archivo NO cambia la topología de la Fase 3:
+# solo añade a auth-service una red con salida. Ningún otro servicio la recibe y no publica puertos.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.oauth.yml up --build
+services:
+  auth-service:
+    networks: [egress]
+networks:
+  egress: {}

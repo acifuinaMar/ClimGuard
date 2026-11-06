@@ -11,14 +11,70 @@
 
       <div class="campo">
         <label for="nombre">Nombre de la comunidad</label>
-        <input id="nombre" type="text" formControlName="nombre"
+        <input id="nombre" type="text" formControlName="nombreComunidad"
                placeholder="Ej.: San José"
-               [class.malo]="nombre.invalid && nombre.touched">
-        @if (nombre.touched && nombre.hasError('required')) {
+               [class.malo]="nombreComunidad.invalid && nombreComunidad.touched">
+        @if (nombreComunidad.touched && nombreComunidad.hasError('required')) {
           <span class="error">El nombre es obligatorio.</span>
-        } @else if (nombre.touched && nombre.hasError('minlength')) {
+        } @else if (nombreComunidad.touched && nombreComunidad.hasError('minlength')) {
           <span class="error">Debe tener al menos 3 caracteres.</span>
         }
+      </div>
+
+      <div class="campo">
+        <label for="pais">País</label>
+        <input id="pais" type="text" formControlName="pais" placeholder="Ej.: Guatemala"
+               (input)="alCambiarPais()">
+        @if (!usaCatalogo()) {
+          <span class="ayuda">Fuera de Guatemala, departamento y municipio se escriben a mano.</span>
+        }
+      </div>
+
+      <div class="fila">
+        <div class="campo">
+          <label for="depto">Departamento</label>
+          @if (usaCatalogo()) {
+            <select id="depto" formControlName="departamento" (change)="alCambiarDepartamento()"
+                    [class.malo]="departamento.invalid && departamento.touched">
+              <option value="" disabled>Seleccione…</option>
+              @if (deptoFueraDeCatalogo(); as d) {
+                <option [value]="d">{{ d }} (valor guardado)</option>
+              }
+              @for (d of departamentos; track d) {
+                <option [value]="d">{{ d }}</option>
+              }
+            </select>
+          } @else {
+            <input id="depto" type="text" formControlName="departamento" placeholder="Ej.: Izabal"
+                   [class.malo]="departamento.invalid && departamento.touched">
+          }
+          @if (departamento.touched && departamento.hasError('required')) {
+            <span class="error">Obligatorio.</span>
+          }
+        </div>
+        <div class="campo">
+          <label for="muni">Municipio</label>
+          @if (usaCatalogo()) {
+            <select id="muni" formControlName="municipio"
+                    [class.malo]="municipio.invalid && municipio.touched">
+              <option value="" disabled>
+                {{ municipios().length || muniFueraDeCatalogo() ? 'Seleccione…' : 'Elija primero el departamento' }}
+              </option>
+              @if (muniFueraDeCatalogo(); as m) {
+                <option [value]="m">{{ m }} (valor guardado)</option>
+              }
+              @for (m of municipios(); track m) {
+                <option [value]="m">{{ m }}</option>
+              }
+            </select>
+          } @else {
+            <input id="muni" type="text" formControlName="municipio" placeholder="Ej.: Puerto Barrios"
+                   [class.malo]="municipio.invalid && municipio.touched">
+          }
+          @if (municipio.touched && municipio.hasError('required')) {
+            <span class="error">Obligatorio.</span>
+          }
+        </div>
       </div>
 
       <div class="campo">
@@ -36,7 +92,6 @@
             <span class="error">Debe estar entre −90 y 90.</span>
           }
         </div>
-
         <div class="campo">
           <label for="lon">Longitud</label>
           <input id="lon" type="number" step="0.000001" formControlName="longitud"
@@ -47,6 +102,11 @@
         </div>
       </div>
       <span class="ayuda">Las coordenadas ubican la comunidad en el mapa.</span>
+
+      <label class="interruptor">
+        <input type="checkbox" formControlName="activo">
+        Comunidad activa
+      </label>
 
       <footer class="modal__pie">
         <button type="button" class="btn btn--claro"

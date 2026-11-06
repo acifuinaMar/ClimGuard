@@ -3,9 +3,14 @@
     <h1>Bitácora</h1>
     <p class="cabecera__sub">Registro de acciones realizadas por los usuarios</p>
   </div>
-  @if (!cargando() && !error()) {
-    <span class="cuenta">{{ total() }} registros</span>
-  }
+  <div class="cabecera__acciones">
+    @if (usandoEjemplo()) {
+      <span class="aviso-ejemplo" title="El backend no respondió; se muestran registros de ejemplo. Al conectarlo, usa los reales.">Datos de ejemplo</span>
+    }
+    @if (!cargando() && !error()) {
+      <span class="cuenta">{{ total() }} registros</span>
+    }
+  </div>
 </header>
 
 @if (cargando()) {
@@ -33,6 +38,8 @@
         <tr>
           <th>Usuario</th>
           <th>Acción</th>
+          <th>Entidad</th>
+          <th>Detalle</th>
           <th>Tipo</th>
           <th>Fecha</th>
         </tr>
@@ -48,6 +55,10 @@
             </td>
 
             <td class="accion">{{ r.accion }}</td>
+
+            <td>{{ r.nombreEntidad }} <span class="ent-id">#{{ r.entidadId }}</span></td>
+
+            <td class="detalle">{{ r.descripcion }}</td>
 
             <td>
               <span class="tipo" [class]="'tipo tipo--' + r.tipo">

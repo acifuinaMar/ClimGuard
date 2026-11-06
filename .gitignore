@@ -1,49 +1,44 @@
-# ---------- Secretos: NUNCA subir ----------
+﻿# Credenciales y variables locales
 .env
-*.env
+.env.*
 !.env.example
-appsettings.Local.json
+
+# Certificados y llaves
+nginx/certs/
+*.pem
 *.pfx
 *.key
 
-# ---------- .NET ----------
-bin/
-obj/
-[Dd]ebug/
-[Rr]elease/
-[Bb]in/
-[Oo]bj/
-*.user
-*.suo
-*.userosscache
+# Dependencias y compilaciones
+**/node_modules/
+**/dist/
+**/bin/
+**/obj/
+**/target/
+**/.angular/
+
+# Archivos del entorno local
 .vs/
-TestResults/
-*.trx
-*.coverage
-coverage/
+.vscode/
+*.log
 
-# ---------- Angular / Node ----------
-node_modules/
-dist/
-.angular/
-npm-debug.log*
-yarn-error.log*
-.pnpm-store/
-*.tsbuildinfo
+# Configuraciones heredadas pendientes de revisión
+/ClimGuard Backend/API/appsettings.json
+/ClimGuard Backend/API/appsettings.Development.json
 
-# ---------- Editores ----------
-.vscode/*
-!.vscode/extensions.json
-!.vscode/launch.json
-.idea/
-*.swp
+# Kubernetes: k8s/climguard.yaml se versiona (generado, revisado, SIN secretos).
+# Los secretos nunca se guardan en k8s/: se crean con scripts/k8s-secrets.sh desde un .env fuera del repo.
+/k8s/*.env
+/k8s/*secret*.yaml
+/k8s/*tls*.yaml
 
-# ---------- Sistema operativo ----------
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-.DS_Store
+# Cachés generadas por Python
+__pycache__/
+*.py[cod]
 
-# ---------- Docker ----------
-docker/sqlserver/data/
+# Respaldos locales y bases de datos
+/backups/
+*.dump
+
+# Archivos generados por las pruebas de Auth
+/services/auth/dist-test/

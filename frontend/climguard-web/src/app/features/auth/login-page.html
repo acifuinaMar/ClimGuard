@@ -68,6 +68,15 @@
 
     </form>
 
+    @if (proveedores().length) {
+      <div class="separador"><span>o continúa con</span></div>
+      <div class="oauth">
+        @for (p of proveedores(); track p.id) {
+          <button type="button" class="boton-oauth" (click)="entrarCon(p.id)" [disabled]="entrando()">{{ p.label }}</button>
+        }
+      </div>
+    }
+
     <footer class="tarjeta__pie">
       <span class="pie__aviso">Usuario de prueba</span>
       <code>JDoe / Compu23</code>

@@ -17,6 +17,11 @@
   border-radius: 999px;
   white-space: nowrap;
 }
+.cabecera__acciones { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; }
+.aviso-ejemplo {
+  background: var(--cg-amarillo-fondo); color: var(--cg-amarillo); border: 1px solid var(--cg-amarillo);
+  border-radius: 999px; padding: .28rem .75rem; font-size: .76rem; font-weight: 700; white-space: nowrap;
+}
 
 .tabla-caja {
   overflow-x: auto;
@@ -60,7 +65,9 @@
 }
 .persona__nombre { font-weight: 600; white-space: nowrap; }
 
-.accion { color: var(--cg-texto-suave); min-width: 16rem; }
+.accion { color: var(--cg-texto-suave); font-weight: 600; white-space: nowrap; }
+.detalle { color: var(--cg-texto-suave); min-width: 13rem; }
+.ent-id { color: var(--cg-texto-tenue); font-size: .78rem; font-variant-numeric: tabular-nums; }
 
 /* La insignia de tipo repite el color según la acción, para leerlo de un vistazo. */
 .tipo {

@@ -1,10 +1,8 @@
-﻿using Domain.Entities.Alert;
-using Domain.Entities.SensorReading;
+﻿using Domain.Entities.SensorReading;
 using Infraestructure.Models;
 using Infraestructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Services.Services.Interfaces;
-using System.Drawing;
 
 namespace Infraestructure.Repositories
 {
@@ -27,12 +25,12 @@ namespace Infraestructure.Repositories
                 _context.LecturaSensors.Add(obj);
                 await _context.SaveChangesAsync();
 
-                return new LecturaSensorDomain
-                (
+                return new LecturaSensorDomain(
                     lectura.LecturaId,
                     lectura.SensorId,
                     lectura.Valor,
-                    lectura.FechaHora
+                    lectura.FechaHora,
+                    lectura.UsuarioIng
                 );
             }
             catch (Exception)
@@ -61,13 +59,15 @@ namespace Infraestructure.Repositories
             {
                 var list = await _context.LecturaSensors.ToListAsync();
 
-                return list.Select(a => new LecturaSensorDomain
-                (
-                    Convert.ToInt32(a.LecturaId),
-                    a.SensorId,
-                    a.Valor,
-                    a.FechaHora
-                )).ToList();
+                return list.Select(a => 
+                    new LecturaSensorDomain(
+                        Convert.ToInt32(a.LecturaId),
+                        a.SensorId,
+                        a.Valor,
+                        a.FechaHora,
+                        a.UsuarioIng
+                    )
+                ).ToList();
             }
             catch (Exception)
             {
@@ -82,12 +82,15 @@ namespace Infraestructure.Repositories
                 var obj = await _context.LecturaSensors
                     .Where(a => a.LecturaId == lectura).FirstOrDefaultAsync();
 
-                return new LecturaSensorDomain
-                (
+                if (obj == null)
+                    return null;
+
+                return new LecturaSensorDomain(
                     Convert.ToInt32(obj.LecturaId),
                     obj.SensorId,
                     obj.Valor,
-                    obj.FechaHora
+                    obj.FechaHora,
+                    obj.UsuarioIng
                 );
             }
             catch (Exception)
@@ -107,13 +110,15 @@ namespace Infraestructure.Repositories
                     .OrderBy(a => a.FechaHora)
                     .ToListAsync();
 
-                return list.Select(a => new LecturaSensorDomain
-                (
-                    Convert.ToInt32(a.LecturaId),
-                    a.SensorId,
-                    a.Valor,
-                    a.FechaHora
-                )).ToList();
+                return list.Select(a => 
+                    new LecturaSensorDomain(
+                        Convert.ToInt32(a.LecturaId),
+                        a.SensorId,
+                        a.Valor,
+                        a.FechaHora,
+                        a.UsuarioIng
+                    )
+                ).ToList();
             }
             catch (Exception)
             {
@@ -135,6 +140,7 @@ namespace Infraestructure.Repositories
                 obj.SensorId = lectura.SensorId;
                 obj.Valor = lectura.Valor;
                 obj.FechaHora = lectura.FechaHora;
+                obj.UsuarioIng = lectura.UsuarioIng;
 
                 await _context.SaveChangesAsync();
 

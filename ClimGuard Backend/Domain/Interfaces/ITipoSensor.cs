@@ -1,13 +1,16 @@
 ﻿using Domain.Entities.SensorType;
 
-namespace Services.Services.Interfaces
+namespace Domain.Interfaces;
+
+public interface ITipoSensor
 {
-    public interface ITipoSensor
-    {
-        Task<IReadOnlyList<TipoSensorDomain>> GetAll();
-        Task<TipoSensorDomain> GetById(int tipo);
-        Task<TipoSensorDomain> Create(TipoSensorDomain tipo);
-        Task<bool> Update(TipoSensorDomain tipo);
-        Task Delete(TipoSensorDomain tipo);
-    }
+    Task<TipoSensorDomain> Create(TipoSensorDomain tipoSensor);
+
+    Task<IReadOnlyList<TipoSensorDomain>> GetAll();
+
+    Task<TipoSensorDomain> GetById(int tipoSensorId);
+
+    Task<bool> Update(TipoSensorDomain tipoSensor);
+
+    Task<bool> Delete(TipoSensorDomain tipoSensor);
 }

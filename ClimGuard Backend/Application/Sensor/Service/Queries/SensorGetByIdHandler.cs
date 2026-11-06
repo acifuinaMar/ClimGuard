@@ -16,16 +16,26 @@ namespace Application.Sensor.Service.Queries
         {
             var sensor = await _repository.GetById(request.id);
 
+            if(sensor == null)
+                return null;
+
             return new SensorResultDto(
                 sensor.SensorId,
+                sensor.Nombre,
+                sensor.Codigo,
+                sensor.Ubicacion,
+                sensor.Descripcion,
+                sensor.FechaInstalacion,
+                sensor.FechaUltimaConexion,
+                sensor.ValorActual,
                 sensor.ComunidadId,
                 sensor.TipoSensorId,
-                sensor.Nombre,
-                sensor.ValorActual,
-                sensor.Activo,
-                sensor.FechaInstalacion,
-                sensor.UltimaActualizacion
-                );
+                sensor.EstadoSensorId,
+                sensor.UsuarioIng,
+                sensor.FechaIng,
+                sensor.UsuarioAct,
+                sensor.FechaAct
+            );
         }
     }
 }
