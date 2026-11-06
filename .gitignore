@@ -26,8 +26,11 @@ nginx/certs/
 /ClimGuard Backend/API/appsettings.json
 /ClimGuard Backend/API/appsettings.Development.json
 
-# Manifiesto Kubernetes pendiente de revisión
-/k8s/climguard.yaml
+# Kubernetes: k8s/climguard.yaml se versiona (generado, revisado, SIN secretos).
+# Los secretos nunca se guardan en k8s/: se crean con scripts/k8s-secrets.sh desde un .env fuera del repo.
+/k8s/*.env
+/k8s/*secret*.yaml
+/k8s/*tls*.yaml
 
 # Cachés generadas por Python
 __pycache__/
