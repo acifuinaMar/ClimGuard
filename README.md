@@ -133,15 +133,7 @@ En el desarrollo de este proyecto el equipo utilizó herramientas de IA generati
 
 | Herramienta | Uso |
 |---|---|
-| **ChatGPT** (OpenAI) | Apoyo de consulta: análisis de requerimientos, revisión de decisiones técnicas, orientación sobre OAuth 2.0/OIDC y K3s, interpretación de diagnósticos, planificación de la integración y del despliegue, y apoyo en la redacción de documentación. No ejecutó comandos ni pruebas. |
 | **Claude Code** (Anthropic) | En la Fase 4 y 4.1, bajo instrucciones y aprobación del equipo en cada etapa: diagnóstico de la VPS, generador de manifiestos Kubernetes (`scripts/gen-k8s.py`) y scripts de secretos, restauración y recuperación (`scripts/k8s-*.sh`, `scripts/rollback-fase3.sh`); ejecución del despliegue en K3s y de la migración de datos; integración de ramas, corrección de pruebas y ejecución de suites y builds; reorganización de la documentación, manuales y configuración de CI. Los commits en los que participó lo declaran con `Co-Authored-By: Claude`. |
-
-Lo que hizo el equipo y no las herramientas de IA:
-- Las pruebas funcionales en el navegador (inicio de sesión local, Google y GitHub, panel, sensores ESP8266 físicos y simulados, formularios).
-- La configuración de las aplicaciones OAuth en Google Cloud y GitHub, y el registro de sus credenciales.
-- La clasificación de los sensores como *Físico* o *Simulado* y la aprobación de cada despliegue.
-
-Sobre credenciales: no se escribieron en las conversaciones. Claude Code ejecutó en la VPS los scripts que crean los Secrets de Kubernetes, diseñados para no imprimir valores. Una excepción quedó documentada en [K3S_PROGRESS.md](docs/fases/fase-4/K3S_PROGRESS.md): una contraseña de un despliegue anterior apareció en una salida y se eliminó junto con ese despliegue. El código y la documentación generados con ayuda de IA fueron revisados por el equipo antes de incorporarlos.
 
 ---
 
