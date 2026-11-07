@@ -1,12 +1,20 @@
 # ClimGuard
-## Diagrama de Clases
+## Diagrama de clases de la Fase 2 (monolito)
 
 | Proyecto | ClimGuard |
 |-----------|-----------|
 | Documento | Diagrama de Clases |
 | Código | DOC-09 |
-| Versión | 2.0 |
-| Estado | Finalizado |
+| Versión | 3.0 |
+| Estado | Vigente (ClimGuard 4.1) |
+
+### Historial de versiones
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 – 2.0 | Agosto – octubre 2026 | Clases del dominio del monolito de la Fase 2 (con ReglaAlerta en lugar de umbrales en la 2.0). |
+| 3.0 | Noviembre 2026 | Clases vigentes por microservicio (ClimGuard 4.1). |
+
+> Las secciones originales describen el modelo de la Fase 2 (una sola base SQL Server) y se conservan como registro. El modelo vigente está en la sección final.
 
 ---
 
@@ -169,3 +177,50 @@ Alerta "*" --> "1" Comunidad
 - La entidad **Alerta** almacena snapshots del mensaje, nivel de alerta y tipo de fenómeno (`MensajeSnap`, `NivelAlertaIdSnap` y `TipoFenomenoIdSnap`), garantizando la integridad histórica de cada alerta aun cuando las reglas sean modificadas posteriormente.
 - Las entidades principales incorporan auditoría mediante los campos de usuario y fecha de creación/modificación.
 - Los componentes de infraestructura (Controllers, Repositories, Background Services, SignalR, Docker y Base de Datos) no forman parte del modelo de clases, ya que pertenecen a la arquitectura de implementación.
+
+---
+
+# Diagrama de clases vigente (ClimGuard 4.1)
+Cada microservicio tiene su propio modelo; las referencias entre servicios son identificadores, no objetos compartidos.
+
+```mermaid
+classDiagram
+  direction LR
+  namespace auth_service {
+    class Role { id; name; permissions[] }
+    class User { id; username; fullName; passwordHash; active; roleId; lastAccess }
+    class ExternalIdentity { id; provider; subject; userId; email; emailVerified; displayName; lastLoginAt }
+    class OAuthFlow { stateHash; provider; nonce; codeVerifier; bindingHash; linkUserId; expiresAt; consumedAt }
+    class OAuthLoginCode { codeHash; userId; bindingHash; expiresAt; consumedAt }
+  }
+  namespace community_service {
+    class Community { comunidadId; nombreComunidad; descripcion; pais; departamento; municipio; latitud; longitud; activo }
+  }
+  namespace sensor_service {
+    class Sensor { sensorId; nombre; codigo; ubicacion; descripcion; fechaInstalacion; fechaUltimaConexion; valorActual; comunidadId; tipoSensorId; estadoSensorId; origen }
+    class SensorType { tipoSensorId; nombre; unidadMedida; activo }
+    class SensorState { estadoSensorId; nombre }
+    class Reading { lecturaId; sensorId; valor; fechaHora }
+  }
+  namespace alert_service {
+    class AlertRule { reglaAlertaId; nombre; tipoSensorId; valorMin; valorMax; nivelAlertaId; tipoFenomenoId; mensaje; activo; requiereRevision }
+    class Alert { alertaId; valorDetectado; mensajeSnap; nivelAlertaIdSnap; tipoFenomenoIdSnap; fechaHora; activo; sensorId; comunidadId; reglaAlertaId; umbralMin; umbralMax; estadoAlertaId; semanticaRegla; usuarioResponsableId }
+    class AlertEvent { eventoId; tipoEventoNombre; descripcion; fechaHora; alertaId; usuarioId }
+    class AlertLevel { nivelAlertaId; nombre; colorHex; activo }
+    class AlertState { estadoAlertaId; nombre; activo }
+    class Phenomenon { tipoFenomenoId; nombre; activo }
+  }
+  Role "1" --> "*" User
+  User "1" --> "*" ExternalIdentity
+  User "1" --> "*" OAuthLoginCode
+  SensorType "1" --> "*" Sensor
+  SensorState "1" --> "*" Sensor
+  Sensor "1" --> "*" Reading
+  AlertLevel "1" --> "*" AlertRule
+  Phenomenon "1" --> "*" AlertRule
+  AlertRule "1" --> "*" Alert
+  AlertState "1" --> "*" Alert
+  Alert "1" --> "*" AlertEvent
+```
+
+Además del modelo persistido, los servicios Python (report-service y audit-service) trabajan con documentos de MongoDB (DOC-10 §10.5) y el sensor-service mantiene el estado del simulador en memoria (`SimulationState`). La lógica de evaluación de reglas vive en `RuleEvaluator` (alert-service) y su espejo `peligro.ts` (frontend).

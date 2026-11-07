@@ -5,10 +5,17 @@
 |-----------|-----------|
 | Documento | Especificación de Requerimientos |
 | Código | DOC-02 |
-| Versión | 1.0 |
-| Estado | Finalizado |
-| Fecha | Agosto 2026 |
-| Tecnologías | Angular 20, .NET 10, SQL Server 2022, SignalR, Docker Compose |
+| Versión | 3.0 |
+| Estado | Vigente (ClimGuard 4.1) |
+| Fecha | Noviembre 2026 |
+| Tecnologías | Angular 22, .NET 10, NestJS, Spring Boot, FastAPI, PostgreSQL 16, SQL Server 2022, MongoDB 7, SignalR, Docker, Kubernetes (K3s) |
+
+### Historial de versiones
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 | Agosto 2026 | Requerimientos de las Fases 1 y 2 (módulos 1 a 9, RNF-001 a RNF-011). |
+| 3.0 | Noviembre 2026 | Se agregan los requerimientos implementados en las Fases 3 y 4 (sección 10 y RNF-012 a RNF-016). CFG-RF-001 queda reemplazado por REG-RF-001; las restricciones se actualizan a la arquitectura de microservicios. |
+
 ---
 
 # Introducción
@@ -333,6 +340,8 @@ El presente documento especifica los requerimientos funcionales y no funcionales
 | **Prioridad** | Alta |
 | **Descripción** |El sistema deberá permitir modificar los valores de precaución, alerta y emergencia asociados a cada uno de los tipos de sensor definidos en el sistema. |
 
+> **Estado en ClimGuard 4.1:** reemplazado por **REG-RF-001** (reglas de alerta por intervalo de peligro). Se conserva como requerimiento original de la Fase 2.
+
 ---
 
 ### CFG-RF-002 – Configurar parámetros generales
@@ -345,6 +354,177 @@ El presente documento especifica los requerimientos funcionales y no funcionales
 | **Actor** | Administrador |
 | **Prioridad** | Media |
 | **Descripción** | El sistema deberá permitir administrar los parámetros generales de funcionamiento del sistema. |
+
+## 10. Requerimientos incorporados en las Fases 3 y 4
+
+### AUT-RF-003 – Iniciar sesión con Google o GitHub
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | AUT-RF-003 |
+| **Nombre** | Iniciar sesión con Google o GitHub |
+| **Módulo** | Autenticación |
+| **Actor** | Usuario |
+| **Prioridad** | Alta |
+| **Descripción** | El sistema deberá permitir iniciar sesión con una cuenta de Google (OpenID Connect) o de GitHub (OAuth 2.0) y emitir el mismo token de sesión que el inicio de sesión local. |
+
+---
+
+### AUT-RF-004 – Registro automático de cuentas externas
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | AUT-RF-004 |
+| **Nombre** | Registro automático de cuentas externas |
+| **Módulo** | Autenticación |
+| **Actor** | Sistema |
+| **Prioridad** | Media |
+| **Descripción** | Si está habilitado, el sistema deberá registrar automáticamente a quien entra por primera vez con Google o GitHub, con rol Consulta, solo si el proveedor confirma un correo verificado y, opcionalmente, si su dominio está autorizado. |
+
+---
+
+### AUT-RF-005 – Vincular una cuenta externa
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | AUT-RF-005 |
+| **Nombre** | Vincular una cuenta externa |
+| **Módulo** | Autenticación |
+| **Actor** | Usuario autenticado |
+| **Prioridad** | Media |
+| **Descripción** | El sistema deberá permitir que un usuario con sesión iniciada vincule su cuenta de Google o GitHub para usarla en accesos posteriores. |
+
+---
+
+### SEN-RF-003 – Indicar el origen de las lecturas
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | SEN-RF-003 |
+| **Nombre** | Indicar el origen de las lecturas |
+| **Módulo** | Gestión de Sensores |
+| **Actor** | Administrador |
+| **Prioridad** | Alta |
+| **Descripción** | Cada sensor deberá registrarse como Físico (lecturas enviadas por un dispositivo) o Simulado (lecturas generadas por el sistema mientras esté activo). |
+
+---
+
+### SEN-RF-004 – Recibir lecturas de dispositivos físicos
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | SEN-RF-004 |
+| **Nombre** | Recibir lecturas de dispositivos físicos |
+| **Módulo** | Monitoreo Climático |
+| **Actor** | Dispositivo (rol Operador) |
+| **Prioridad** | Alta |
+| **Descripción** | El sistema deberá aceptar lecturas enviadas por dispositivos autenticados (ESP8266) y procesarlas igual que las simuladas: almacenamiento, notificación en tiempo real y evaluación de reglas. |
+
+---
+
+### SEN-RF-005 – Seleccionar la comunidad de un sensor
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | SEN-RF-005 |
+| **Nombre** | Seleccionar la comunidad de un sensor |
+| **Módulo** | Gestión de Sensores |
+| **Actor** | Administrador |
+| **Prioridad** | Media |
+| **Descripción** | Al registrar un sensor, la comunidad deberá elegirse de una lista de comunidades activas; al editarlo, deberá conservarse la comunidad actual aunque esté inactiva. |
+
+---
+
+### COM-RF-003 – Seleccionar departamento y municipio
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | COM-RF-003 |
+| **Nombre** | Seleccionar departamento y municipio |
+| **Módulo** | Gestión de Comunidades |
+| **Actor** | Administrador |
+| **Prioridad** | Media |
+| **Descripción** | Para comunidades de Guatemala, el departamento y el municipio deberán elegirse de un catálogo en cascada; para otros países se escribirán como texto libre. |
+
+---
+
+### REG-RF-001 – Gestionar reglas de alerta
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | REG-RF-001 |
+| **Nombre** | Gestionar reglas de alerta |
+| **Módulo** | Configuración |
+| **Actor** | Administrador |
+| **Prioridad** | Alta |
+| **Descripción** | El sistema deberá permitir crear, editar y activar o desactivar reglas por tipo de sensor con un intervalo de peligro [mínimo, máximo], un nivel de alerta, un tipo de fenómeno y un mensaje. Las reglas heredadas se evaluarán con su semántica original hasta que se conviertan de forma explícita. |
+
+---
+
+### REG-RF-002 – Gestionar tipos de fenómeno
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | REG-RF-002 |
+| **Nombre** | Gestionar tipos de fenómeno |
+| **Módulo** | Configuración |
+| **Actor** | Administrador, Operador |
+| **Prioridad** | Media |
+| **Descripción** | El sistema deberá permitir crear, editar, activar o desactivar y eliminar los tipos de fenómeno climático asociados a reglas y alertas. |
+
+---
+
+### ALT-RF-005 – Atender alertas
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | ALT-RF-005 |
+| **Nombre** | Atender alertas |
+| **Módulo** | Gestión de Alertas |
+| **Actor** | Administrador, Operador |
+| **Prioridad** | Alta |
+| **Descripción** | El sistema deberá permitir marcar una alerta activa como atendida, registrando al responsable y la fecha. |
+
+---
+
+### REP-RF-001 – Generar reportes PDF
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | REP-RF-001 |
+| **Nombre** | Generar reportes PDF |
+| **Módulo** | Reportes |
+| **Actor** | Administrador |
+| **Prioridad** | Alta |
+| **Descripción** | El sistema deberá generar en el servidor reportes PDF de comunidades, sensores, lecturas, alertas, historial de eventos, estado de sensores, estadísticas climáticas y un reporte ejecutivo, con filtros por comunidad, sensor, tipo, nivel, fenómeno y fechas. |
+
+---
+
+### REP-RF-002 – Consultar y descargar reportes
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | REP-RF-002 |
+| **Nombre** | Consultar y descargar reportes |
+| **Módulo** | Reportes |
+| **Actor** | Administrador |
+| **Prioridad** | Alta |
+| **Descripción** | El sistema deberá conservar el historial de reportes generados (identificador, tipo, autor, fecha, filtros, estado y tamaño) y permitir descargar de nuevo cada PDF. |
+
+---
+
+### REP-RF-003 – Limitar el tamaño de los reportes
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | REP-RF-003 |
+| **Nombre** | Limitar el tamaño de los reportes |
+| **Módulo** | Reportes |
+| **Actor** | Sistema |
+| **Prioridad** | Media |
+| **Descripción** | El sistema deberá rechazar con un mensaje claro los reportes que superen el número máximo de filas configurado y limitar la cantidad de reportes en proceso simultáneo. |
+
+---
 
 # Requerimientos No Funcionales
 
@@ -467,6 +647,61 @@ El presente documento especifica los requerimientos funcionales y no funcionales
 | **Prioridad** | Media |
 | **Descripción** | El sistema deberá poder desplegarse utilizando Docker Compose, permitiendo reproducir el entorno de ejecución de manera consistente.|
 
+## RNF-012 – Autenticación externa segura
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | RNF-012 |
+| **Nombre** | Autenticación externa segura |
+| **Prioridad** | Alta |
+| **Descripción** | El inicio de sesión con proveedores externos deberá usar Authorization Code con PKCE y `state` (y `nonce` en OpenID Connect), validar el ID Token contra las claves publicadas por el proveedor y no exponer nunca el token de sesión en una URL. |
+
+---
+
+## RNF-013 – Despliegue en Kubernetes
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | RNF-013 |
+| **Nombre** | Despliegue en Kubernetes |
+| **Prioridad** | Alta |
+| **Descripción** | El sistema deberá ejecutarse en Kubernetes con Deployments y Services por componente, acceso por Ingress con HTTPS, configuración en ConfigMaps, secretos en Secrets, almacenamiento persistente para las bases de datos y comprobaciones de salud (startup, liveness y readiness). |
+
+---
+
+## RNF-014 – Aislamiento de datos por servicio
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | RNF-014 |
+| **Nombre** | Aislamiento de datos por servicio |
+| **Prioridad** | Media |
+| **Descripción** | Cada microservicio deberá ser el único con acceso a su base de datos; los demás obtendrán esa información a través de su API. |
+
+---
+
+## RNF-015 – Auditoría
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | RNF-015 |
+| **Nombre** | Auditoría |
+| **Prioridad** | Media |
+| **Descripción** | Las acciones relevantes (inicios de sesión exitosos y fallidos, altas, cambios y eliminaciones) deberán registrarse en la bitácora con usuario, fecha y origen. |
+
+---
+
+## RNF-016 – Integración continua
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | RNF-016 |
+| **Nombre** | Integración continua |
+| **Prioridad** | Media |
+| **Descripción** | Cada cambio en el repositorio deberá compilar y probar automáticamente los servicios y el frontend, validar los manifiestos de despliegue y buscar secretos expuestos. |
+
+---
+
 # Restricciones
 
 | Código | Restricción |
@@ -479,6 +714,8 @@ El presente documento especifica los requerimientos funcionales y no funcionales
 | RES-006 | El sistema deberá implementar comunicación en tiempo real utilizando SignalR. |
 | RES-007 | Toda la documentación del proyecto deberá desarrollarse en formato Markdown (.md). |
 | RES-008 | La autenticación deberá implementarse utilizando JWT. |
+
+> **Estado en ClimGuard 4.1:** RES-002 y RES-003 se cumplen en los servicios .NET (gateway, community, sensor) y en el sensor-service (SQL Server); desde la Fase 3 el sistema usa además NestJS, Spring Boot y FastAPI, y las bases PostgreSQL 16 y MongoDB 7 ([DOC-13](DOC-13-Arquitectura%20de%20Software.md)). RES-005: Docker Compose se usa en desarrollo; en producción, Kubernetes (K3s).
 
 # Supuestos
 
@@ -496,7 +733,7 @@ El presente documento especifica los requerimientos funcionales y no funcionales
 
 | Código | Dependencia |
 |----------|-------------|
-| DEP-001 | Angular 20 |
+| DEP-001 | Angular 20 (Fases 1-2); Angular 22 en ClimGuard 4.1 |
 | DEP-002 | .NET 10 |
 | DEP-003 | SQL Server 2022 |
 | DEP-004 | SignalR |
@@ -505,6 +742,11 @@ El presente documento especifica los requerimientos funcionales y no funcionales
 | DEP-007 | GitHub |
 | DEP-008 | Navegador web compatible |
 | DEP-009 | JWT|
+| DEP-010 | PostgreSQL 16 y MongoDB 7 (desde la Fase 3) |
+| DEP-011 | NestJS, Spring Boot y FastAPI (desde la Fase 3) |
+| DEP-012 | Google y GitHub como proveedores OAuth (Fase 4) |
+| DEP-013 | Kubernetes K3s y Traefik (Fase 4, producción) |
+| DEP-014 | Dispositivos ESP8266 con conexión a Internet (Fase 4) |
 
 # Criterios Generales de Aceptación
 

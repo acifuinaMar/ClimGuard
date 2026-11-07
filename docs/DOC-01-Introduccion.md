@@ -2,20 +2,27 @@
 ## Sistema Web de Monitoreo y Alerta Temprana para Riesgos Climáticos
 
 **Curso:** Desarrollo Web  
-**Tecnologías:** Angular 20, .NET 10, SQL Server 2022, SignalR, Docker Compose  
-**Versión:** 1.0
+**Tecnologías:** Angular 22, .NET 10 (gateway, community, sensor), NestJS (auth), Spring Boot (alert), FastAPI (report, audit), PostgreSQL 16, SQL Server 2022, MongoDB 7, SignalR, Docker Compose, Kubernetes (K3s)  
+**Versión:** 3.0 (vigente, ClimGuard 4.1)
 
 ---
 
 # DOC-01. Introducción al Proyecto
 
+### Historial de versiones
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 | Agosto 2026 | Introducción del sistema con Angular, API .NET, SQL Server y SignalR, con datos simulados. |
+| 3.0 | Noviembre 2026 | Alcance de ClimGuard 4.1: microservicios, sensores físicos ESP8266, reglas de alerta, OAuth, reportes PDF y despliegue en K3s. |
+
+
 ## 1. Introducción
 
 Los fenómenos climáticos representan una amenaza constante para las comunidades, especialmente aquellas ubicadas en zonas rurales donde el acceso oportuno a información puede ser limitado. La falta de un sistema que centralice el monitoreo de variables ambientales dificulta la detección temprana de condiciones de riesgo, retrasando la toma de decisiones ante posibles emergencias.
 
-**ClimGuard** es un sistema web de monitoreo y alerta temprana para riesgos climáticos que permite visualizar en tiempo real las lecturas provenientes de sensores ambientales, detectar automáticamente condiciones de riesgo mediante umbrales configurables, generar alertas, administrar comunidades, sensores y usuarios, así como mantener un historial de eventos para facilitar el seguimiento de incidentes.
+**ClimGuard** es un sistema web de monitoreo y alerta temprana para riesgos climáticos que permite visualizar en tiempo real las lecturas provenientes de sensores ambientales, detectar automáticamente condiciones de riesgo mediante reglas de alerta configurables, generar alertas, administrar comunidades, sensores y usuarios, así como mantener un historial de eventos para facilitar el seguimiento de incidentes.
 
-El sistema fue desarrollado utilizando una arquitectura moderna basada en Angular, .NET Web API, SQL Server y SignalR, permitiendo trabajar inicialmente con datos simulados y facilitando una futura integración con dispositivos IoT y sensores físicos sin requerir cambios significativos en la arquitectura del software.
+El sistema comenzó en las Fases 1 y 2 como una aplicación Angular con una API .NET, SQL Server y SignalR que trabajaba con datos simulados. En la Fase 3 se reorganizó en microservicios detrás de un API Gateway, cada uno con su propia base de datos, y en la Fase 4 incorporó el inicio de sesión con Google y GitHub y el despliegue en Kubernetes (K3s). La versión 4.1 recibe lecturas de sensores físicos ESP8266 y de sensores simulados por el mismo proceso.
 
 ---
 
@@ -30,6 +37,8 @@ La ausencia de una plataforma que integre estas funcionalidades dificulta el mon
 # 3. Justificación
 
 El desarrollo de ClimGuard permitió construir una plataforma capaz de centralizar el monitoreo de variables climáticas, automatizar la generación de alertas y facilitar la gestión de eventos mediante una arquitectura moderna, escalable y preparada para futuras integraciones con dispositivos IoT.
+
+En la Fase 4 el sistema pasó a ejecutarse en Kubernetes (K3s), con almacenamiento persistente, configuración y secretos separados del código y comprobaciones de salud de cada servicio.
 
 Asimismo, el uso de Docker Compose facilita el despliegue reproducible del sistema en distintos entornos, reduciendo tiempos de configuración y simplificando la instalación del proyecto.
 
@@ -47,12 +56,15 @@ Desarrollar un sistema web que permita monitorear variables climáticas en tiemp
 
 - Administrar comunidades, sensores y usuarios del sistema.
 - Visualizar en tiempo real las variables climáticas provenientes de sensores simulados o físicos.
-- Detectar automáticamente condiciones de riesgo mediante umbrales configurables.
-- Administrar los umbrales utilizados para la generación automática de alertas.
+- Detectar automáticamente condiciones de riesgo mediante reglas de alerta configurables (intervalos de peligro por tipo de sensor; en el análisis original, *umbrales*).
+- Administrar las reglas de alerta y los tipos de fenómeno utilizados para la generación automática de alertas.
 - Generar alertas clasificadas por niveles de peligro.
 - Mostrar las alertas en tiempo real mediante SignalR.
 - Registrar las acciones relevantes realizadas por los usuarios mediante un módulo de bitácora.
 - Mantener un historial de lecturas y eventos registrados.
+- Permitir el inicio de sesión con cuentas de Google y GitHub (OAuth 2.0 / OpenID Connect).
+- Generar reportes en PDF de comunidades, sensores, lecturas, alertas y estadísticas.
+- Desplegar el sistema en un clúster Kubernetes con HTTPS, almacenamiento persistente y comprobaciones de salud.
 - Diseñar una arquitectura escalable que facilite la incorporación de nuevas comunidades, sensores y futuras tecnologías IoT.
 
 ---
@@ -61,57 +73,52 @@ Desarrollar un sistema web que permita monitorear variables climáticas en tiemp
 
 ClimGuard permite administrar múltiples comunidades y los sensores asociados a cada una de ellas, mostrando información climática en tiempo real mediante un panel de monitoreo.
 
-El sistema registra automáticamente las lecturas generadas por los sensores simulados, evalúa los umbrales configurados para cada tipo de sensor y genera alertas cuando se detectan condiciones de riesgo.
+El sistema registra automáticamente las lecturas enviadas por sensores físicos (ESP8266) y las generadas para los sensores simulados, evalúa las reglas de alerta configuradas para cada tipo de sensor y genera alertas cuando se detectan condiciones de riesgo.
 
-Asimismo, incorpora un Centro de Alertas para visualizar los eventos activos, un módulo de Bitácora para registrar acciones realizadas por los usuarios y diferentes módulos administrativos para la gestión de usuarios, comunidades, sensores y umbrales.
+Asimismo, incorpora un Centro de Alertas para visualizar los eventos activos, un módulo de Bitácora para registrar acciones realizadas por los usuarios y diferentes módulos administrativos para la gestión de usuarios, comunidades, sensores, reglas de alerta y tipos de fenómeno, además de un módulo de reportes PDF y el inicio de sesión con Google y GitHub.
 
-Actualmente el sistema trabaja con datos simulados; sin embargo, su arquitectura permite sustituir esta fuente de datos por sensores físicos conectados mediante microcontroladores, sin modificar el funcionamiento del resto de la aplicación.
+Desde la Fase 4 el sistema combina sensores físicos y simulados: cada sensor indica su origen y ambos tipos siguen el mismo proceso de registro, evaluación y notificación.
 
 ---
 
 # 7. Tecnologías Utilizadas
 
-## Frontend
-- Angular 20
+| Área | Tecnología |
+|---|---|
+| Frontend | Angular 22 |
+| API Gateway | ASP.NET Core 10 + YARP |
+| Microservicios | NestJS (auth), ASP.NET Core 10 (community, sensor), Spring Boot 3.4 (alert), FastAPI (report, audit) |
+| Bases de datos | PostgreSQL 16, SQL Server 2022, MongoDB 7 |
+| Tiempo real | SignalR |
+| Autenticación | JWT, OAuth 2.0 / OpenID Connect (Google, GitHub) |
+| Contenedores y orquestación | Docker, Docker Compose (desarrollo), Kubernetes K3s (producción) |
+| Dispositivos | ESP8266 |
+| Control de versiones | Git y GitHub (con integración continua en GitHub Actions) |
 
-## Backend
-- .NET 10 Web API
-
-## Base de Datos
-- SQL Server 2022
-
-## Comunicación en Tiempo Real
-- SignalR
-
-## Contenedorización
-- Docker Compose
-
-## Control de Versiones
-- Git y GitHub
+En las Fases 1 y 2 la pila era Angular 20, una API .NET 10, SQL Server 2022, SignalR y Docker Compose.
 
 ---
 
 # 8. Arquitectura General
 
-ClimGuard está compuesto por una aplicación web desarrollada en Angular, una API REST implementada en .NET, una base de datos SQL Server y un servicio de simulación de sensores.
+ClimGuard 4.1 está compuesto por una aplicación web Angular, un API Gateway y seis microservicios (autenticación, comunidades, sensores, alertas, reportes y auditoría), cada uno con su propia base de datos.
 
-La API centraliza la lógica de negocio, administra la persistencia de la información y notifica al frontend mediante SignalR cuando se generan nuevas lecturas o alertas. El frontend consume la API REST para las operaciones CRUD y utiliza SignalR para recibir actualizaciones en tiempo real sin necesidad de recargar la página.
+El gateway es el único punto de entrada: valida el token y reenvía cada petición al microservicio correspondiente. El sensor-service registra las lecturas (de dispositivos o del simulador), las publica por SignalR y solicita al alert-service evaluarlas contra las reglas.
 
 ```mermaid
 flowchart LR
-
-A[Simulador de Sensores] --> B[API .NET]
-
-B --> C[(SQL Server)]
-
-B --> D[SignalR Hub]
-
-D --> E[Frontend Angular]
-
-E --> F[Usuario]
+E[ESP8266 / simulador] --> S[sensor-service]
+F[Frontend Angular] --> G[API Gateway]
+G --> S
+G --> M[auth · community · alert · report · audit]
+S --> A[alert-service]
+S --> H[SignalR] --> F
+U[Usuario] --> F
 ```
 
-La arquitectura implementada facilita la futura incorporación de sensores físicos, permitiendo sustituir el simulador por dispositivos IoT sin afectar la lógica principal del sistema.
+Detalle: [DOC-13 Arquitectura](DOC-13-Arquitectura%20de%20Software.md).
+
+La previsión de las primeras fases de incorporar sensores físicos sin cambiar la lógica principal se cumplió en la Fase 4: el dispositivo usa la misma API de lecturas que el resto del sistema.
 
 ---
 
@@ -120,3 +127,5 @@ La arquitectura implementada facilita la futura incorporación de sensores físi
 La documentación del proyecto se encuentra organizada en documentos independientes que describen cada una de las etapas del desarrollo del sistema, incluyendo requerimientos funcionales y no funcionales, reglas de negocio, historias de usuario, casos de uso, diagramas UML, arquitectura, diseño de base de datos, especificación de la API REST y despliegue mediante Docker.
 
 Cada documento mantiene trazabilidad con los componentes implementados, permitiendo relacionar los requerimientos definidos con la solución desarrollada.
+
+El índice de la documentación vigente y de los registros históricos de cada fase está en [docs/README.md](README.md).

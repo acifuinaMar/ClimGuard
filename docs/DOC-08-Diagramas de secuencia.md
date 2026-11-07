@@ -5,8 +5,16 @@
 |-----------|-----------|
 | Documento | Diagramas de Secuencia |
 | Código | DOC-08 |
-| Versión | 1.0 |
-| Estado | Finalizado |
+| Versión | 3.0 |
+| Estado | Vigente (ClimGuard 4.1) |
+
+### Historial de versiones
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 | Agosto 2026 | DS-001 a DS-006 sobre la API monolítica de la Fase 2. |
+| 3.0 | Noviembre 2026 | DS-007 a DS-009 sobre los microservicios de ClimGuard 4.1. |
+
+> DS-001 a DS-006 muestran los componentes de la API monolítica de la Fase 2 (controladores, servicios y repositorios en un solo proceso, con SQL Server) y se conservan como diseño de esa etapa. Los diagramas vigentes son DS-007 a DS-009.
 
 ---
 
@@ -245,4 +253,86 @@ Repository-->>Service: Resultado
 Service-->>Controller: Lista de registros
 Controller-->>Vista: Mostrar bitácora
 Vista-->>Administrador: Visualizar registros
+```
+
+---
+
+# DS-007 – Inicio de sesión con Google (ClimGuard 4.1)
+```mermaid
+sequenceDiagram
+actor U as Usuario
+participant W as Angular
+participant G as Gateway
+participant A as auth-service
+participant P as Google
+U->>W: Pulsa «Google»
+W->>G: GET /api/auth/oauth/google/start
+G->>A: reenvía
+A-->>W: 302 al proveedor (state, nonce, PKCE) + cookie de enlace
+W->>P: Autorización
+P-->>W: 302 /api/auth/oauth/google/callback?code&state
+W->>G: GET callback
+G->>A: reenvía
+A->>P: Canje del code (client_secret + code_verifier)
+P-->>A: ID Token
+A->>A: Valida firma, emisor, audiencia, nonce y correo verificado
+A-->>W: 302 /auth/callback#code=<un solo uso>
+W->>G: POST /api/auth/oauth/exchange {code}
+G->>A: reenvía
+A-->>W: Sesión (JWT de ClimGuard)
+```
+
+---
+
+# DS-008 – Lectura de un sensor físico y generación de alerta (ClimGuard 4.1)
+```mermaid
+sequenceDiagram
+participant D as ESP8266
+participant G as Gateway
+participant S as sensor-service
+participant DB as SQL Server
+participant AL as alert-service
+participant H as Hub SignalR
+participant W as Angular
+D->>G: POST /api/auth/login
+G-->>D: token (rol Operador)
+D->>G: POST /api/readings (Bearer)
+G->>S: reenvía
+S->>DB: INSERT lectura
+S->>H: LecturaNueva
+H-->>W: actualiza el panel
+S->>AL: POST /api/alerts/evaluate (X-Internal-Key)
+AL->>AL: Reglas activas, mayor nivel, período de espera
+AL-->>S: generated, alert
+opt alerta generada
+S->>H: AlertaNueva
+H-->>W: alerta y alarma
+end
+S-->>D: 200
+```
+
+---
+
+# DS-009 – Generación de un reporte PDF (ClimGuard 4.1)
+```mermaid
+sequenceDiagram
+actor A as Administrador
+participant W as Angular
+participant G as Gateway
+participant R as report-service
+participant X as community / sensor / alert / audit
+participant M as MongoDB (GridFS)
+A->>W: Elige tipo y filtros, «Generar PDF»
+W->>G: POST /api/reports {type, filters}
+G->>R: reenvía
+R->>M: registra el reporte (PENDING)
+R-->>W: 202 + identificador
+R->>X: consulta los datos con el JWT del usuario
+R->>R: genera el PDF por partes
+R->>M: guarda el PDF y marca COMPLETED
+A->>W: «Descargar»
+W->>G: GET /api/reports/{id}/download
+G->>R: reenvía
+R->>M: lee el PDF
+R-->>W: application/pdf
 ```
