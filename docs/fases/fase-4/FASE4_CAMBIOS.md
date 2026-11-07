@@ -200,13 +200,13 @@ Las 35 pruebas cubren: vector RFC 7636 de PKCE; `state`/`nonce` aleatorios y sol
 ## 10. ESP8266 (no modificado)
 
 Con el sketch (`ClimGuard.ino`) y `ClimGuardCA.h` que me enviaste confirmo la autenticación real del dispositivo:
-`POST /api/auth/login` con `{"username","password"}` (usuario `esp8266_climguard`) → exige HTTP 200, `rol == "Operador"` y `token` → `POST /api/readings` con `Authorization: Bearer`, renovando el JWT cada 5 min o ante un 401. TLS con la raíz ISRG Root X1 fijada.
+`POST /api/auth/login` con `{"username","password"}` (usuario de servicio del dispositivo, rol Operador) → exige HTTP 200, `rol == "Operador"` y `token` → `POST /api/readings` con `Authorization: Bearer`, renovando el JWT cada 5 min o ante un 401. TLS con la raíz ISRG Root X1 fijada.
 
-**Compatibilidad con esta entrega: sin cambios necesarios.** El login local conserva ruta, JSON de entrada y de salida, el nombre de rol y los claims (el campo extra `nombreCompleto` se agrega solo en el canje OAuth, no en el login local); `POST /api/readings` y el Sensor Service no se tocaron; el dispositivo no usa Google/GitHub. Las cuentas OAuth se crean siempre como Consulta, así que no pueden escribir lecturas, y sus usuarios se llaman `google_…`/`github_…`, que no pueden chocar con `esp8266_climguard`.
+**Compatibilidad con esta entrega: sin cambios necesarios.** El login local conserva ruta, JSON de entrada y de salida, el nombre de rol y los claims (el campo extra `nombreCompleto` se agrega solo en el canje OAuth, no en el login local); `POST /api/readings` y el Sensor Service no se tocaron; el dispositivo no usa Google/GitHub. Las cuentas OAuth se crean siempre como Consulta, así que no pueden escribir lecturas, y sus usuarios se llaman `google_…`/`github_…`, que no pueden chocar con el usuario del dispositivo.
 
 Observaciones (fuera de alcance, sin modificar):
 1. El sketch trae **la contraseña del Wi-Fi y la del usuario del dispositivo en texto plano**. Como pasaron por este chat, conviene **rotar ambas** y moverlas a un archivo no versionado (p. ej. `secrets.h` en `.gitignore`). No incluí el sketch en el ZIP.
-2. Mantén `esp8266_climguard` con rol **Operador** y sin cuenta externa vinculada. Si el rol cambia a otro nombre, el sketch dejará de aceptar el login.
+2. Mantén el usuario del dispositivo con rol **Operador** y sin cuenta externa vinculada. Si el rol cambia a otro nombre, el sketch dejará de aceptar el login.
 3. Con el limitador de login del Gateway (10/min por IP) no hay problema: el dispositivo inicia sesión una vez cada 5 min. Muchos dispositivos tras el mismo NAT comparten ese límite.
 4. Futuro (no hecho, según tu decisión 5): una credencial propia de dispositivo evitaría guardar usuario y contraseña en el firmware.
 

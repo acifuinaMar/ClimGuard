@@ -3,7 +3,7 @@
 > **Registro de la Fase 4 — bitácora del despliegue en K3s (6 de noviembre de 2026).** Describe cómo se migró de Docker Compose a K3s. Para operar el clúster hoy, use [k8s/README.md](../../../k8s/README.md). Documentación vigente: [docs/README.md](../../README.md).
 
 
-VPS: DigitalOcean `ns1-acifuina` (67.205.162.186) · Ubuntu 22.04.5 · 4 vCPU · 8 GB · 49 GB.
+VPS: DigitalOcean (datos de conexión fuera del repositorio) · Ubuntu 22.04.5 · 4 vCPU · 8 GB · 49 GB.
 Dominio: `climguard.acifuina.online` (DNS autoritativo en BIND9 de esta misma VPS — **no tocado**).
 
 **Estado: Fase 4 en producción sobre K3s desde 2026-11-06 02:29 UTC** (corte de 43 s sin servicio).
@@ -57,7 +57,7 @@ Internet ─► nginx del host :443 (Let's Encrypt/certbot, sin cambios de TLS) 
 | 02:11 | B · Código e imágenes | Commit `83d94aa` (`git archive`, sin `.env`) en `/opt/climguard-fase4`; 8 imágenes `climguard/*:4.0.0` construidas (8 min). |
 | 02:13 | Respaldo en caliente | `/opt/climguard-backups/20261106_0213` (172 MB) + copia local `backups/fase3-vps-20261106_0213.tar.gz`. |
 | 02:15 | K3s | Instalado; Traefik NodePort 30080/30443. |
-| 02:17 | Secret | `/root/climguard-k8s.env` (600, root): claves de Fase 3 + **`sa` nueva** + OAuth del `.env` local. |
+| 02:17 | Secret | archivo de secretos en `/root` (600, root): claves de Fase 3 + **`sa` nueva** + OAuth del `.env` local. |
 | 02:18 | **Bug** | `init.sh`: `REASSIGN OWNED BY postgres` falla en PG16 → corregido (migraciones auth se ejecutan como `auth`). |
 | 02:18 | **Bug** | `ACCEPT_EULA: Y` se leía como booleano (YAML 1.1) → el generador ahora entrecomilla `Y/N/yes/on…`. |
 | 02:23 | Restauración | `scripts/k8s-restore.sh` (bases recreadas vacías, `pg_restore --no-owner --role`, `auth-001`, mongorestore, RESTORE de SQL Server). Conteos idénticos a Fase 3. |
@@ -74,13 +74,13 @@ Arranca los contenedores `climguard3-*`, devuelve el `proxy_pass` a 8443, recarg
 - ⚠️ Al volver, Docker vuelve a publicar 8443/8081 en Internet (Docker se salta UFW).
 
 ## Seguridad
-- La contraseña `sa` expuesta pertenecía solo a proyecto2 (Fase 3 usa otra, verificado por hash) y desapareció con él. SQL Server en K3s usa una clave nueva, solo en `/root/climguard-k8s.env` y en el Secret.
-- Ningún secreto en Git, manifiestos ni registros. `/root/climguard-k8s.env` y `/opt/climguard-backups` son root-only (600/700).
+- La contraseña `sa` expuesta pertenecía solo a proyecto2 (Fase 3 usa otra, verificado por hash) y desapareció con él. SQL Server en K3s usa una clave nueva, solo en `/root/<archivo-de-secretos>.env` y en el Secret.
+- Ningún secreto en Git, manifiestos ni registros. el archivo de secretos en `/root` y `/opt/climguard-backups` son root-only (600/700).
 
 ## Pendientes
 1. **OAuth en producción (acción del dueño de las cuentas):** las credenciales cargadas son las del `.env` local (registradas para `https://localhost:8443`).
    - Google Cloud Console → ese cliente → *Authorized redirect URIs*: añadir `https://climguard.acifuina.online/api/auth/oauth/google/callback`.
-   - GitHub solo admite un callback por app: crear una OAuth App de producción con callback `https://climguard.acifuina.online/api/auth/oauth/github/callback` y actualizar `GITHUB_CLIENT_ID/SECRET` en `/root/climguard-k8s.env`, luego `sudo bash scripts/k8s-secrets.sh /root/climguard-k8s.env && sudo kubectl -n climguard rollout restart deploy/auth-service`.
+   - GitHub solo admite un callback por app: crear una OAuth App de producción con callback `https://climguard.acifuina.online/api/auth/oauth/github/callback` y actualizar `GITHUB_CLIENT_ID/SECRET` en `/root/<archivo-de-secretos>.env`, luego `sudo bash scripts/k8s-secrets.sh /root/<archivo-de-secretos>.env && sudo kubectl -n climguard rollout restart deploy/auth-service`.
 2. **Prueba manual en navegador:** login local con un usuario real, Google, GitHub, dashboard en vivo (SignalR) y generación de un reporte.
 3. **Liberar recursos (bloqueado por permisos de la herramienta, decide el dueño):** detener BD de Fase 3 (`docker stop climguard3-postgres-1 climguard3-mongo-1 climguard3-sqlserver-1`, ~2 GB de RAM; el rollback las arranca), `docker builder prune -f` (~14 GB de caché de compilación) y `docker image rm climguard/*:4.0.0` (copias ya importadas en containerd). Disco libre actual: 8 GB (84 %).
 4. **Renovación TLS de Traefik:** `climguard-tls` es una copia del certificado (vence 2027-01-05). No rompe el servicio (nginx del host termina el TLS público y no verifica el salto interno), pero conviene un `deploy-hook` de certbot que actualice el Secret.

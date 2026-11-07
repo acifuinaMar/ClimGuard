@@ -18,7 +18,7 @@ Los servicios solo se hablan por HTTP (con el Bearer del usuario o `X-Internal-K
 ```bash
 ./scripts/gen-env.sh        # crea .env con secretos aleatorios (no sobrescribe)
 ./scripts/gen-certs.sh      # certificado autofirmado para nginx
-docker compose up --build   # https://localhost:8443  ·  admin / Admin123 (SEED_DEFAULT_USERS=true)
+docker compose up --build   # https://localhost:8443  ·  usuarios demo solo con SEED_DEFAULT_USERS=true (desarrollo local; nunca en producción)
 ```
 Stack completo ≈ 5–6 GB de RAM. Subconjunto: `docker compose up auth-service audit-service gateway edge frontend`.
 Primer arranque: SQL Server y Maven/NuGet/npm tardan varios minutos. Si el 8443/8080 está ocupado, cambie `EDGE_*_PORT` en `.env`.
@@ -46,7 +46,7 @@ Tipos: COMMUNITIES, SENSORS, READINGS, ALERTS, EVENT_HISTORY, SENSOR_STATUS, CLI
 - Simulador de lecturas en un solo contenedor (no escalar `sensor-service` a >1 réplica con simulador activo).
 - Sin pruebas automatizadas de Gateway/Community/Sensor/Auth (más allá de módulos puros) ni E2E.
 - El monolito de la Fase 2 (`ClimGuard Backend/`, `docker-compose.phase2.yml`) se conserva intacto como referencia; su `appsettings.json` contiene credenciales en claro (SA y clave JWT): rotarlas.
-- El usuario `admin` del script P2 usa otra contraseña que la semilla de Auth (`Admin123`).
+- El usuario `admin` del script P2 usaba otra contraseña que la semilla de desarrollo de Auth. *(Nota 4.1: ambas son contraseñas débiles de la Fase 2; ver la advertencia de seguridad en [docs/README.md](../../README.md).)*
 
 ## Cambios de estabilización (noviembre 2026)
 
