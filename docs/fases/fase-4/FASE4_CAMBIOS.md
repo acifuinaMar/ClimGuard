@@ -1,5 +1,8 @@
 # FASE 4 — Autenticación externa (OAuth 2.0 / OIDC)
 
+> **Registro de la Fase 4 — diseño de OAuth 2.0 / OIDC (noviembre de 2026).** El diseño, el flujo y las reglas de seguridad siguen vigentes en ClimGuard 4.1. Quedaron superados: la nota de que la Fase 4 «no se declara terminada», las instrucciones con ZIP (§8 y §11) y la mención de K3s como trabajo pendiente (ver [K3S_PROGRESS.md](K3S_PROGRESS.md)). Documentación vigente: [docs/README.md](../../README.md).
+
+
 Alcance de esta entrega: **solo autenticación externa** (Google por OIDC, GitHub por OAuth 2.0) sobre el Auth Service, más Gateway y Angular.
 **No se declara terminada la Fase 4**: Kubernetes/K3s corresponde a otros integrantes y varias verificaciones requieren tu Docker (sección 9).
 

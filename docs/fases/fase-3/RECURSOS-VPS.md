@@ -1,5 +1,8 @@
 # RECURSOS-VPS — reportes PDF sin aumentar el costo
 
+> **Documento histórico — Fase 3 (noviembre de 2026).** Se conserva como registro de esa etapa: describe lo que se había implementado, probado y pendiente *en ese momento*. Varias afirmaciones (por ejemplo «no compilado» o «no ejecutado») quedaron superadas en la Fase 4. Documentación vigente de ClimGuard 4.1: [docs/README.md](../../README.md).
+
+
 **No se midió con WeasyPrint real** (no estaba disponible). No se pidió más RAM ni se agregaron servicios. `mem_limit` del report-service sigue en 768 MB.
 
 ## Valor inicial de producción

@@ -1,5 +1,8 @@
 # DESPLIEGUE-SEGURO (Docker Compose, proyecto `climguard3`)
 
+> **Documento histórico — Fase 3 (noviembre de 2026).** Se conserva como registro de esa etapa: describe lo que se había implementado, probado y pendiente *en ese momento*. Varias afirmaciones (por ejemplo «no compilado» o «no ejecutado») quedaron superadas en la Fase 4. Documentación vigente de ClimGuard 4.1: [docs/README.md](../../README.md).
+
+
 No se ejecutó nada en el VPS. Todos los comandos usan `-p climguard3 -f docker-compose.yml` de forma explícita; ejecútelos desde la carpeta del proyecto desplegado (la que contiene `docker-compose.yml` y `.env`). **Nunca** use `down -v`, `--volumes`, `--remove-orphans` ni `system prune`.
 
 Nombres verificados en `docker-compose.yml`: servicios `edge, frontend, gateway, auth-service, community-service, sensor-service, alert-service, report-service, audit-service, postgres, sqlserver, mongo`; volúmenes `pgdata, sqldata, mongodata` (se llamarán `climguard3_pgdata`, `climguard3_sqldata`, `climguard3_mongodata`); bases: PostgreSQL `climguard_alert` (usuario `alert`), SQL Server `ClimGuardSensor`, MongoDB `climguard_reports`. El compose no define `container_name` ni `name:`; por eso el nombre del proyecto depende de `-p`.

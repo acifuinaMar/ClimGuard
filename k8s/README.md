@@ -1,7 +1,7 @@
 # ClimGuard Fase 4 — operación en K3s
 
 Producción: `https://climguard.acifuina.online` · VPS `adminacifuina@67.205.162.186` · namespace `climguard`.
-Historia del despliegue y decisiones: [K3S_PROGRESS.md](../K3S_PROGRESS.md).
+Historia del despliegue y decisiones: [K3S_PROGRESS.md](../docs/fases/fase-4/K3S_PROGRESS.md).
 
 Todos los comandos se ejecutan **en la VPS** y piden la contraseña de `sudo` (el kubeconfig de K3s es solo de root):
 ```bash

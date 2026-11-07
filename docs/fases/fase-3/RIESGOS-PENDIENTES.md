@@ -1,5 +1,8 @@
 # RIESGOS-PENDIENTES
 
+> **Documento histórico — Fase 3 (noviembre de 2026).** Se conserva como registro de esa etapa: describe lo que se había implementado, probado y pendiente *en ese momento*. Varias afirmaciones (por ejemplo «no compilado» o «no ejecutado») quedaron superadas en la Fase 4. Documentación vigente de ClimGuard 4.1: [docs/README.md](../../README.md).
+
+
 Informe de lo que **no está resuelto o no está probado**. Ordenado por gravedad.
 
 | # | Riesgo | Gravedad | Estado | Cómo reducirlo |

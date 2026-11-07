@@ -1,5 +1,8 @@
 # PRUEBAS
 
+> **Documento histórico — Fase 3 (noviembre de 2026).** Se conserva como registro de esa etapa: describe lo que se había implementado, probado y pendiente *en ese momento*. Varias afirmaciones (por ejemplo «no compilado» o «no ejecutado») quedaron superadas en la Fase 4. Documentación vigente de ClimGuard 4.1: [docs/README.md](../../README.md).
+
+
 Entorno: contenedor Linux sin acceso a Maven/npm/NuGet/PyPI (proxy 403) y sin daemon Docker. Esto limita lo que se pudo ejecutar. Todo lo marcado «ejecutado» se corrió realmente en esta entrega; lo demás está en «NO ejecutado».
 
 ## Ejecutado, con resultado real

@@ -1,5 +1,8 @@
 # ClimGuard Fase 4 — progreso del despliegue en K3s
 
+> **Registro de la Fase 4 — bitácora del despliegue en K3s (6 de noviembre de 2026).** Describe cómo se migró de Docker Compose a K3s. Para operar el clúster hoy, use [k8s/README.md](../../../k8s/README.md). Documentación vigente: [docs/README.md](../../README.md).
+
+
 VPS: DigitalOcean `ns1-acifuina` (67.205.162.186) · Ubuntu 22.04.5 · 4 vCPU · 8 GB · 49 GB.
 Dominio: `climguard.acifuina.online` (DNS autoritativo en BIND9 de esta misma VPS — **no tocado**).
 
@@ -84,7 +87,7 @@ Arranca los contenedores `climguard3-*`, devuelve el `proxy_pass` a 8443, recarg
 5. Opcional: NetworkPolicies para replicar el aislamiento de redes `internal` de Compose (auth-service necesita salida HTTPS a Google/GitHub).
 6. Conocido, previo a K3s: el limitador por IP del gateway ve la IP del proxy (KnownProxies solo loopback); las claves de DataProtection de .NET no persisten (aviso en logs, sin impacto actual).
 7. Traefik aparece como `LoadBalancer <pending>` (el chart ignora `service.type`); es inocuo sin `servicelb` y los NodePorts funcionan.
-8. Git: commit local en `fase4-oauth-oidc` con scripts, manifiestos (revisados, sin secretos) y documentación; **sin push**. Operación diaria: [k8s/README.md](k8s/README.md).
+8. Git: commit local en `fase4-oauth-oidc` con scripts, manifiestos (revisados, sin secretos) y documentación; **sin push**. Operación diaria: [k8s/README.md](../../../k8s/README.md).
 
 ## Incidencia: el simulador no genera lecturas (2026-11-06)
 - **Causa:** cambio de comportamiento de la Fase 4, no de K3s. En Fase 3 (`538add3`) el simulador escribía en **todos** los sensores activos (`EstadoSensorId == 1`), incluidos los físicos. Desde `dd733ee` solo escribe en los que tienen `Origen = 'SIMULADO'`, y `SchemaUpgrades` agregó la columna con `DEFAULT 'FISICO'` al arrancar sobre los datos migrados: los 9 sensores quedaron `FISICO`, así que el simulador no tiene sensores que simular.

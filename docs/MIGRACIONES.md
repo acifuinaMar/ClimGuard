@@ -1,8 +1,24 @@
 # MIGRACIONES
 
-Ninguna migración se ejecutó contra su base real ni contra producción. Son aditivas e idempotentes (no borran ni reescriben datos).
-Los comandos con el proyecto `climguard3` están en `DESPLIEGUE-SEGURO.md`.
+Scripts SQL de ClimGuard (`scripts/migrations/`). Todos son **aditivos e idempotentes**: no borran ni reescriben datos y pueden ejecutarse más de una vez.
 
+## Estado en producción (ClimGuard 4.1, K3s)
+| Script | ¿Aplicado en producción? | Cómo |
+|---|---|---|
+| `auth-000-baseline.sql`, `auth-001-external-identities.sql` | **Sí** (2026-11-06) | `docker/postgres/init.sh` los ejecuta como el usuario `auth` al inicializar el PostgreSQL de K3s; tras restaurar los datos de la Fase 3, `scripts/k8s-restore.sh` vuelve a aplicar `auth-001`. |
+| `sensor-001-origen.sql` (columna `Sensor.Origen`) | **Sí**, por la aplicación | El sensor-service ejecuta el mismo SQL al arrancar (`SchemaUpgrades.cs`, `Migrations__AutoApply=true`). Todos los sensores migrados quedaron `FISICO`; los de demostración se pasaron a `SIMULADO` desde la interfaz. |
+| `alert-001-rule-semantics.sql`, `alert-002-draft-rules.sql` | **No verificado** | El alert-service usa Hibernate (`ddl-auto: update`). Compruebe el estado antes de ejecutarlos (consultas abajo). |
+
+Comprobación (solo lectura) en K3s:
+```bash
+sudo kubectl -n climguard exec postgres-0 -- psql -U postgres -d climguard_auth  -c '\dt'
+sudo kubectl -n climguard exec postgres-0 -- psql -U postgres -d climguard_alert -c "SELECT requiere_revision, activo, count(*) FROM regla_alerta GROUP BY 1,2"
+```
+Ejecutar un script en K3s: `sudo kubectl -n climguard exec -i postgres-0 -- psql -v ON_ERROR_STOP=1 -U postgres -d <base> < scripts/migrations/<script>.sql` (con respaldo previo, ver [k8s/README.md](../k8s/README.md) §5).
+
+Los comandos equivalentes con Docker Compose (proyecto `climguard3`) están en [DESPLIEGUE-SEGURO.md](fases/fase-3/DESPLIEGUE-SEGURO.md) (histórico).
+
+## Pruebas de cada script (Fase 3 y Fase 4, antes de producción)
 | Script | Motor | Probado |
 |---|---|---|
 | `scripts/migrations/sensor-001-origen.sql` | SQL Server | **No** (no había SQL Server). El mismo SQL lo aplica `SchemaUpgrades.cs` al arrancar el sensor (sin compilar). |
@@ -12,7 +28,7 @@ Los comandos con el proyecto `climguard3` están en `DESPLIEGUE-SEGURO.md`.
 | `scripts/migrations/auth-001-external-identities.sql` | PostgreSQL | Sí, en un PostgreSQL temporal: sobre base nueva y sobre un esquema Fase 3 simulado con una fila en `external_identities` (se conserva); idempotente (2ª ejecución sin cambios); unicidad `(provider, subject)` y consumo atómico de códigos probados con 8 sesiones concurrentes. **No** contra la base real. |
 
 ## 0. Auth (Fase 4): identidades externas OAuth
-Detalle en `FASE4_CAMBIOS.md`. Aditiva: completa `external_identities` y crea `oauth_flows` y `oauth_login_codes`. No toca `users` ni `roles`.
+Detalle en [FASE4_CAMBIOS.md](fases/fase-4/FASE4_CAMBIOS.md). Aditiva: completa `external_identities` y crea `oauth_flows` y `oauth_login_codes`. No toca `users` ni `roles`.
 
 ## 1. Sensores: físico vs simulado
 - Agrega `dbo.Sensor.Origen NVARCHAR(10) NOT NULL DEFAULT 'FISICO'` + check `FISICO|SIMULADO`.
@@ -48,4 +64,4 @@ Si coinciden varias reglas (legadas y nuevas), gana el nivel más alto y, a igua
 Las columnas nuevas son inofensivas para la versión anterior. **Pero** la versión anterior interpreta TODAS las reglas como rango normal: tras el corte de cualquier regla (o crear reglas nuevas) un rollback del código invierte su significado. Para volver atrás: restaurar el respaldo de `regla_alerta` tomado antes del despliegue, o revertir los cortes (plantilla de reversión) y borrar las reglas nuevas.
 
 ## 3. Reportes
-No requieren migración. `REPORT_MAX_ROWS=100` sigue siendo el valor inicial (ver `RECURSOS-VPS.md`).
+No requieren migración. `REPORT_MAX_ROWS=100` sigue siendo el valor inicial (ver [RECURSOS-VPS.md](fases/fase-3/RECURSOS-VPS.md); en producción K3s se usa 5000 filas y concurrencia 2, ver `scripts/gen-k8s.py`).

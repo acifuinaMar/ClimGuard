@@ -1,5 +1,8 @@
 # CAMBIOS-REALIZADOS — ClimGuard Fase 3 (estabilización)
 
+> **Documento histórico — Fase 3 (noviembre de 2026).** Se conserva como registro de esa etapa: describe lo que se había implementado, probado y pendiente *en ese momento*. Varias afirmaciones (por ejemplo «no compilado» o «no ejecutado») quedaron superadas en la Fase 4. Documentación vigente de ClimGuard 4.1: [docs/README.md](../../README.md).
+
+
 Alcance: se corrigió sobre el ZIP recibido sin reescribir el proyecto. **Versión 2 de la entrega**: incorpora la revisión de integración (ver «Ronda 2» al final; reemplaza lo dicho antes sobre reglas «fuera de evaluación» y sobre `reportlab`). No se tocó el VPS, ni credenciales, ni datos. Las carpetas heredadas de Fase 2 (`backend/`, `ClimGuard Backend/`) no se modificaron. Los límites de lo verificado están en `PRUEBAS.md`.
 
 ## 0. Diagnóstico (basado en los archivos del ZIP)

@@ -1,5 +1,7 @@
 # ClimGuard — Fase 3 (microservicios)
 
+> **Documento histórico — Fase 3 (noviembre de 2026).** Se conserva como registro de esa etapa: describe lo que se había implementado, probado y pendiente *en ese momento*. Varias afirmaciones (por ejemplo «no compilado» o «no ejecutado») quedaron superadas en la Fase 4. Documentación vigente de ClimGuard 4.1: [docs/README.md](../../README.md).
+
 ```
 Navegador ──HTTPS──▶ edge (nginx) ──▶ frontend (Angular, estático)
                           └─ /api, /hubs ─▶ gateway (YARP, valida JWT, CORS, rate limit)
@@ -51,3 +53,39 @@ Tipos: COMMUNITIES, SENSORS, READINGS, ALERTS, EVENT_HISTORY, SENSOR_STATUS, CLI
 Ver `CAMBIOS-REALIZADOS.md`, `MIGRACIONES.md`, `PRUEBAS.md`, `DESPLIEGUE-SEGURO.md`, `RECURSOS-VPS.md`, `REVISION-INTEGRACION.md` y `RIESGOS-PENDIENTES.md` en la raíz del proyecto.
 Resumen: sensores `FISICO`/`SIMULADO`; reglas de alerta con intervalo de peligro `[min,max]` inclusivo (las reglas previas quedan como legadas y se siguen evaluando como antes hasta una conversión explícita);
 reportes PDF por trozos con tope explícito (`REPORT_MAX_ROWS=100` inicial, `REPORT_ON_LIMIT`), cola limitada y limpieza de temporales.
+
+## Estado del código al iniciar la Fase 3
+*(Antes en `FASE3_ESTADO_REAL.md`.)*
+
+### Código encontrado en proyecto3
+- Monolito Fase 2 .NET + SQL Server y frontend Angular.
+- Gateway YARP .NET 10, Report FastAPI + MongoDB, Audit FastAPI + MongoDB.
+- Docker Compose base y override parcial de Fase 3.
+
+### Mejoras de esta entrega
+- Gateway exige JWT válido en rutas proxificadas salvo login, aplica límite de peticiones y conserva el hub SignalR.
+- Nginx encamina SignalR al Gateway y elimina rutas /reports y /audit que no tenían correspondencia con las rutas de YARP.
+- Report Service conserva los PDF generados en MongoDB GridFS y permite volver a descargarlos mediante `GET /api/reports/{reportId}/download`; registra descargas.
+- Audit Service usa un objeto independiente para `detail` en cada solicitud.
+
+### Bloqueos conocidos (NO considerar Fase 3 finalizada)
+- No existen microservicios independientes Auth/NestJS, Community/.NET+Postgres, Sensor/.NET+SQL Server, Alert/Java+Postgres.
+- Los reportes siguen consultando endpoints del monolito; únicamente hay cuatro tipos genéricos, no los diez requisitos completos.
+- Las rutas reales de Login deben comprobarse frente a los controladores y la UI; los tokens deben usar la misma clave, issuer y audience.
+- El `docker-compose.phase3.yml` es un override y se ejecuta junto al `docker-compose.yml`; este último expone los puertos 8080 y 1433 del monolito/SQL Server y deben cerrarse antes de producción.
+- No se ha ejecutado `dotnet build`, `docker compose` ni pruebas end-to-end en este entorno.
+
+### Comando de integración (solo ambiente de pruebas)
+`docker compose -f docker-compose.yml -f docker-compose.phase3.yml --env-file .env config`
+
+No subir este paquete directamente a producción sin pruebas y copia de seguridad.
+
+## Documentos de esta fase
+| Documento | Contenido |
+|---|---|
+| [CAMBIOS-REALIZADOS.md](CAMBIOS-REALIZADOS.md) | Bitácora de estabilización (sensores físico/simulado, semántica de reglas, reportes PDF) |
+| [MIGRACIONES.md](../../MIGRACIONES.md) | Scripts SQL (documento vigente, actualizado para 4.1) |
+| [PRUEBAS.md](PRUEBAS.md) · [REVISION-INTEGRACION.md](REVISION-INTEGRACION.md) | Qué se pudo probar y compilar entonces |
+| [DESPLIEGUE-SEGURO.md](DESPLIEGUE-SEGURO.md) | Procedimiento con Docker Compose (proyecto `climguard3`), reemplazado por K3s |
+| [RECURSOS-VPS.md](RECURSOS-VPS.md) | Límites y mediciones de los reportes PDF |
+| [RIESGOS-PENDIENTES.md](RIESGOS-PENDIENTES.md) | Riesgos abiertos al cierre de la Fase 3 (estado actual: [riesgos-y-pendientes.md](../../riesgos-y-pendientes.md)) |
