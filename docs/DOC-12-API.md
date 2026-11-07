@@ -5,759 +5,282 @@
 |-----------|-----------|
 | Documento | Especificación de la API REST |
 | Código | DOC-12 |
-| Versión | 2.0 |
-| Estado | En desarrollo |
+| Versión | 3.0 |
+| Estado | Vigente (ClimGuard 4.1) |
+
+### Historial de versiones
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 – 2.0 | Agosto – octubre 2026 | API del monolito de la Fase 2 (`/api/comunidades`, `/api/sensores`, `/api/ReglaAlerta`, …). Consultable en la etiqueta `fase2-main-final` y en [fases/fase-1-2/api-docx](fases/fase-1-2/api-docx/). |
+| 3.0 | Noviembre 2026 | Reescrito para los microservicios de la Fase 3/4: rutas, permisos y contratos verificados contra los controladores de cada servicio; OAuth 2.0 / OIDC. |
 
 ---
 
 # Objetivo
-
-El presente documento define el contrato de comunicación entre el cliente (Angular) y el servidor (.NET Web API) del sistema ClimGuard.
-
-Su propósito es establecer los endpoints disponibles, los métodos HTTP utilizados, los parámetros de entrada, los formatos JSON de solicitud y respuesta, así como los códigos de estado esperados.
-
-La presente especificación constituye la referencia oficial para el desarrollo del frontend, backend y pruebas del sistema.
-
----
-
-# Arquitectura General
-
-```text
-Angular
-    │
- HTTP / JSON
-    │
-    ▼
-ASP.NET Core Web API
-    │
-Entity Framework Core
-    │
-    ▼
-SQL Server 2022
-```
-
----
+Describir los endpoints públicos de ClimGuard 4.1 tal como los implementa cada microservicio y los expone el API Gateway.
 
 # Convenciones
 
-## URL Base
+## URL base
+| Entorno | URL |
+|---|---|
+| Producción | `https://climguard.acifuina.online/api` |
+| Local (Docker Compose) | `https://localhost:8443/api` |
 
-```
-/api
-```
+Todas las peticiones pasan por el **gateway** (YARP), que reenvía cada prefijo a su servicio. Los servicios no son accesibles directamente desde fuera.
 
----
+## Autenticación
+- Encabezado `Authorization: Bearer <JWT>` en todas las rutas salvo las marcadas como **pública**.
+- El JWT (HS256) lo emite el auth-service. Contiene `sub` (id de usuario), `preferred_username`, `role` (`Administrador`, `Operador` o `Consulta`) y `permissions`.
+- El gateway rechaza con **401** las rutas protegidas sin token válido; cada servicio vuelve a validar el token y aplica su propia autorización (**403** si el rol o permiso no alcanza).
 
-## Formato de intercambio
+**Columna «Acceso»** en las tablas: *pública*; *autenticado* (cualquier rol); un **rol** (`Administrador`; `Operador` = Operador o Administrador); o un **permiso** del JWT (por ejemplo `reports.generate`).
 
-- Todas las solicitudes y respuestas utilizarán formato JSON.
-- La codificación será UTF-8.
-- Las fechas utilizarán el estándar ISO-8601.
-- Las coordenadas geográficas se representarán mediante coordenadas decimales.
+| Permiso (JWT) | Administrador | Operador | Consulta |
+|---|:-:|:-:|:-:|
+| `dashboard.view` | ✔ | ✔ | ✔ |
+| `audit.write` | ✔ | ✔ | ✔ |
+| `reports.generate`, `reports.download`, `reports.history` | ✔ | | |
+| `audit.read` | ✔ | | |
+| `users.manage` | ✔ | | |
 
----
+## Formato y paginación
+- JSON en UTF-8 (`Content-Type: application/json`); fechas en ISO 8601 (UTC).
+- Los listados paginados aceptan `page` y `pageSize` y devuelven el total en el encabezado **`X-Total-Count`**.
 
-## Respuesta exitosa
+## Límites de peticiones (gateway, por IP y por minuto)
+| Política | Rutas | Límite |
+|---|---|---|
+| `login` | `POST /api/auth/login`, `POST /api/login` | 10 |
+| `oauth` | rutas públicas de OAuth | 30 |
+| general | resto | 300 |
 
-```json
-{
-    "success": true,
-    "message": "Operación realizada correctamente.",
-    "data": {}
-}
-```
-
----
-
-## Respuesta de error
-
-```json
-{
-    "success": false,
-    "message": "Descripción del error.",
-    "errors": []
-}
-```
-
----
+Al superarlo, el gateway responde **429**.
 
 ## Códigos HTTP
-
-| Código | Descripción |
-|---------|-------------|
-|200|Operación realizada correctamente.|
-|201|Recurso creado correctamente.|
-|400|Solicitud inválida.|
-|401|Usuario no autenticado.|
-|403|Acceso denegado.|
-|404|Recurso no encontrado.|
-|500|Error interno del servidor.|
-
----
-
-# Seguridad
-
-- La autenticación se realizará mediante JSON Web Token (JWT).
-- Todos los endpoints requerirán autenticación, excepto el inicio de sesión.
-- El acceso a cada recurso dependerá del rol del usuario autenticado.
+| Código | Significado en ClimGuard |
+|---|---|
+| 200 / 201 / 202 / 204 | Correcto / creado / aceptado (reporte en cola) / sin contenido |
+| 400 | Datos inválidos (el cuerpo trae el detalle) |
+| 401 | Sin token, token vencido o credenciales incorrectas |
+| 403 | El rol o permiso no permite la operación |
+| 404 | Recurso inexistente |
+| 409 | Conflicto (por ejemplo, eliminar una comunidad con sensores) |
+| 422 | Reporte que supera el límite de filas (`LIMIT_EXCEEDED`) |
+| 429 | Límite de peticiones o cola de reportes llena (`Retry-After`) |
+| 502 / 503 | Un servicio dependiente no respondió / el servicio no está listo |
 
 ---
 
-# 1. Autenticación
+# 1. Autenticación y usuarios — auth-service
 
-## 1.1 Iniciar sesión
+## 1.1 Inicio de sesión local
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| POST | `/api/auth/login` | pública | Inicia sesión con usuario y contraseña |
+| POST | `/api/login` | pública | Alias de compatibilidad con la Fase 2 (mismo contrato) |
+| GET | `/api/auth/me` | autenticado | Datos del usuario del token |
+| POST | `/api/auth/logout` | autenticado | Registra el cierre de sesión (204) |
 
-| Campo | Valor |
-|--------|-------|
-| Método | **POST** |
-| Endpoint | `/api/auth/login` |
-| Autenticación | No |
-| Roles | Público |
-| RF relacionado | AUT-RF-001 |
+**Request**
+```json
+{ "username": "<usuario>", "password": "<contraseña>" }
+```
+También se aceptan los nombres `nombreUsuario` y `contraseña` (compatibilidad con la Fase 2).
 
-### Descripción
-
-Permite a un usuario autenticarse en el sistema.
-
-### Request
-
+**Response 200**
 ```json
 {
-    "correo":"admin@climguard.com",
-    "password":"123456"
+  "usuarioId": 7,
+  "usuario": "<usuario>",
+  "token": "<JWT>",
+  "mensaje": "Inicio de sesión correcto.",
+  "rol": "Operador",
+  "permissions": ["dashboard.view", "audit.write"],
+  "expiresAt": "2026-11-06T18:30:00.000Z"
 }
 ```
+**Response 401**: `usuarioId: 0`, `token: ""` y `mensaje: "Usuario o contraseña incorrectos."`.
 
-### Response (200)
+> Este contrato lo usa el dispositivo ESP8266 (requiere HTTP 200, `rol` y `token`). No debe cambiarse sin actualizar el firmware.
 
+## 1.2 OAuth 2.0 / OIDC (Google y GitHub)
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/auth/oauth/providers` | pública | Proveedores configurados: `{"providers":[{"id":"google","label":"Google"}, …]}` |
+| GET | `/api/auth/oauth/{proveedor}/start` | pública | Redirige (302) a Google o GitHub con `state`, PKCE y, en Google, `nonce` |
+| GET | `/api/auth/oauth/{proveedor}/callback` | pública | Retorno del proveedor; redirige a `/auth/callback#code=<código de un solo uso>` o a `/login?oauth_error=<motivo>` |
+| POST | `/api/auth/oauth/exchange` | pública | Canjea `{"code": "..."}` por la sesión (mismo formato que el login local, más `nombreCompleto`) |
+| POST | `/api/auth/oauth/{proveedor}/link` | autenticado | Inicia la vinculación de una cuenta externa al usuario de la sesión |
+
+`{proveedor}`: `google` o `github`. El JWT nunca viaja en la URL; el código de canje dura 60 s, se usa una sola vez y queda ligado al navegador que inició el flujo (cookie `httpOnly`). Motivos de error: `not_registered`, `account_disabled`, `email_not_verified`, `domain_not_allowed`, `identity_in_use`, `invalid_state`, `invalid_token`, `provider_error`, `provider_unavailable`, `unknown_provider`. Diseño completo: [FASE4_CAMBIOS.md](fases/fase-4/FASE4_CAMBIOS.md).
+
+## 1.3 Usuarios
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/users` | `users.manage` | Lista de usuarios |
+| GET | `/api/users/{id}` | `users.manage` | Un usuario |
+| POST | `/api/users` | `users.manage` | Crea un usuario |
+| PUT | `/api/users/{id}` | `users.manage` | Modifica un usuario (y su contraseña si se envía) |
+| DELETE | `/api/users/{id}` | `users.manage` | Elimina un usuario (204) |
+
+`/api/Usuario` y `/api/Usuario/{id}` son alias de compatibilidad.
+
+**Request (POST / PUT)**
 ```json
-{
-    "success": true,
-    "message":"Inicio de sesión exitoso.",
-    "data":{
-        "token":"JWT_TOKEN",
-        "usuario":{
-            "idUsuario":1,
-            "nombre":"Administrador",
-            "correo":"admin@climguard.com",
-            "rol":"Administrador"
-        }
-    }
-}
+{ "nombreCompleto": "Ana López", "nombreUsuario": "alopez", "password": "<contraseña>", "rolId": 2, "activo": true }
 ```
+`rolId`: 1 Administrador, 2 Operador, 3 Consulta. Las contraseñas se guardan con scrypt y sal.
 
 ---
 
-## 1.2 Obtener usuario autenticado
+# 2. Comunidades — community-service
 
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/auth/me` |
-| Autenticación | Sí |
-| Roles | Todos |
-| RF relacionado | AUT-RF-001 |
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/communities?activo=&q=&page=1&pageSize=100` | autenticado | Lista (filtro por estado y texto; `X-Total-Count`) |
+| GET | `/api/communities/{id}` | autenticado | Una comunidad |
+| POST | `/api/communities` | Administrador | Crea |
+| PUT | `/api/communities/{id}` | Administrador | Modifica |
+| DELETE | `/api/communities/{id}` | Administrador | Elimina; **409** si tiene sensores asociados |
 
-### Response
-
+**Request (POST / PUT)**
 ```json
-{
-    "success": true,
-    "data":{
-        "idUsuario":1,
-        "nombre":"Administrador",
-        "correo":"admin@climguard.com",
-        "rol":"Administrador"
-    }
-}
+{ "nombreComunidad": "San Juan Sacatepéquez", "descripcion": "Zona de ladera", "pais": "Guatemala",
+  "departamento": "Guatemala", "municipio": "San Juan Sacatepéquez", "latitud": 14.7189, "longitud": -90.6442, "activo": true }
 ```
 
 ---
 
-# 2. Administración
+# 3. Sensores y lecturas — sensor-service
 
-## 2.1 Usuarios
+## 3.1 Sensores
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/sensors?comunidadId=&tipoSensorId=&estadoSensorId=&origen=&page=1&pageSize=100` | autenticado | Lista (`X-Total-Count`) |
+| GET | `/api/sensors/{id}` | autenticado | Un sensor |
+| POST | `/api/sensors` | Administrador | Crea (sin `origen` se registra como `FISICO`) |
+| PUT | `/api/sensors/{id}` | Administrador | Modifica (sin `origen` no lo cambia) |
+| DELETE | `/api/sensors/{id}` | Administrador | Elimina |
 
-La administración de usuarios no forma parte del alcance del primer release de ClimGuard.
-
-Los usuarios y sus roles son administrados directamente por el administrador de la base de datos, por lo que la API no expone endpoints para crear, modificar o eliminar usuarios.
-
-Únicamente se utilizan los endpoints de autenticación para validar las credenciales del usuario y obtener su información de sesión.
-
-## 2.2 Comunidades
-
-### Obtener comunidades
-
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/comunidades` |
-| Autenticación | Sí |
-| Roles | Administrador, Operador |
-| RF relacionado | ADM-RF-001 |
-
-### Response
-
+**Request (POST / PUT)**
 ```json
-{
-    "success":true,
-    "data":[
-        {
-            "idComunidad":1,
-            "nombre":"San Miguel",
-            "descripcion":"Comunidad piloto"
-        }
-    ]
-}
+{ "nombre": "Temperatura San Juan", "codigo": "TMP-001", "ubicacion": "Plaza central", "descripcion": "Temperatura ambiente",
+  "fechaInstalacion": "2026-05-01T00:00:00Z", "comunidadId": 1, "tipoSensorId": 1, "estadoSensorId": 1, "origen": "SIMULADO" }
 ```
+`origen`: `FISICO` (las lecturas las envía el dispositivo) o `SIMULADO` (las genera el simulador mientras el sensor esté activo).
 
----
+## 3.2 Lecturas
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/readings?sensorId=&comunidadId=&tipoSensorId=&desde=&hasta=&page=1&pageSize=500` | autenticado | Historial (`X-Total-Count`) |
+| GET | `/api/readings/stats?comunidadId=&desde=&hasta=` | autenticado | Cantidad, promedio, mínimo, máximo y suma por tipo de sensor |
+| POST | `/api/readings` | Operador | Registra una lectura (la usa el ESP8266) |
 
-### Obtener comunidad
-
-GET `/api/comunidades/{id}`
-
----
-
-### Crear comunidad
-
-POST `/api/comunidades`
-
+**Request (POST)**
 ```json
-{
-    "nombre":"San Miguel",
-    "descripcion":"Comunidad piloto"
-}
+{ "sensorId": 5, "valor": 24.57, "fechaHora": "2026-11-06T02:13:41Z" }
 ```
+`fechaHora` es opcional (por defecto, la hora del servidor). Cada lectura se guarda, se envía por SignalR y se evalúa contra las reglas de alerta.
+
+## 3.3 Catálogos y simulación
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/sensor-types` | autenticado | Tipos de sensor (variable y unidad) |
+| GET | `/api/sensor-states` | autenticado | Estados del sensor (Activo, Inactivo, Mantenimiento, Fuera de línea) |
+| GET | `/api/simulation` | autenticado | `{"enabled": true}` |
+| POST | `/api/simulation/start` · `/api/simulation/stop` | Administrador | Enciende o apaga el simulador (hasta el siguiente reinicio del servicio) |
+
+## 3.4 Tiempo real (SignalR)
+| Hub | Acceso | Eventos |
+|---|---|---|
+| `/hubs/monitoreo` | autenticado (token en `access_token` de la conexión) | `LecturaNueva` (cada lectura), `AlertaNueva` (cada alerta generada) |
 
 ---
 
-### Actualizar comunidad
+# 4. Reglas, alertas y catálogos — alert-service
 
-PUT `/api/comunidades/{id}`
+## 4.1 Reglas de alerta
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/rules` | autenticado | Todas las reglas (incluye `requiereRevision`) |
+| POST | `/api/rules` | Administrador | Crea (siempre con la semántica de intervalo) |
+| PUT | `/api/rules/{id}?convertirSemantica=false` | Administrador | Modifica; con `convertirSemantica=true` convierte una regla legada |
+| DELETE | `/api/rules/{id}` | Administrador | Elimina (204) |
+| GET | `/api/rules/classify?tipoSensorId=&valor=` | autenticado | Nivel de peligro de un valor, sin crear alertas |
+| GET | `/api/rules/pending-review` | autenticado | Reglas legadas pendientes de convertir |
 
+**Request (POST / PUT)**
 ```json
-{
-    "nombre":"San Miguel",
-    "descripcion":"Descripción actualizada"
-}
+{ "nombre": "Temperatura elevada", "tipoSensorId": 1, "valorMin": 35, "valorMax": 100,
+  "nivelAlertaId": 4, "tipoFenomenoId": 1, "mensaje": "Temperatura extrema", "activo": true }
 ```
+Semántica: la regla se activa si `valorMin ≤ valor ≤ valorMax` (extremos incluidos). Las reglas legadas (`requiereRevision = true`) se siguen evaluando como antes: alerta **fuera** de `[valorMin, valorMax]` ([MIGRACIONES.md](MIGRACIONES.md) §2).
+
+## 4.2 Alertas y eventos
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/alerts?comunidadId=&sensorId=&nivelAlertaId=&tipoFenomenoId=&estadoAlertaId=&activo=&desde=&hasta=&page=&pageSize=` | autenticado | Alertas (`X-Total-Count`) |
+| GET | `/api/alerts/{id}` | autenticado | Una alerta |
+| GET | `/api/alerts/events?comunidadId=&sensorId=&nivelAlertaId=&tipoFenomenoId=&desde=&hasta=&page=&pageSize=` | autenticado | Historial de eventos |
+| GET | `/api/alerts/stats?comunidadId=&desde=&hasta=` | autenticado | Estadísticas de alertas |
+| POST | `/api/alerts/{id}/attend` | Operador | Pasa la alerta a *Atendida* |
+| POST | `/api/alerts/{id}/close` | Operador | Pasa la alerta a *Cerrada* |
+| POST | `/api/alerts/evaluate` | interno (`X-Internal-Key`) u Operador | Evalúa una lectura; responde `generated`, `alert`, `condicionPeligro` y `suprimidaPorCooldown` |
+
+## 4.3 Catálogos
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/levels` | autenticado | Niveles de alerta |
+| GET | `/api/alert-states` | autenticado | Estados de alerta (Activa, Atendida, Cerrada) |
+| GET | `/api/phenomena` | autenticado | Tipos de fenómeno |
+| POST | `/api/phenomena` | Operador | Crea un tipo de fenómeno (`{"nombre": "Helada", "activo": true}`) |
+| PUT | `/api/phenomena/{id}` | Operador | Modifica |
+| DELETE | `/api/phenomena/{id}` | Operador | Elimina (204) |
 
 ---
 
-### Eliminar comunidad
+# 5. Reportes — report-service
 
-DELETE /api/comunidades/{id}
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/reports/types` | autenticado | Tipos disponibles y sus filtros |
+| POST | `/api/reports` | `reports.generate` | Encola un reporte → **202** con metadatos y `Location`; con `?sync=true` (requiere también `reports.download`) devuelve el PDF |
+| GET | `/api/reports/{id}` | `reports.history` | Estado y metadatos (`PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`) |
+| GET | `/api/reports/{id}/download` | `reports.download` | Descarga el PDF (GridFS) |
+| GET | `/api/reports/history?page=1&pageSize=20` | `reports.history` | Historial (`X-Total-Count`) |
+| GET | `/api/reports/dashboard?comunidadId=` | `dashboard.view` | Indicadores del panel |
+| POST | `/api/reports/{tipo}` | `reports.generate` + `reports.download` | Ruta de compatibilidad: genera y devuelve el PDF de forma síncrona |
 
-> Regla de negocio:
-
-> Antes de eliminar una comunidad el sistema validará que la operación no comprometa la integridad referencial de la información almacenada.
-
----
-
-## 2.3 Sensores
-> El código del sensor debe ser único y la comunidad, tipo de sensor y estado deben existir previamente en los catálogos del sistema.
-
-### Obtener sensores
-
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/sensores` |
-| Autenticación | Sí |
-| Roles | Administrador, Operador |
-| RF relacionado | ADM-RF-003 |
-
-Filtros opcionales
-
-- idComunidad
-- idTipoSensor
-- idEstadoSensor
-
-Ejemplo
-
-GET /api/sensores?idComunidad=2
-
-### Response
-
+**Request (POST /api/reports)**
 ```json
-{
-    "success":true,
-    "data":[
-        {
-            "idSensor":1,
-            "codigo":"TEMP-001",
-            "ubicacion":"Bosque Norte",
-            "estado":"ACTIVO",
-            "tipoSensor":"Temperatura",
-            "comunidad":"San Miguel"
-        }
-    ]
-}
+{ "type": "READINGS", "filters": { "sensorId": 5, "from": "2026-11-01", "to": "2026-11-05" } }
 ```
 
----
+| `type` | Filtros admitidos |
+|---|---|
+| `COMMUNITIES` | `activo` |
+| `SENSORS` | `comunidadId`, `tipoSensorId`, `estadoSensorId` |
+| `READINGS` | `sensorId`, `comunidadId`, `tipoSensorId`, `from`, `to` (sin rango: último día) |
+| `ALERTS` | `comunidadId`, `sensorId`, `nivelAlertaId`, `tipoFenomenoId`, `estadoAlertaId`, `from`, `to` |
+| `EVENT_HISTORY` | `comunidadId`, `tipoFenomenoId`, `from`, `to` |
+| `SENSOR_STATUS` | `comunidadId` |
+| `CLIMATE_STATS` | `comunidadId`, `from`, `to` |
+| `EXECUTIVE` | `comunidadId`, `from`, `to` |
 
-### Obtener sensor
-
-GET `/api/sensores/{id}`
-
----
-
-### Crear sensor
-
-POST `/api/sensores`
-
-```json
-{
-    "codigo":"TEMP-001",
-    "ubicacion":"Bosque Norte",
-    "latitud":14.628451,
-    "longitud":-90.512341,
-    "fechaInstalacion":"2026-08-01",
-    "idComunidad":null,
-    "idTipoSensor":2,
-    "idEstadoSensor":1
-}
-```
+Si el reporte supera `REPORT_MAX_ROWS` responde **422** con `errorCode: LIMIT_EXCEEDED`, el límite y el total; con la cola llena, **429** con `Retry-After`.
 
 ---
 
-### Actualizar sensor
+# 6. Bitácora — audit-service
 
-PUT `/api/sensores/{id}`
-
----
-### Cambiar estado del sensor
-
-| Campo | Valor |
-|--------|-------|
-| Método | **PATCH** |
-| Endpoint | `/api/sensores/{id}/estado` |
-| Autenticación | Sí |
-| Roles | Administrador |
-| RF relacionado | SEN-RF-002 |
-
-### Request
-
-```json
-{
-    "activo": false
-}
-```
-> El sistema permitirá activar o desactivar sensores mediante la actualización de su estado. Los sensores no serán eliminados físicamente del sistema.
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| POST | `/api/audit` | interno (`X-Internal-Key`) o autenticado | Registra un evento (`201`) |
+| GET | `/api/audit?page=&pageSize=` | `audit.read` | Eventos de auditoría (`X-Total-Count`) |
+| GET | `/api/audit/bitacora?limit=200` | `audit.read` | Últimas acciones en el formato de la pantalla Bitácora |
 
 ---
 
-## 2.4 Reglas de Alerta
-
-Las reglas de alerta permiten configurar los rangos que determinarán la generación automática de alertas para cada tipo de sensor.
-
-Cada regla define:
-
-- Tipo de sensor.
-- Nivel de alerta.
-- Tipo de fenómeno.
-- Valor mínimo.
-- Valor máximo.
-- Mensaje asociado.
-
-### Obtener reglas
-
-GET `/api/ReglaAlerta`
-
-### Obtener regla
-
-GET `/api/ReglaAlerta/{id}`
-
-### Obtener reglas por tipo de sensor
-
-GET `/api/ReglaAlerta/{tipoSensorId}`
-
-### Crear regla
-
-POST `/api/ReglaAlerta`
-
-### Actualizar regla
-
-PUT `/api/ReglaAlerta`
-
-### Eliminar regla
-
-DELETE `/api/ReglaAlerta/{id}&usuarioLogeado={usuarioId}`
-
-> Las reglas únicamente podrán ser administradas por usuarios con rol Administrador.
-
-# 3. Monitoreo
-
-El módulo de monitoreo concentra las operaciones relacionadas con la recepción de lecturas provenientes de los sensores, la generación automática de alertas y la consulta de la información presentada en el Dashboard.
-
----
-
-## 3.1 Lecturas
-
-### 3.1.1 Registrar lectura
-
-| Campo | Valor |
-|--------|-------|
-| Método | **POST** |
-| Endpoint | `/api/lecturas` |
-| Autenticación | No (servicio interno) |
-| Roles | Sistema |
-| RF relacionado | MON-RF-001 |
-
-### Descripción
-
-Registra una nueva lectura proveniente de un sensor. Una vez almacenada la lectura, el sistema evaluará automáticamente las reglas de alerta configuradas para determinar si debe generarse una alerta.
-
-### Request
-
-```json
-{
-    "idSensor": 3,
-    "valor": 32.5
-}
-```
-
-### Response (201)
-
-```json
-{
-    "success": true,
-    "message": "Lectura registrada correctamente."
-}
-```
-
----
-
-### 3.1.2 Consultar lecturas
-
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/lecturas` |
-| Autenticación | Sí |
-| Roles | Administrador, Operador |
-| RF relacionado | MON-RF-002 |
-
-### Parámetros de consulta (Opcionales)
-
-| Parámetro | Tipo | Descripción |
-|-----------|------|-------------|
-| idSensor | INT | Filtra por sensor. |
-| fechaInicio | DATE | Fecha inicial. |
-| fechaFin | DATE | Fecha final. |
-
-### Ejemplo
-
-```http
-GET /api/lecturas?idSensor=3&fechaInicio=2026-08-01&fechaFin=2026-08-31
-```
-
-### Response (200)
-
-```json
-{
-    "success": true,
-    "data": [
-        {
-            "idLectura": 125,
-            "sensor": "TEMP-001",
-            "valor": 32.5,
-            "fechaHora": "2026-08-20T10:35:18"
-        }
-    ]
-}
-```
-
----
-
-### 3.1.3 Obtener detalle de lectura
-
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/lecturas/{id}` |
-| Autenticación | Sí |
-| Roles | Administrador, Operador |
-| RF relacionado | MON-RF-002 |
-
----
-
-## 3.2 Alertas
-
-### 3.2.1 Visualizar alertas activas
-
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/alertas` |
-| Autenticación | Sí |
-| Roles | Administrador, Operador |
-| RF relacionado | ALT-RF-001 |
-
-### Parámetros de consulta (Opcionales)
-
-| Parámetro | Tipo |
-|-----------|------|
-| idComunidad | INT |
-| idNivelRiesgo | INT |
-| idEstadoAlerta | INT |
-| fechaInicio | DATE |
-| fechaFin | DATE |
-
-### Response (200)
-
-```json
-{
-    "success": true,
-    "data": [
-        {
-            "idAlerta": 18,
-            "sensor": "TEMP-001",
-            "tipoAlerta": "Incendio Forestal",
-            "nivel": "EMERGENCIA",
-            "estado": "ACTIVA",
-            "fechaHora": "2026-08-20T11:22:14"
-        }
-    ]
-}
-```
-
----
-
-### 3.2.2 Obtener alerta
-
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/alertas/{id}` |
-| Autenticación | Sí |
-| Roles | Administrador, Operador |
-| RF relacionado | ALT-RF-001 |
-
----
-
-### 3.2.3 Atender alerta
-
-| Campo | Valor |
-|--------|-------|
-| Método | **PUT** |
-| Endpoint | `/api/alertas/{id}/atender` |
-| Autenticación | Sí |
-| Roles | Operador |
-| RF relacionado | ALT-RF-003 |
-
-### Response
-
-```json
-{
-    "success": true,
-    "message": "La alerta fue marcada como atendida."
-}
-```
-
----
-
-### 3.2.4 Cerrar alerta
-
-| Campo | Valor |
-|--------|-------|
-| Método | **PUT** |
-| Endpoint | `/api/alertas/{id}/cerrar` |
-| Autenticación | Sí |
-| Roles | Operador |
-| RF relacionado | ALT-RF-004 |
-
-### Response
-
-```json
-{
-    "success": true,
-    "message": "La alerta fue cerrada correctamente."
-}
-```
-
----
-
-> **Regla de negocio:** Las alertas son generadas automáticamente por el sistema al detectar que una lectura supera los umbrales configurados. No existe un endpoint para crear alertas manualmente.
-
----
-
-## 3.3 Dashboard
-
-### 3.3.1 Obtener resumen general
-
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/dashboard` |
-| Autenticación | Sí |
-| Roles | Administrador, Operador |
-| RF relacionado | MON-RF-003 |
-
-### Response
-
-```json
-{
-    "success": true,
-    "data": {
-        "sensoresActivos": 24,
-        "alertasActivas": 3,
-        "comunidades": 8,
-        "ultimaLectura": "2026-08-20T11:35:42"
-    }
-}
-```
-
----
-
-### 3.3.2 Obtener evolución de lecturas
-### Descripción
-
-Obtiene la información utilizada para representar la gráfica del Dashboard.
-
-En el primer release los valores mostrados corresponden a información obtenida de las lecturas registradas por el Background Service.
-
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/dashboard/evolucion` |
-| Autenticación | Sí |
-| Roles | Administrador, Operador |
-| RF relacionado | MON-RF-003 |
-
-### Parámetros de consulta
-
-| Parámetro | Tipo |
-|-----------|------|
-| idSensor | INT |
-| fechaInicio | DATE |
-| fechaFin | DATE |
-
-### Response
-
-```json
-{
-    "success": true,
-    "data": [
-        {
-            "fechaHora": "2026-08-20T10:00:00",
-            "valor": 28.3
-        },
-        {
-            "fechaHora": "2026-08-20T11:00:00",
-            "valor": 29.6
-        }
-    ]
-}
-```
-
-
-
-
-
----
-## 3.4 Simulación Automática
-
-El sistema incorpora un Background Service encargado de simular el comportamiento de los sensores registrados.
-
-El proceso ejecuta automáticamente las siguientes operaciones:
-
-1. Obtiene los sensores activos.
-2. Genera una nueva lectura para cada sensor.
-3. Actualiza el valor actual del sensor.
-4. Registra la lectura en el historial.
-5. Evalúa las reglas de alerta configuradas.
-6. Genera automáticamente una alerta cuando la lectura cumple una condición establecida.
-
-Este proceso se ejecuta periódicamente y no requiere intervención del usuario.
----
-# 4. Auditoría
-
-El módulo de auditoría permite consultar las acciones realizadas por los usuarios dentro del sistema.
-
-La bitácora es generada automáticamente por la aplicación y no podrá modificarse manualmente.
-
----
-
-## 4.1 Bitácora
-
-### 4.1.1 Consultar bitácora
-
-| Campo | Valor |
-|--------|-------|
-| Método | **GET** |
-| Endpoint | `/api/bitacora` |
-| Autenticación | Sí |
-| Roles | Administrador |
-| RF relacionado | USR-RF-003 |
-
-### Descripción
-
-Obtiene el historial de acciones registradas por el sistema.
-
-### Parámetros de consulta (Opcionales)
-
-| Parámetro | Tipo | Descripción |
-|-----------|------|-------------|
-| idUsuario | INT | Filtra por usuario. |
-| fechaInicio | DATE | Fecha inicial del rango. |
-| fechaFin | DATE | Fecha final del rango. |
-
-### Ejemplo
-
-```http
-GET /api/bitacora?idUsuario=2&fechaInicio=2026-08-01&fechaFin=2026-08-31
-```
-
-### Response (200)
-
-```json
-{
-    "success": true,
-    "data": [
-        {
-            "idBitacora": 15,
-            "usuario": "Administrador",
-            "accion": "Creó un sensor.",
-            "fechaHora": "2026-08-20T09:15:44"
-        },
-        {
-            "idBitacora": 16,
-            "usuario": "Administrador",
-            "accion": "Actualizó una regla alerta.",
-            "fechaHora": "2026-08-20T09:48:12"
-        }
-    ]
-}
-```
-
-> **Regla de negocio:** La bitácora es generada automáticamente por el sistema. No existen endpoints para crear, modificar o eliminar registros.
-
----
-
-# Observaciones
-
-- El presente documento constituye el contrato oficial de comunicación entre el frontend y el backend.
-- Toda modificación a la estructura de solicitudes, respuestas o endpoints deberá actualizarse previamente en este documento.
-- Los modelos de datos utilizados por la API deberán ser consistentes con el Diagrama de Clases (DOC-09) y el Modelo de Base de Datos (DOC-10).
-- Los nombres de los endpoints se definieron siguiendo principios REST.
-- Las respuestas de la API utilizarán JSON como formato de intercambio.
-- Los códigos HTTP deberán emplearse conforme a su significado estándar.
-- Las lecturas mostradas en el Dashboard son generadas automáticamente por un Background Service que simula el comportamiento de los sensores y registra el historial en la base de datos.
----
-
-# Consideraciones de Implementación
-
-- La API será desarrollada utilizando ASP.NET Core Web API.
-- La persistencia de datos será implementada mediante Entity Framework Core sobre SQL Server 2022.
-- La autenticación se realizará mediante JSON Web Token (JWT).
-- El acceso a los recursos será controlado mediante roles.
-- La validación de los datos de entrada deberá realizarse tanto en el cliente como en el servidor.
-- Las alertas son generadas automáticamente mediante un Background Service que procesa las lecturas registradas y evalúa las reglas de alerta configuradas para cada tipo de sensor.
-- La documentación de la API podrá complementarse mediante Swagger/OpenAPI durante la etapa de desarrollo.
-- La activación y desactivación de sensores se realiza mediante la actualización de su estado. El sistema no contempla la eliminación física de sensores durante la operación.
-- La entidad Alerta conserva snapshots del mensaje, nivel de alerta y tipo de fenómeno utilizados al momento de generar la alerta, garantizando la integridad histórica de la información.
-
----
+# 7. Salud de los servicios
+Cada servicio expone `GET /health` y `GET /ready` dentro del clúster (no a través del gateway). Kubernetes los usa como *startup*, *liveness* y *readiness probes*.
