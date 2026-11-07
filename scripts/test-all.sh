@@ -11,7 +11,7 @@ export TYPES
 (cd services/auth && rm -rf /tmp/auth-test && cat > /tmp/tsconfig.auth.json <<JSON
 {"compilerOptions":{"module":"commonjs","target":"ES2022","strict":true,"esModuleInterop":true,"skipLibCheck":true,"outDir":"/tmp/auth-test","rootDir":"$PWD","typeRoots":["$TYPES"],"types":["node"]},"files":["$PWD/test/common.test.ts","$PWD/test/oauth.test.ts"]}
 JSON
- tsc -p /tmp/tsconfig.auth.json && node --test /tmp/auth-test/test/*.test.js 2>&1 | grep -E "^# (tests|pass|fail)") || fail=1
+ tsc -p /tmp/tsconfig.auth.json && node --test /tmp/auth-test/test/*.test.js 2>&1 | grep -E "^(#|ℹ) (tests|pass|fail)") || fail=1
 echo "== Alert (javac + java, evaluador de reglas)"
 (mkdir -p /tmp/alert-test && cd services/alert && javac -d /tmp/alert-test src/main/java/com/climguard/alert/RuleEvaluator.java src/test/java/com/climguard/alert/RuleEvaluatorSelfTest.java 2>&1 | grep -v Picked; java -cp /tmp/alert-test com.climguard.alert.RuleEvaluatorSelfTest 2>&1 | grep -c "^OK" | sed 's/$/ comprobaciones OK/') || fail=1
 echo "== docker-compose.yml / k8s (sintaxis YAML)"

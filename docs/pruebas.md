@@ -34,5 +34,22 @@ Realizadas sobre `https://climguard.acifuina.online` durante el despliegue de la
 | Simulador de lecturas tras clasificar los sensores de demostración como *Simulado* | Equipo | Correcto |
 | Funcionamiento general de la versión 4.1 en producción tras actualizar el frontend (incluye los desplegables de comunidad y de departamento/municipio) | Equipo | Confirmado por el equipo al cerrar la versión |
 
+## Estado de la integración continua
+Flujo [`.github/workflows/ci.yml`](../.github/workflows/ci.yml): se ejecuta en cada *push*, *pull request* o de forma manual. Usa permisos de solo lectura, no necesita secretos ni acceso a la VPS y **no despliega**.
+
+| Trabajo | Qué hace | Validado localmente antes de subirlo |
+|---|---|---|
+| `frontend` | `npm ci`, `ng test` (Chrome headless) y `ng build --configuration production` (Node 22) | Sí: 40/40 y build correcto (Node 26, Windows) |
+| `auth` | `npm ci`, `npm run build`, `npm test` | Sí: build correcto y 41/41 |
+| `python` (report, audit) | `pip install -r requirements.txt` y `unittest` (Python 3.12) | Sí: 68/68 y 4/4 (Python 3.13) |
+| `alert` | Autoprueba del evaluador de reglas y `mvn package` (JDK 21) | Autoprueba: sí (48/0). `mvn package`: no había Maven local; es el mismo comando con el que se construyó la imagen de producción |
+| `dotnet` (gateway, community, sensor) | `dotnet build -c Release` (.NET 10) | Sí: 0 errores (sensor con 4 advertencias preexistentes) |
+| `infra` | Sintaxis de scripts, generador = manifiestos versionados, ausencia de Secrets, esquemas de Kubernetes con kubeconform y `docker compose config` con un `.env` generado | Todo salvo kubeconform (requiere Docker en ejecución) |
+| `secrets` | gitleaks 8.21.2 (versión fija y suma de verificación) sobre el árbol actual con `.gitleaks.toml` | No: la descarga del binario no estaba permitida en el entorno local. Se hizo una revisión equivalente con patrones propios (claves privadas, tokens de Google/GitHub/AWS, contraseñas literales, JSON con claves): sin hallazgos fuera de datos de prueba y marcadores |
+
+**Pendiente de comprobar en GitHub:** la primera ejecución completa del flujo (en particular kubeconform, gitleaks y `mvn package`). El escaneo de secretos analiza el árbol actual; el historial contiene credenciales de la Fase 2 ya documentadas ([riesgos-y-pendientes.md](riesgos-y-pendientes.md), S3).
+
+`scripts/test-all.sh` reúne las mismas pruebas en una sola orden. En Windows con Git Bash el paso de Auth puede fallar porque `tsc` no interpreta rutas `/c/...`; ahí use `npm test` dentro de `services/auth`.
+
 ## No cubierto
 Pruebas unitarias de gateway, community y sensor (solo compilación), controladores Spring y pruebas extremo a extremo automatizadas. Ver [riesgos-y-pendientes.md](riesgos-y-pendientes.md) (Q1–Q3).

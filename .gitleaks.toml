@@ -1,0 +1,23 @@
+# Configuración de gitleaks para ClimGuard (usada por .github/workflows/ci.yml).
+# Reglas por defecto + excepciones acotadas a datos de prueba ficticios.
+title = "ClimGuard"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Datos ficticios de pruebas y marcadores de plantilla (nunca secretos reales)"
+paths = [
+  # Pruebas unitarias: claves, hashes y tokens inventados para probar JWT, contraseñas y OAuth.
+  '''services/auth/test/.*''',
+  '''services/report/tests/.*''',
+  '''services/audit/tests/.*''',
+  '''frontend/climguard-web/src/.*\.spec\.ts''',
+  # Dependencias bloqueadas (sumas de integridad de paquetes).
+  '''(^|/)package-lock\.json$''',
+]
+regexes = [
+  # Marcadores de .env.example (CAMBIAME...) y de la documentación (<archivo-de-secretos>, <JWT>, ...).
+  '''CAMBIAME[A-Za-z0-9_$!#-]*''',
+  '''<[a-z][a-z0-9-]*>''',
+]
