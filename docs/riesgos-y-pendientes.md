@@ -34,6 +34,8 @@ Estado al 6 de noviembre de 2026. Reemplaza, para la versión vigente, al regist
 | F1 | Eliminar sensores | La API lo permite (`DELETE /api/sensors/{id}`, Administrador) pero la opción está deshabilitada en la interfaz; se usa activar/desactivar. |
 | F2 | Cerrar alertas | La API ofrece `POST /api/alerts/{id}/close`; la interfaz solo permite **Atender**. |
 | F3 | Identidades externas | No hay pantalla para listar ni desvincular cuentas de Google o GitHub; no hay *refresh token*. |
+| F4 | Campo «Valor actual» del formulario de sensores | Es editable, pero el sensor-service no lo recibe (`SensorInput` no tiene ese campo): lo que se escriba no se guarda. Convertirlo en solo lectura o quitarlo. |
+| F5 | Contraseña al editar usuarios | El formulario exige escribir una contraseña también al editar (por ejemplo, solo para cambiar el rol). |
 
 ## Calidad
 | # | Pendiente | Detalle |
