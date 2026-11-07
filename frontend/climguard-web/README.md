@@ -1,59 +1,41 @@
-# ClimguardWeb
+# ClimGuard Web (Angular 22)
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.34.
+Interfaz web de ClimGuard 4.1. Es una aplicación de una sola página que consume la API a través del gateway (`/api`) y recibe actualizaciones en tiempo real por SignalR (`/hubs/monitoreo`).
 
-## Development server
-
-To start a local development server, run:
-
-```bash
-ng serve
+## Estructura
+```text
+src/app/
+├── app.routes.ts          rutas; cada pantalla exige un permiso (permisoGuard)
+├── core/
+│   ├── roles.ts           matriz de roles → permisos de la interfaz (RBAC)
+│   ├── guards/            authGuard (sesión) y permisoGuard (permiso por ruta)
+│   ├── interceptors/      añade el JWT a cada petición y cierra sesión ante 401
+│   ├── services/          clientes HTTP por recurso, SignalR (tiempo real), alarma, reglas de peligro
+│   ├── models/            tipos de datos de la API
+│   ├── data/guatemala.ts  catálogo de departamentos y municipios
+│   └── peligro.ts         evaluación de reglas en el cliente (espejo del evaluador del alert-service)
+├── layout/                marco con menú lateral, encabezado y aviso de emergencia
+└── features/              pantallas: auth, dashboard, mapa, sensores, comunidades, reglas, alertas,
+                           historial, fenomenos, usuarios, reportes, bitacora
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Los permisos de la interfaz solo ocultan opciones; la autorización real la aplica cada servicio del backend.
 
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
+## Comandos
 ```bash
-ng generate component component-name
+npm ci                                                   # dependencias exactas (package-lock.json)
+npx ng serve                                             # desarrollo en http://localhost:4200
+npx ng build --configuration production                  # salida en dist/climguard-web/browser
+npx ng test --watch=false --browsers=ChromeHeadless      # pruebas unitarias (Karma + Jasmine)
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Configuración
+| Archivo | `apiUrl` | Uso |
+|---|---|---|
+| `src/environments/environment.production.ts` | `/api` (mismo origen) | build de producción y de Docker |
+| `src/environments/environment.ts` | URL absoluta del servidor | `ng serve` en desarrollo |
 
-```bash
-ng generate --help
-```
+## Imagen y despliegue
+`Dockerfile` construye la aplicación con Node 22 y la sirve con nginx (`nginx.conf`: rutas de Angular con `try_files`, caché de archivos con huella y cabeceras de seguridad). En producción la imagen es `climguard/frontend:<versión>` en K3s; ver [k8s/README.md](../../k8s/README.md).
 
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Manual de uso de cada pantalla: [DOC-14 Manual de usuario](../../docs/DOC-14-Manual%20de%20usuario.md).
