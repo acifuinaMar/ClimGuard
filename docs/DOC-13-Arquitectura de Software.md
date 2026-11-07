@@ -5,257 +5,154 @@
 |-----------|-----------|
 | Documento | Arquitectura del Sistema |
 | Código | DOC-13 |
-| Versión | 2.0 |
-| Estado | Finalizado |
+| Versión | 3.0 |
+| Estado | Vigente (ClimGuard 4.1) |
+
+### Historial de versiones
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 – 2.0 | Agosto – octubre 2026 | Arquitectura por capas del monolito de la Fase 2: Angular 20, ASP.NET Core Web API, `BackgroundService` de simulación, SignalR y SQL Server 2022 en Docker. Ver [fases/fase-1-2](fases/fase-1-2/README.md). |
+| 3.0 | Noviembre 2026 | Microservicios con API Gateway (Fase 3), autenticación OAuth 2.0/OIDC y despliegue en Kubernetes K3s (Fase 4), sensores físicos ESP8266. |
 
 ---
 
 # Objetivo
+Describir la arquitectura de ClimGuard 4.1: sus componentes, cómo se comunican, cómo se protegen y cómo se despliegan.
 
-El presente documento describe la arquitectura de software implementada en ClimGuard.
-
-Su propósito es mostrar la organización de los principales componentes del sistema, la comunicación entre ellos y las tecnologías utilizadas durante el desarrollo del segundo release.
-
-La arquitectura fue diseñada siguiendo una separación por capas, permitiendo desacoplar la interfaz de usuario, la lógica de negocio y el acceso a datos, facilitando el mantenimiento, la escalabilidad y futuras integraciones con sensores físicos.
-
----
-
-# 1. Arquitectura General
-
-ClimGuard está compuesto por una aplicación web desarrollada en Angular, una API REST implementada en .NET 10, una base de datos SQL Server 2022 y un servicio de comunicación en tiempo real mediante SignalR.
-
-Actualmente las lecturas provienen de datos simulados; sin embargo, la arquitectura permite sustituir esta fuente por dispositivos físicos sin modificar el resto del sistema.
+# 1. Vista general
 
 ```mermaid
 flowchart LR
-
-Usuario((Usuario))
-
-Angular["Angular 20"]
-
-API["ASP.NET Core Web API"]
-
-Background["Background Service<br/>Simulación de Sensores"]
-
-SQL[(SQL Server 2022)]
-
-SignalR["SignalR Hub"]
-
-Angular --> API
-
-Usuario --> Angular
-
-Background --> API
-
-API --> SQL
-
-API --> SignalR
-
-SignalR --> Angular
+  U((Usuario)) --> B[Navegador<br/>Angular 22]
+  E((ESP8266)) -->|HTTPS| G
+  B -->|HTTPS /api, /hubs| G[API Gateway<br/>.NET 10 · YARP]
+  G --> AU[auth-service<br/>NestJS]
+  G --> CO[community-service<br/>.NET 10]
+  G --> SE[sensor-service<br/>.NET 10 · SignalR]
+  G --> AL[alert-service<br/>Spring Boot]
+  G --> RE[report-service<br/>FastAPI]
+  G --> AD[audit-service<br/>FastAPI]
+  AU --> PG1[(PostgreSQL<br/>climguard_auth)]
+  CO --> PG2[(PostgreSQL<br/>climguard_community)]
+  AL --> PG3[(PostgreSQL<br/>climguard_alert)]
+  SE --> SQL[(SQL Server<br/>ClimGuardSensor)]
+  RE --> MG1[(MongoDB<br/>climguard_reports + GridFS)]
+  AD --> MG2[(MongoDB<br/>climguard_audit)]
+  SE -->|evaluar lectura| AL
+  RE -->|datos del reporte| CO & SE & AL & AD
+  AU & CO & AL -->|eventos| AD
+  AU -->|OIDC / OAuth 2.0| EXT[Google · GitHub]
 ```
 
----
+ClimGuard pasó de un monolito (Fases 1-2) a **siete servicios** independientes: un gateway y seis microservicios, cada uno con su propia base de datos. El frontend es una aplicación Angular servida como archivos estáticos.
 
-# 2. Arquitectura por Capas
+# 2. Componentes
 
-El sistema se encuentra organizado mediante una arquitectura por capas, donde cada componente posee una responsabilidad claramente definida.
+| Componente | Tecnología | Responsabilidad | Datos |
+|---|---|---|---|
+| Frontend | Angular 22, SignalR, Leaflet | Interfaz por roles, panel en tiempo real, mapa, formularios | — |
+| API Gateway | ASP.NET Core 10 + YARP 2.3 | Único punto de entrada: enruta `/api/*` y `/hubs/*`, valida el JWT, CORS, límites por IP | — |
+| auth-service | NestJS 11 + TypeORM | Login local, OAuth 2.0/OIDC (Google, GitHub), emisión de JWT, usuarios y roles | PostgreSQL |
+| community-service | ASP.NET Core 10 + EF Core | Comunidades (ubicación, departamento, municipio) | PostgreSQL |
+| sensor-service | ASP.NET Core 10 + EF Core + SignalR | Sensores, lecturas, estadísticas, simulador, hub `/hubs/monitoreo` | SQL Server |
+| alert-service | Java 21 + Spring Boot 3.4 + Hibernate | Reglas, evaluación de lecturas, alertas y eventos, catálogos | PostgreSQL |
+| report-service | Python 3.12 + FastAPI + Jinja2 + WeasyPrint | Reportes PDF por trozos, historial, descarga, indicadores del panel | MongoDB + GridFS |
+| audit-service | Python 3.12 + FastAPI | Bitácora de acciones | MongoDB |
+
+Detalle de rutas: [DOC-12](DOC-12-API.md). Guía del código: [services/README.md](../services/README.md).
+
+# 3. Flujo de una lectura
+
+```mermaid
+sequenceDiagram
+  participant D as ESP8266 o simulador
+  participant S as sensor-service
+  participant A as alert-service
+  participant H as Hub SignalR
+  participant W as Navegador
+  D->>S: POST /api/readings (JWT de Operador) — o generación interna cada 5 s
+  S->>S: guarda la lectura (SQL Server)
+  S->>H: LecturaNueva
+  H-->>W: actualiza panel y mapa
+  S->>A: POST /api/alerts/evaluate (X-Internal-Key)
+  A->>A: aplica reglas activas del tipo de sensor (mayor nivel gana; cooldown)
+  A-->>S: generated / alert / condicionPeligro
+  S->>H: AlertaNueva (si se creó)
+  H-->>W: alerta en pantalla y alarma si es emergencia
+```
+
+- **Sensores físicos** (`Origen = FISICO`): el ESP8266 inicia sesión con un usuario de rol Operador y envía cada lectura.
+- **Sensores simulados** (`Origen = SIMULADO`): el simulador del sensor-service genera una lectura cada 5 s para cada sensor simulado **activo**. Ambos tipos siguen el mismo camino.
+
+# 4. Seguridad
+
+| Aspecto | Implementación |
+|---|---|
+| Identidad | JWT HS256 emitido por el auth-service; `role` y `permissions` en el token. Vida configurable (`JWT_EXPIRATION_MINUTES`, 30 min). |
+| Login externo | Google con OIDC (Authorization Code + PKCE + `state` + `nonce`, ID Token verificado contra el JWKS de Google); GitHub con OAuth 2.0 (Code + PKCE + `state`). El JWT de ClimGuard se entrega por un código de un solo uso canjeado por POST, nunca en la URL. Usuarios nuevos se registran como **Consulta**; nunca como Administrador. |
+| Autorización | Doble capa: el gateway exige un token válido; cada servicio vuelve a validarlo y comprueba rol o permiso (RBAC). La interfaz oculta opciones según los permisos, pero no es una barrera de seguridad. |
+| Comunicación interna | Clave compartida `X-Internal-Key` para llamadas de servicio a servicio; el report-service usa el JWT del usuario que pide el reporte. |
+| Contraseñas | scrypt con sal; los hashes heredados de la Fase 2 (SHA-256) se convierten al iniciar sesión. |
+| Transporte | HTTPS con certificado de Let's Encrypt; HSTS, `nosniff`, `SAMEORIGIN`, `Referrer-Policy`. |
+| Abuso | Límites por IP en el gateway: login 10/min, OAuth 30/min, general 300/min. |
+| Secretos | Variables de entorno: `.env` (local, no versionado) o Secret de Kubernetes (producción). Ningún secreto en el repositorio ni en los manifiestos. |
+
+# 5. Datos
+Cada servicio es dueño de su base de datos y ningún otro servicio la consulta directamente.
+
+| Motor | Bases | Usuario | Contenido |
+|---|---|---|---|
+| PostgreSQL 16 | `climguard_auth`, `climguard_community`, `climguard_alert` | uno por base (`auth`, `community`, `alert`) | Usuarios, roles e identidades externas; comunidades; reglas, alertas, eventos y catálogos |
+| SQL Server 2022 | `ClimGuardSensor` | `sa` (contenedor dedicado) | Sensores, tipos, estados y lecturas |
+| MongoDB 7 | `climguard_reports`, `climguard_audit` | `root` (contenedor dedicado) | Metadatos de reportes y PDF en GridFS; eventos de auditoría |
+
+Modelo: [DOC-10](DOC-10-Modelo%20de%20BD.md) y [DOC-11](DOC-11%20Diagrama%20Entidad-Relaci%C3%B3n.md). Cambios de esquema: [MIGRACIONES.md](MIGRACIONES.md).
+
+# 6. Despliegue
+
+## 6.1 Desarrollo local — Docker Compose
+`docker-compose.yml` levanta los 12 contenedores (borde nginx, frontend, gateway, 6 microservicios y 3 motores de base de datos). Solo el borde publica puertos (`8443`). Cada base de datos vive en una red que comparte únicamente con su servicio, y la red de servicios no tiene salida a Internet; `docker-compose.oauth.yml` agrega salida solo al auth-service para OAuth.
+
+## 6.2 Producción — Kubernetes K3s
 
 ```mermaid
 flowchart TB
-
-subgraph Frontend
-Angular["Angular 20"]
-end
-
-subgraph Backend
-Controllers["Controllers"]
-Services["Services"]
-BackgroundServices["Background Services"]
-Repositories["Repositories"]
-end
-
-subgraph Persistencia
-SQL[(SQL Server)]
-end
-
-Angular --> Controllers
-Controllers --> Services
-Services --> Repositories
-Repositories --> SQL
+  I((Internet)) -->|443| N[nginx del host<br/>Let's Encrypt]
+  N -->|127.0.0.1:30443| T[Traefik<br/>Ingress + TLS]
+  subgraph K3s["K3s · namespace climguard"]
+    T -->|/| F[Deployment frontend]
+    T -->|/api, /hubs| GW[Deployment gateway]
+    GW --> MS[6 Deployments de microservicios]
+    MS --> DB1[(StatefulSet postgres<br/>PVC 5 Gi)]
+    MS --> DB2[(StatefulSet sqlserver<br/>PVC 10 Gi)]
+    MS --> DB3[(StatefulSet mongo<br/>PVC 5 Gi)]
+  end
 ```
 
-## Descripción de las capas
+| Recurso | Uso |
+|---|---|
+| Deployments (8) | frontend, gateway y 6 microservicios; 1 réplica cada uno. Backend con `maxSurge: 0` (no duplica la RAM en el nodo de 8 GB); frontend con `maxSurge: 1, maxUnavailable: 0` (actualización sin corte). |
+| StatefulSets (3) + PVC | PostgreSQL, SQL Server y MongoDB con almacenamiento persistente `local-path`. |
+| Services (11) | `ClusterIP` para cada componente; ninguno expuesto fuera del clúster. |
+| Ingress + Middleware | Traefik con TLS y cabeceras de seguridad; rutas `/api`, `/hubs` y `/`. |
+| ConfigMaps | `climguard-config` (configuración no secreta), `postgres-init` (script de inicialización), `postgres-migrations` (scripts SQL). |
+| Secrets | `climguard-secrets` (claves y contraseñas), `climguard-tls` (certificado). |
+| Probes | *startup* y *liveness* en `/health`, *readiness* en `/ready` (comprueba la base de datos). |
 
-| Capa | Responsabilidad |
-|------|-----------------|
-| Frontend | Presentación de la información e interacción con el usuario. |
-| Controllers | Recepción de solicitudes HTTP y exposición de la API REST. |
-| Services | Implementación de la lógica de negocio del sistema. |
-| Background Services | Generación de los valores para los sensores. |
-| Repositories | Acceso a la base de datos mediante consultas y persistencia de información. |
-| SQL Server | Almacenamiento permanente de la información del sistema. |
+Decisiones de red: K3s se instaló sin `servicelb`, de modo que Traefik **no** toma los puertos 80/443 del host (los conserva el nginx del host con certbot y el DNS autoritativo de la VPS no se ve afectado); los NodePorts solo escuchan en `127.0.0.1`. Los manifiestos se generan con `scripts/gen-k8s.py`; la operación está en [k8s/README.md](../k8s/README.md) y la historia del despliegue en [K3S_PROGRESS.md](fases/fase-4/K3S_PROGRESS.md).
 
----
+# 7. Patrones y decisiones
 
-# 3. Diagrama de Componentes
+| Patrón / decisión | Aplicación | Qué aporta |
+|---|---|---|
+| Microservicios con base de datos por servicio | Seis servicios independientes | Cada servicio se construye, despliega y falla por separado |
+| API Gateway | YARP | Un solo punto de entrada, validación de token y límites centralizados |
+| Persistencia políglota | PostgreSQL, SQL Server, MongoDB | SQL Server mantiene el modelo de sensores y lecturas que venía de la Fase 2; MongoDB guarda PDF (GridFS) y eventos sin esquema fijo |
+| Publish / Subscribe | SignalR | Panel y mapa en tiempo real |
+| RBAC por permisos | JWT `permissions` + `roles.ts` en el cliente | Mínimo privilegio; un solo lugar define qué puede cada rol |
+| Evaluación de reglas espejo | `RuleEvaluator.java` y `peligro.ts` con los mismos vectores de prueba | El color en pantalla coincide con la decisión del backend |
+| Reportes asíncronos con cola acotada | `202` + historial; troceo del PDF | Evitar que un reporte grande agote la memoria (429 y 422 controlados) |
+| Infraestructura generada | `gen-k8s.py` | Manifiestos reproducibles y verificables en CI |
 
-El siguiente diagrama representa los principales componentes funcionales implementados en ClimGuard y la comunicación existente entre ellos.
-
-```mermaid
-flowchart LR
-
-subgraph Frontend
-
-Login
-
-Dashboard
-
-Comunidades
-
-Sensores
-
-Alertas
-
-Bitacora
-
-Configuracion
-
-end
-
-subgraph Backend
-
-Controllers
-
-Services
-
-Repositories
-
-SignalR
-
-end
-
-subgraph BaseDatos
-
-SQLServer[(SQL Server)]
-
-end
-
-Login --> Controllers
-Dashboard --> Controllers
-Comunidades --> Controllers
-Sensores --> Controllers
-Alertas --> Controllers
-Bitacora --> Controllers
-Configuracion --> Controllers
-
-Controllers --> Services
-Services --> Repositories
-
-Repositories --> SQLServer
-
-Services --> SignalR
-```
-
----
-
-# 4. Flujo General de la Información
-
-El flujo de procesamiento de la información dentro del sistema se realiza de la siguiente manera:
-
-1. El usuario interactúa con la aplicación Angular.
-2. Angular consume los servicios expuestos por la API REST.
-3. Los Controllers reciben la solicitud.
-4. Los Services ejecutan la lógica de negocio.
-5. Los Repositories realizan las operaciones sobre SQL Server.
-6. El Background Service obtiene periódicamente los sensores activos.
-7. Genera nuevas lecturas para cada sensor.
-8. Actualiza el valor actual del sensor.
-9. Evalúa las reglas de alerta configuradas.
-10. Registra automáticamente las alertas generadas.
-11. SignalR notifica los cambios al frontend.
-12. Angular actualiza la interfaz en tiempo real.
-
----
-
-# 5. Tecnologías Utilizadas
-
-| Componente | Tecnología |
-|------------|------------|
-| Frontend | Angular 20 |
-| Backend | .NET 10 Web API |
-| Comunicación Cliente-Servidor | REST |
-| Comunicación en tiempo real | SignalR |
-| ORM | Entity Framework Core | 
-| Base de Datos | SQL Server 2022 |
-| Contenedores | Docker |
-| Control de versiones | Git |
-| Repositorio | GitHub |
-
----
-
-# 6. Patrones Arquitectónicos Utilizados
-
-| Patrón | Aplicación |
-|---------|------------|
-| Arquitectura por capas | Separación entre presentación, lógica de negocio y acceso a datos. |
-| Repository | Encapsula el acceso a la base de datos. |
-| Service Layer | Centraliza la lógica de negocio del sistema. |
-| Dependency Injection | Utilizado por .NET para la gestión de dependencias. |
-| Background Service   | Simulación automática de lecturas y generación periódica de alertas. |
-| API REST | Comunicación entre Angular y el backend. |
-| Publish / Subscribe | Implementado mediante SignalR para actualizar información en tiempo real. |
-
----
-
-# 7. Despliegue
-
-Durante el desarrollo del proyecto todos los componentes se ejecutan mediante contenedores Docker.
-
-```mermaid
-flowchart LR
-
-Usuario --> Angular
-
-Angular --> API
-
-API --> SQLServer
-
-API --> SignalR
-```
-
-La utilización de Docker facilita la portabilidad del sistema y garantiza que todos los servicios puedan ejecutarse bajo una configuración uniforme en diferentes entornos.
-
----
-
-# 8. Escalabilidad
-
-La arquitectura implementada permite incorporar nuevas funcionalidades sin modificar significativamente la estructura existente.
-
-Entre las posibles ampliaciones futuras se encuentran:
-
-- Integración con sensores físicos mediante ESP32 u otros microcontroladores.
-- Incorporación de nuevos tipos de sensores.
-- Envío de notificaciones mediante correo electrónico o SMS.
-- Integración con servicios meteorológicos externos.
-- Despliegue en infraestructura en la nube.
-- Sustitución del Background Service por sensores físicos sin afectar la arquitectura general.
-
----
-
-# 9. Consideraciones de Diseño
-
-Durante el desarrollo del primer release se tomaron las siguientes decisiones arquitectónicas:
-
-- La comunicación entre el frontend y el backend se realiza exclusivamente mediante una API REST.
-- La actualización en tiempo real del dashboard se implementa mediante SignalR.
-- Las lecturas son generadas automáticamente por un Background Service que simula el comportamiento de los sensores y almacena el historial en la base de datos.
-- La persistencia de la información se realiza en SQL Server 2022.
-- Los servicios del sistema se ejecutan utilizando contenedores Docker.
-
----
-
-# Observaciones
-
-- La arquitectura implementada favorece el mantenimiento y la evolución del sistema mediante una clara separación de responsabilidades.
-- La incorporación futura de sensores físicos no requerirá cambios significativos en el frontend ni en la estructura general de la aplicación.
-- El presente documento describe la arquitectura correspondiente al segundo release de ClimGuard.
+# 8. Limitaciones conocidas
+Un solo nodo (sin alta disponibilidad), sin NetworkPolicies en K3s, JWT con clave compartida y respaldos manuales. Lista completa: [riesgos-y-pendientes.md](riesgos-y-pendientes.md).
