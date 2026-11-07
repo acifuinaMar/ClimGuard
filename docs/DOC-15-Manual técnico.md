@@ -85,7 +85,7 @@ VPS Linux Ubuntu 22.04 con 4 vCPU, 8 GB de RAM y 50 GB de disco; K3s; nginx y ce
 | `scripts/test-all.sh` | Pruebas de Report, Audit, Auth, Alert y sintaxis YAML |
 
 # 5. Configuración (variables de entorno)
-Toda la configuración entra por variables de entorno. En desarrollo vienen de `.env` (plantilla: `.env.example`, generada con `./scripts/gen-env.sh`); en producción, del ConfigMap `climguard-config` (valores no secretos) y del Secret `climguard-secrets` (secretos). **`.env` nunca se versiona.**
+Toda la configuración entra por variables de entorno. En desarrollo vienen de `.env` (plantilla: `.env.example`, generada con `bash scripts/gen-env.sh`); en producción, del ConfigMap `climguard-config` (valores no secretos) y del Secret `climguard-secrets` (secretos). **`.env` nunca se versiona.**
 
 | Variable | Secreta | Descripción |
 |---|:-:|---|
@@ -118,8 +118,8 @@ Valores de producción no secretos: `CONFIG_DATA` en `scripts/gen-k8s.py`.
 ```bash
 git clone https://github.com/acifuinaMar/ClimGuard.git
 cd ClimGuard
-./scripts/gen-env.sh            # crea .env con secretos aleatorios (no sobrescribe uno existente)
-./scripts/gen-certs.sh          # nginx/certs/server.{crt,key}, autofirmado
+bash scripts/gen-env.sh         # crea .env con secretos aleatorios (no sobrescribe uno existente)
+bash scripts/gen-certs.sh       # nginx/certs/server.{crt,key}, autofirmado
 docker compose up --build -d    # el primer build tarda varios minutos
 docker compose ps               # todos los servicios deben quedar "healthy"
 ```

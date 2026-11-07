@@ -83,8 +83,8 @@ Requisitos: Docker con Compose v2, Bash (Linux, macOS o Git Bash en Windows), Op
 
 ```bash
 git clone https://github.com/acifuinaMar/ClimGuard.git && cd ClimGuard
-./scripts/gen-env.sh          # crea .env con secretos aleatorios (nunca se versiona)
-./scripts/gen-certs.sh        # certificado autofirmado para https://localhost:8443
+bash scripts/gen-env.sh       # crea .env con secretos aleatorios (nunca se versiona)
+bash scripts/gen-certs.sh     # certificado autofirmado para https://localhost:8443
 docker compose up --build     # primer arranque: varios minutos (SQL Server, Maven, npm, NuGet)
 ```
 

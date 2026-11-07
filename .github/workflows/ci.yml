@@ -138,7 +138,7 @@ jobs:
             -strict -summary -ignore-missing-schemas /k8s/climguard.yaml /k8s/traefik-config.yaml
       - name: Docker Compose (con un .env de prueba generado al vuelo)
         run: |
-          ./scripts/gen-env.sh
+          bash scripts/gen-env.sh   # los .sh se versionan sin permiso de ejecución
           docker compose -f docker-compose.yml config -q
           docker compose -f docker-compose.yml -f docker-compose.oauth.yml config -q
           rm -f .env
