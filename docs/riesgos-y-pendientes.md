@@ -2,6 +2,8 @@
 
 Estado al 6 de noviembre de 2026. Reemplaza, para la versión vigente, al registro histórico de la Fase 3 ([RIESGOS-PENDIENTES.md](fases/fase-3/RIESGOS-PENDIENTES.md)), cuyos riesgos de compilación y despliegue quedaron resueltos al construir y desplegar la Fase 4.
 
+> **Alcance.** La entrega de reorganización documental de ClimGuard 4.1 **no modifica el frontend, el backend, las configuraciones operativas ni los manifiestos de Kubernetes**. Los hallazgos de este documento —en particular **S1, S2, F4 y F5**, identificados durante la revisión de la documentación— quedan registrados para una versión posterior y **no se corrigen en esta entrega**. Las acciones S1 y S2 que no requieren cambiar código (revisar o desactivar el usuario de prueba y cambiar contraseñas desde la pantalla Usuarios) son tareas de operación del equipo.
+
 ## Seguridad — acciones recomendadas
 | # | Hallazgo | Gravedad | Acción |
 |---|---|---|---|
