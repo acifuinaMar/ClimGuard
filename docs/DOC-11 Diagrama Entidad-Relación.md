@@ -5,8 +5,16 @@
 |-----------|-----------|
 | Documento | Diagrama Entidad-Relación |
 | Código | DOC-11 |
-| Versión | 2.0 |
-| Estado | Finalizado |
+| Versión | 3.0 |
+| Estado | Vigente (ClimGuard 4.1) |
+
+### Historial de versiones
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 – 2.0 | Agosto – octubre 2026 | Diagrama entidad-relación de la base única SQL Server de la Fase 2. |
+| 3.0 | Noviembre 2026 | Diagramas vigentes por base de datos y referencias lógicas entre servicios. |
+
+> Las secciones originales describen el modelo de la Fase 2 (una sola base SQL Server) y se conservan como registro. El modelo vigente está en la sección final.
 
 ---
 
@@ -97,3 +105,49 @@ USUARIO ||--o{ BITACORA : registra
 - La entidad **ReglaAlerta** centraliza la configuración de las condiciones para la generación de alertas.
 - La entidad **Alerta** conserva snapshots de la regla aplicada (`MensajeSnap`, `NivelAlertaIdSnap` y `TipoFenomenoIdSnap`), garantizando la trazabilidad histórica aun cuando las reglas sean modificadas posteriormente.
 - El modelo incorpora auditoría en las entidades principales mediante usuario y fecha de creación/modificación.
+
+---
+
+# Diagramas vigentes (ClimGuard 4.1)
+Atributos completos en [DOC-10 §10](DOC-10-Modelo%20de%20BD.md).
+
+## auth-service (PostgreSQL `climguard_auth`)
+```mermaid
+erDiagram
+ROLES ||--o{ USERS : asigna
+USERS ||--o{ EXTERNAL_IDENTITIES : vincula
+USERS ||--o{ OAUTH_LOGIN_CODES : recibe
+OAUTH_FLOWS
+```
+
+## sensor-service (SQL Server `ClimGuardSensor`)
+```mermaid
+erDiagram
+TIPO_SENSOR ||--o{ SENSOR : clasifica
+ESTADO_SENSOR ||--o{ SENSOR : estado
+SENSOR ||--o{ LECTURA_SENSOR : registra
+```
+
+## alert-service (PostgreSQL `climguard_alert`)
+```mermaid
+erDiagram
+NIVEL_ALERTA ||--o{ REGLA_ALERTA : define
+TIPO_FENOMENO ||--o{ REGLA_ALERTA : clasifica
+REGLA_ALERTA ||--o{ ALERTA : genera
+ESTADO_ALERTA ||--o{ ALERTA : estado
+ALERTA ||--o{ EVENTO_ALERTA : historial
+```
+
+## community-service (PostgreSQL `climguard_community`)
+Una entidad: `communities`.
+
+## Referencias lógicas entre servicios
+No son claves foráneas: cada servicio guarda el identificador y lo valida a través de la API del otro.
+
+| Desde | Atributo | Hacia |
+|---|---|---|
+| Sensor (sensor-service) | comunidadId | communities (community-service) |
+| regla_alerta (alert-service) | tipoSensorId | TipoSensor (sensor-service) |
+| alerta, evento_alerta (alert-service) | sensorId, comunidadId | Sensor, communities |
+| evento_alerta, alerta (alert-service) | usuarioId, usuarioResponsableId | users (auth-service) |
+| reports (report-service) | generatedBy | users (auth-service) |

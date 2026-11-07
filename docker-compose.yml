@@ -1,7 +1,7 @@
 # =====================================================================
 #  ClimGuard Fase 3 — microservicios
 #  Uso:   ./scripts/gen-env.sh && ./scripts/gen-certs.sh && docker compose up --build
-#  Web:   https://localhost:${EDGE_HTTPS_PORT:-8443}     (admin / Admin123 con SEED_DEFAULT_USERS=true)
+#  Web:   https://localhost:${EDGE_HTTPS_PORT:-8443}     (usuarios demo con SEED_DEFAULT_USERS=true, solo desarrollo)
 #  Solo el nginx de borde publica puertos. Cada base de datos vive en una red
 #  que comparte únicamente con SU servicio (ningún servicio ve la BD de otro).
 #  RAM aproximada del stack completo: 5-6 GB. Para un subconjunto:

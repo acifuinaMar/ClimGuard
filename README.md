@@ -1,173 +1,129 @@
-# ClimGuard
+# ClimGuard 4.1
 
-## Sistema Web de Monitoreo y Alerta Temprana para Riesgos Climáticos
+**Sistema web de monitoreo y alerta temprana de riesgos climáticos para comunidades vulnerables.**
 
-> Proyecto desarrollado para el curso de **Desarrollo Web** utilizando una arquitectura cliente-servidor basada en Angular, ASP.NET Core, SQL Server y Docker.
+Proyecto académico del curso de Desarrollo Web (Universidad Mariano Gálvez). ClimGuard recibe lecturas de sensores físicos (ESP8266) y simulados, evalúa reglas de alerta, notifica en tiempo real y genera reportes PDF. Está construido como un conjunto de microservicios detrás de un API Gateway y se ejecuta en producción sobre Kubernetes (K3s).
 
----
-
-## Descripción
-
-ClimGuard es una plataforma web diseñada para el monitoreo de variables climáticas y la generación automática de alertas tempranas para comunidades vulnerables.
-
-El sistema permite administrar comunidades, sensores, reglas de alerta y catálogos, mientras un **Background Service** simula el comportamiento de los sensores, registra lecturas históricas y genera alertas automáticamente cuando se cumplen las condiciones configuradas.
-
-La información se actualiza en tiempo real mediante **SignalR**, ofreciendo una experiencia dinámica para el usuario.
+- **Producción:** <https://climguard.acifuina.online>
+- **Versión estable:** etiqueta [`v4.1.0`](https://github.com/acifuinaMar/ClimGuard/tree/v4.1.0) (frontend 4.1.0, backend 4.0.0)
+- **Documentación completa:** [docs/README.md](docs/README.md)
 
 ---
 
-# Características principales
+## Funcionalidades
 
-- Administración de comunidades.
-- Gestión de sensores climáticos.
-- Simulación automática de lecturas.
-- Generación automática de alertas.
-- Configuración de reglas de alerta.
-- Historial de lecturas.
-- Bitácora de acciones.
-- Actualización en tiempo real mediante SignalR.
-- Despliegue utilizando Docker.
-- Arquitectura preparada para integrar sensores físicos (IoT).
+| Área | Qué permite |
+|---|---|
+| Acceso | Inicio de sesión con usuario y contraseña, o con **Google** (OIDC) y **GitHub** (OAuth 2.0); vinculación de cuentas externas; roles Administrador, Operador y Consulta. |
+| Monitoreo | Panel en tiempo real (SignalR) con el estado de cada sensor, alertas activas y gráfica de evolución; mapa de comunidades y sensores por nivel de alerta; alarma visual y sonora ante emergencias. |
+| Sensores | Alta, edición y activación/desactivación; origen **Físico** (lecturas enviadas por el dispositivo) o **Simulado** (lecturas generadas por el sistema); comunidad elegida de una lista. |
+| Comunidades | Registro con coordenadas; país, y para Guatemala **departamento y municipio en cascada** (22 departamentos, 340 municipios). |
+| Reglas y alertas | Reglas por tipo de sensor con intervalo de peligro `[mínimo, máximo]`, nivel y fenómeno; generación automática de alertas; atención de alertas; historial de eventos con filtros; catálogo de tipos de fenómeno. |
+| Reportes | 8 tipos de reporte PDF (comunidades, sensores, lecturas, alertas, historial de eventos, estado de sensores, estadísticas climáticas y ejecutivo) con filtros, historial y descarga. |
+| Administración | Gestión de usuarios y roles; bitácora de auditoría de todas las acciones. |
 
----
-
-# Tecnologías utilizadas
-
-| Tecnología | Versión |
-|------------|----------|
-| Angular | 20 |
-| ASP.NET Core Web API | 10 |
-| SQL Server | 2022 |
-| Entity Framework Core | 10 |
-| SignalR | Incluido en .NET |
-| Docker & Docker Compose | Última estable |
-| Git | Control de versiones |
-| GitHub | Repositorio remoto |
-
----
-
-# Arquitectura
-
-El sistema se encuentra organizado bajo una arquitectura cliente-servidor.
+## Arquitectura
 
 ```text
-                 Usuario
-                    │
-                    ▼
-            Angular Frontend
-                    │
-          REST API + SignalR
-                    │
-          ASP.NET Core Web API
-                    │
-      Background Service (Simulación)
-                    │
-              SQL Server 2022
+Navegador ──HTTPS──► nginx (host, Let's Encrypt) ──► Traefik (Ingress K3s, TLS)
+                                                     ├─ /            ► frontend            Angular 22 (nginx)
+                                                     └─ /api, /hubs  ► gateway             .NET 10 · YARP (JWT, CORS, límites)
+                                                                         ├─ auth-service       NestJS 11 · PostgreSQL
+                                                                         ├─ community-service  .NET 10 · PostgreSQL
+                                                                         ├─ sensor-service     .NET 10 · SQL Server · SignalR · simulador
+                                                                         ├─ alert-service      Java 21 · Spring Boot 3.4 · PostgreSQL
+                                                                         ├─ report-service     Python 3.12 · FastAPI · MongoDB/GridFS · WeasyPrint
+                                                                         └─ audit-service      Python 3.12 · FastAPI · MongoDB
+ESP8266 ──HTTPS── POST /api/auth/login → POST /api/readings
 ```
 
-El **Background Service** ejecuta periódicamente la simulación de sensores, registra las lecturas generadas, evalúa las reglas configuradas y crea automáticamente las alertas correspondientes.
+- Cada microservicio tiene su propia base de datos; se comunican solo por HTTP (con el JWT del usuario o una clave interna).
+- El JWT lo emite el auth-service (también tras el login con Google o GitHub) y lo validan el gateway y cada servicio.
+- En K3s las bases de datos son StatefulSets con volúmenes persistentes; la configuración va en ConfigMaps y los secretos en Secrets.
 
----
+Detalle: [DOC-13 Arquitectura de Software](docs/DOC-13-Arquitectura%20de%20Software.md).
 
-# Estructura del Proyecto
+## Tecnologías
+
+| Capa | Tecnología |
+|---|---|
+| Frontend | Angular 22, TypeScript 6, SignalR, Leaflet |
+| API Gateway | ASP.NET Core 10 + YARP 2.3 |
+| Microservicios | NestJS 11 + TypeORM (auth) · ASP.NET Core 10 + EF Core (community, sensor) · Spring Boot 3.4 + Hibernate (alert) · FastAPI (report, audit) |
+| Datos | PostgreSQL 16 · SQL Server 2022 · MongoDB 7 (GridFS para PDF) |
+| Seguridad | JWT HS256, OAuth 2.0 / OIDC (Google, GitHub) con PKCE, HTTPS, RBAC por permisos |
+| Infraestructura | Docker / Docker Compose (local) · K3s + Traefik (producción) · Let's Encrypt |
+| Dispositivo | ESP8266 (firmware fuera de este repositorio) |
+
+## Estructura del repositorio
 
 ```text
-ClimGuard
-│
-├── frontend/
-│   └── climguard-web/
-│
-├── ClimGuard Backend/
-│   ├── API/
-│   ├── Application/
-│   ├── Domain/
-│   ├── Infrastructure/
-│   └── Services/
-│
-├── Script para DB/
-│
-├── docs/
-│
-├── docker-compose.yml
-│
-└── README.md
+ClimGuard/
+├── README.md                 este archivo
+├── docs/                     documentación (índice en docs/README.md)
+│   ├── DOC-00 … DOC-15       análisis, diseño, API, arquitectura y manuales
+│   ├── MIGRACIONES.md · pruebas.md · riesgos-y-pendientes.md
+│   └── fases/                documentación histórica de cada fase
+├── frontend/climguard-web/   aplicación Angular
+├── services/                 microservicios: gateway, auth, community, sensor, alert, report, audit
+├── docker/postgres/          inicialización de PostgreSQL (bases y usuarios por servicio)
+├── nginx/                    configuración del borde HTTPS para Docker Compose
+├── k8s/                      manifiestos de producción (generados) y guía de operación
+├── scripts/                  generación de .env, certificados y manifiestos; migraciones SQL; respaldo y recuperación
+├── docker-compose.yml        stack completo para desarrollo local
+├── docker-compose.oauth.yml  salida a Internet solo para el auth-service (OAuth)
+└── .github/workflows/        integración continua (pruebas y builds)
 ```
 
----
+Más detalle por carpeta: [services/README.md](services/README.md) y [frontend/climguard-web/README.md](frontend/climguard-web/README.md).
 
-# Ejecución rápida
+## Ejecución local (Docker Compose)
 
-## 1. Clonar el repositorio
+Requisitos: Docker con Compose v2, Bash (Linux, macOS o Git Bash en Windows), OpenSSL, unos 6 GB de RAM libres.
 
 ```bash
-git clone <URL_DEL_REPOSITORIO>
+git clone https://github.com/acifuinaMar/ClimGuard.git && cd ClimGuard
+bash scripts/gen-env.sh       # crea .env con secretos aleatorios (nunca se versiona)
+bash scripts/gen-certs.sh     # certificado autofirmado para https://localhost:8443
+docker compose up --build     # primer arranque: varios minutos (SQL Server, Maven, npm, NuGet)
 ```
 
-## 2. Ingresar al proyecto
+- Aplicación: <https://localhost:8443> (el navegador advertirá del certificado autofirmado).
+- Usuarios iniciales: con `SEED_DEFAULT_USERS=true` en `.env` se crean usuarios de demostración **solo para desarrollo local**; nunca active esa opción en producción.
+- Login con Google o GitHub en local: complete las variables `OAUTH_*`, `GOOGLE_*` y `GITHUB_*` del `.env` y use `docker compose -f docker-compose.yml -f docker-compose.oauth.yml up --build` (ver [DOC-15 §6](docs/DOC-15-Manual%20t%C3%A9cnico.md)).
+- Detener sin perder datos: `docker compose down` (**no** use `-v`, que borra los volúmenes).
 
-```bash
-cd ClimGuard
-```
+Producción (K3s): [k8s/README.md](k8s/README.md) y [DOC-15 Manual técnico](docs/DOC-15-Manual%20t%C3%A9cnico.md).
 
-## 3. Levantar el entorno
+## Pruebas
 
-```bash
-docker compose up --build
-```
+| Componente | Comando | Resultado de referencia (v4.1) |
+|---|---|---|
+| Frontend | `cd frontend/climguard-web && npx ng test --watch=false --browsers=ChromeHeadless` | 40 / 40 |
+| Report | `cd services/report && python -m unittest discover -s tests -t .` | 68 / 68 |
+| Audit | `cd services/audit && python -m unittest discover -s tests -t .` | 4 / 4 |
+| Auth + OAuth | `bash scripts/test-all.sh` (incluye los demás) | 41 / 41 |
+| Alert (evaluador de reglas) | incluido en `scripts/test-all.sh` | 48 comprobaciones |
 
-## 4. Detener los servicios
+La integración continua de GitHub Actions ejecuta estas pruebas, los builds de todos los servicios y del frontend, valida Compose y los manifiestos de Kubernetes y busca secretos en cada cambio. Detalle: [docs/pruebas.md](docs/pruebas.md).
 
-```bash
-docker compose down
-```
+## Documentación
 
----
+Índice completo: **[docs/README.md](docs/README.md)**. Accesos directos:
+[Manual de usuario](docs/DOC-14-Manual%20de%20usuario.md) ·
+[Manual técnico](docs/DOC-15-Manual%20t%C3%A9cnico.md) ·
+[API](docs/DOC-12-API.md) ·
+[Arquitectura](docs/DOC-13-Arquitectura%20de%20Software.md) ·
+[Operación en K3s](k8s/README.md) ·
+[Historia por fases](docs/README.md#historia-del-proyecto)
 
-# Documentación
+## Evolución
 
-La documentación completa del proyecto se encuentra disponible en la carpeta **docs/** e incluye:
-
-- Introducción
-- Requerimientos
-- Reglas de negocio
-- Historias de usuario
-- Casos de uso
-- Diagramas UML
-- Modelo de Base de Datos
-- API REST
-- Arquitectura de Software
-- Manual de Usuario
-- Manual Técnico
-
----
-
-# Funcionalidades implementadas
-
-- Gestión de usuarios y roles.
-- Administración de comunidades.
-- Administración de sensores.
-- Gestión de tipos de sensores.
-- Gestión de estados.
-- Gestión de niveles de alerta.
-- Gestión de tipos de fenómeno.
-- Configuración de reglas de alerta.
-- Simulación automática de lecturas.
-- Generación automática de alertas.
-- Historial de lecturas.
-- Bitácora del sistema.
-- Dashboard con actualización en tiempo real.
-
----
-
-# Trabajo futuro
-
-El sistema fue diseñado para facilitar futuras ampliaciones, entre ellas:
-
-- Integración con sensores físicos (ESP32 u otros dispositivos IoT).
-- Envío de notificaciones por correo electrónico.
-- Integración con servicios meteorológicos externos.
-- Reportes en PDF y Excel.
-- Predicción de riesgos mediante modelos de inteligencia artificial.
+| Fase | Resumen | Referencia |
+|---|---|---|
+| 1-2 | Monolito ASP.NET Core + SQL Server + Angular, simulación de lecturas y SignalR | [docs/fases/fase-1-2](docs/fases/fase-1-2/README.md) · etiqueta `fase2-main-final` |
+| 3 | Microservicios con API Gateway, PostgreSQL/SQL Server/MongoDB, reportes PDF, auditoría; Docker Compose | [docs/fases/fase-3](docs/fases/fase-3/README.md) |
+| 4 / 4.1 | OAuth 2.0/OIDC (Google, GitHub), despliegue en K3s con migración de datos, desplegables de comunidad y departamento/municipio | [docs/fases/fase-4](docs/README.md#fase-4) · etiqueta `v4.1.0` |
 
 ---
 
@@ -177,25 +133,24 @@ En el desarrollo de este proyecto el equipo utilizó herramientas de IA generati
 
 | Herramienta | Uso |
 |---|---|
-| **ChatGPT** (OpenAI) | Apoyo de consulta durante el desarrollo. *(El equipo completa aquí en qué partes se usó.)* |
-| **Claude Code** (Anthropic) | En la Fase 4, bajo instrucciones y aprobación del equipo en cada etapa: diagnóstico de la VPS, generación de los manifiestos Kubernetes (`scripts/gen-k8s.py`), scripts de secretos, restauración y recuperación (`scripts/k8s-*.sh`, `scripts/rollback-fase3.sh`), ejecución del despliegue en K3s y de la migración de datos, y redacción de `K3S_PROGRESS.md` y `k8s/README.md`. También en los commits que lo declaran con `Co-Authored-By: Claude` (por ejemplo `9179568`, `cb42ef6`, `dea5c12`). |
+| **ChatGPT** (OpenAI) | Apoyo de consulta: análisis de requerimientos, revisión de decisiones técnicas, orientación sobre OAuth 2.0/OIDC y K3s, interpretación de diagnósticos, planificación de la integración y del despliegue, y apoyo en la redacción de documentación. No ejecutó comandos ni pruebas. |
+| **Claude Code** (Anthropic) | En la Fase 4 y 4.1, bajo instrucciones y aprobación del equipo en cada etapa: diagnóstico de la VPS, generador de manifiestos Kubernetes (`scripts/gen-k8s.py`) y scripts de secretos, restauración y recuperación (`scripts/k8s-*.sh`, `scripts/rollback-fase3.sh`); ejecución del despliegue en K3s y de la migración de datos; integración de ramas, corrección de pruebas y ejecución de suites y builds; reorganización de la documentación, manuales y configuración de CI. Los commits en los que participó lo declaran con `Co-Authored-By: Claude`. |
 
-Qué **no** hizo la IA:
-- Las pruebas funcionales en el navegador (login local, Google y GitHub, dashboard, sensores ESP8266 físicos y simulados) las realizó el equipo.
-- La configuración de las aplicaciones OAuth en Google Cloud y GitHub, el registro de sus credenciales y la clasificación de los sensores como *Físico* o *Simulado* los hizo el equipo.
-- Las credenciales no se escribieron en las conversaciones. Claude Code ejecutó en la VPS los scripts que crean los Secrets de Kubernetes, diseñados para no imprimir valores. Una excepción quedó documentada en `K3S_PROGRESS.md`: la contraseña `sa` de proyecto2 apareció en una salida y se eliminó junto con ese despliegue.
-- El código y la documentación generados con ayuda de IA fueron revisados por el equipo antes de incorporarlos.
+Lo que hizo el equipo y no las herramientas de IA:
+- Las pruebas funcionales en el navegador (inicio de sesión local, Google y GitHub, panel, sensores ESP8266 físicos y simulados, formularios).
+- La configuración de las aplicaciones OAuth en Google Cloud y GitHub, y el registro de sus credenciales.
+- La clasificación de los sensores como *Físico* o *Simulado* y la aprobación de cada despliegue.
+
+Sobre credenciales: no se escribieron en las conversaciones. Claude Code ejecutó en la VPS los scripts que crean los Secrets de Kubernetes, diseñados para no imprimir valores. Una excepción quedó documentada en [K3S_PROGRESS.md](docs/fases/fase-4/K3S_PROGRESS.md): una contraseña de un despliegue anterior apareció en una salida y se eliminó junto con ese despliegue. El código y la documentación generados con ayuda de IA fueron revisados por el equipo antes de incorporarlos.
 
 ---
 
-# Equipo de desarrollo
+## Equipo de desarrollo
 
 - **Dalila Nineth Zacarías de León**
 - **Mahuerk Yoc Vázquez**
 - **Maryori Elizabeth Acifuina Juárez**
 
----
-
-# Licencia
+## Licencia
 
 Proyecto desarrollado con fines académicos para el curso de **Desarrollo Web**.

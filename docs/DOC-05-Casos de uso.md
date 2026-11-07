@@ -5,8 +5,16 @@
 |-----------|-----------|
 | Documento | Casos de uso |
 | Código | DOC-05 |
-| Versión | 1.0 |
-| Estado | Finalizado |
+| Versión | 3.0 |
+| Estado | Vigente (ClimGuard 4.1) |
+
+### Historial de versiones
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 | Agosto 2026 | CU-001 a CU-008 (Fases 1 y 2). |
+| 3.0 | Noviembre 2026 | CU-009 a CU-013 de las Fases 3 y 4; nota de vigencia en CU-004; CU-008 corregido para referir a HU-009 (bitácora). |
+
+> Los casos CU-001 a CU-008 se conservan como se especificaron; las notas *Estado en ClimGuard 4.1* indican los cambios.
 
 ---
 
@@ -312,6 +320,8 @@ El presente documento describe los casos de uso implementados en ClimGuard, espe
 - Todo sensor deberá pertenecer a una única comunidad.
 
 # CU-004 – Configurar Umbrales
+
+> **Estado en ClimGuard 4.1:** reemplazado por **CU-013 – Gestionar reglas de alerta**.
 
 ## Información General
 
@@ -718,4 +728,401 @@ El presente documento describe los casos de uso implementados en ClimGuard, espe
 
 ## Historia de Usuario Relacionada
 
+- HU-009
+
+---
+
+# CU-009 – Iniciar sesión con un proveedor externo
+
+## Información General
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | CU-009 |
+| **Nombre** | Iniciar sesión con un proveedor externo |
+| **Objetivo** | Permitir el acceso con una cuenta de Google o GitHub. |
+| **Actor principal** | Usuario |
+| **Actores secundarios** | Google / GitHub, auth-service |
+| **Prioridad** | Alta |
+| **Frecuencia de uso** | Alta |
+| **Disparador** | El usuario pulsa el botón de un proveedor en la pantalla de inicio de sesión. |
+
+---
+
+## Precondiciones
+
+- El proveedor está configurado en el servidor.
+- El usuario tiene una cuenta en el proveedor.
+
+---
+
+## Postcondiciones
+
+### En caso de éxito
+
+- El usuario entra al panel con una sesión de ClimGuard.
+- Si era su primer acceso y el auto-registro está habilitado, queda registrado con rol Consulta.
+- El acceso queda en la bitácora.
+
+### En caso de fallo
+
+- El usuario vuelve a la pantalla de inicio con un mensaje que explica el motivo.
+- No se crea ninguna sesión.
+
+---
+
+## Flujo Principal
+
+1. El usuario pulsa Google o GitHub.
+2. El sistema genera los datos de seguridad del flujo y redirige al proveedor.
+3. El usuario se autentica y autoriza en el proveedor.
+4. El proveedor devuelve al sistema un código de autorización.
+5. El sistema canjea el código, valida la identidad y localiza o crea al usuario.
+6. El sistema entrega al navegador un código de un solo uso.
+7. El navegador canjea ese código por la sesión de ClimGuard.
+8. El sistema muestra el panel.
+
+---
+
+## Flujos Alternos
+
+### FA-01 – Cuenta no registrada
+
+1. El auto-registro está deshabilitado y la identidad no existe.
+2. El sistema informa que la cuenta no está registrada.
+
+### FA-02 – Correo no verificado o dominio no autorizado
+
+1. El proveedor no confirma un correo verificado o el dominio no está permitido.
+2. El sistema rechaza el registro e informa el motivo.
+
+### FA-03 – Flujo expirado o cancelado
+
+1. El usuario cancela o tarda demasiado.
+2. El sistema informa que debe intentarlo de nuevo.
+
+---
+
+## Reglas de Negocio Relacionadas
+
+- RN-024
+- RN-025
+- RN-026
+
+## Requerimientos Funcionales Relacionados
+
+- AUT-RF-003
+- AUT-RF-004
+
+## Historia de Usuario Relacionada
+
 - HU-010
+
+---
+
+# CU-010 – Registrar una lectura de un sensor físico
+
+## Información General
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | CU-010 |
+| **Nombre** | Registrar una lectura de un sensor físico |
+| **Objetivo** | Incorporar al sistema las mediciones de un dispositivo real. |
+| **Actor principal** | Dispositivo ESP8266 |
+| **Actores secundarios** | sensor-service, alert-service |
+| **Prioridad** | Alta |
+| **Frecuencia de uso** | Continua |
+| **Disparador** | El dispositivo obtiene una nueva medición. |
+
+---
+
+## Precondiciones
+
+- El sensor existe, está activo y su origen es Físico.
+- El dispositivo dispone de una cuenta de servicio con rol Operador.
+
+---
+
+## Postcondiciones
+
+### En caso de éxito
+
+- La lectura queda almacenada.
+- El panel la muestra en tiempo real.
+- Si la lectura cae en un intervalo de peligro, se genera la alerta correspondiente.
+
+### En caso de fallo
+
+- La lectura no se registra y el dispositivo recibe el código de error.
+
+---
+
+## Flujo Principal
+
+1. El dispositivo inicia sesión y obtiene un token.
+2. El dispositivo envía la lectura con su token.
+3. El sistema valida el token y los datos.
+4. El sistema guarda la lectura y la publica en tiempo real.
+5. El sistema evalúa la lectura contra las reglas activas del tipo de sensor.
+6. Si corresponde, el sistema genera y publica una alerta.
+
+---
+
+## Flujos Alternos
+
+### FA-01 – Token vencido
+
+1. El sistema responde que el token no es válido.
+2. El dispositivo inicia sesión de nuevo y reenvía la lectura.
+
+### FA-02 – Datos inválidos
+
+1. El sistema rechaza la lectura e indica el error.
+
+---
+
+## Reglas de Negocio Relacionadas
+
+- RN-009
+- RN-011
+- RN-022
+- RN-027
+
+## Requerimientos Funcionales Relacionados
+
+- SEN-RF-004
+- MON-RF-002
+- ALT-RF-001
+
+## Historia de Usuario Relacionada
+
+- HU-013
+
+---
+
+# CU-011 – Atender una alerta
+
+## Información General
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | CU-011 |
+| **Nombre** | Atender una alerta |
+| **Objetivo** | Registrar la atención de una alerta activa. |
+| **Actor principal** | Operador |
+| **Actores secundarios** | Administrador |
+| **Prioridad** | Alta |
+| **Frecuencia de uso** | Media |
+| **Disparador** | El operador selecciona Atender en una alerta activa. |
+
+---
+
+## Precondiciones
+
+- El usuario tiene rol Operador o Administrador.
+- La alerta está activa.
+
+---
+
+## Postcondiciones
+
+### En caso de éxito
+
+- La alerta queda en estado Atendida con el responsable registrado.
+- La alerta deja de figurar entre las activas y aparece en el historial.
+
+### En caso de fallo
+
+- La alerta permanece activa y se informa el error.
+
+---
+
+## Flujo Principal
+
+1. El usuario abre Alertas.
+2. El sistema muestra las alertas activas.
+3. El usuario pulsa Atender.
+4. El sistema cambia el estado y registra al responsable.
+5. El sistema actualiza la lista.
+
+---
+
+## Flujos Alternos
+
+### FA-01 – Sin permiso
+
+1. El usuario no tiene el rol requerido.
+2. El sistema no muestra la acción o la rechaza.
+
+---
+
+## Reglas de Negocio Relacionadas
+
+- RN-013
+- RN-015
+
+## Requerimientos Funcionales Relacionados
+
+- ALT-RF-005
+
+## Historia de Usuario Relacionada
+
+- HU-015
+
+---
+
+# CU-012 – Generar un reporte PDF
+
+## Información General
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | CU-012 |
+| **Nombre** | Generar un reporte PDF |
+| **Objetivo** | Obtener un reporte en PDF con información filtrada. |
+| **Actor principal** | Administrador |
+| **Actores secundarios** | report-service |
+| **Prioridad** | Alta |
+| **Frecuencia de uso** | Media |
+| **Disparador** | El administrador elige un tipo de reporte y pulsa Generar PDF. |
+
+---
+
+## Precondiciones
+
+- El usuario tiene rol Administrador.
+
+---
+
+## Postcondiciones
+
+### En caso de éxito
+
+- El reporte queda en el historial con su identificador.
+- El PDF puede descargarse.
+
+### En caso de fallo
+
+- El reporte queda en estado fallido o no se crea, y se informa el motivo.
+
+---
+
+## Flujo Principal
+
+1. El administrador abre Reportes.
+2. Elige el tipo de reporte.
+3. Completa los filtros.
+4. Pulsa Generar PDF.
+5. El sistema reúne los datos de los servicios correspondientes y genera el PDF.
+6. El sistema registra el reporte en el historial.
+7. El administrador descarga el PDF.
+
+---
+
+## Flujos Alternos
+
+### FA-01 – Límite de filas superado
+
+1. El sistema informa el límite y el total.
+2. El administrador acota los filtros y repite la generación.
+
+### FA-02 – Cola llena
+
+1. Hay demasiados reportes en proceso.
+2. El sistema pide intentarlo más tarde.
+
+---
+
+## Reglas de Negocio Relacionadas
+
+- RN-029
+
+## Requerimientos Funcionales Relacionados
+
+- REP-RF-001
+- REP-RF-002
+- REP-RF-003
+
+## Historia de Usuario Relacionada
+
+- HU-016
+
+---
+
+# CU-013 – Gestionar reglas de alerta
+
+## Información General
+
+| Campo | Descripción |
+|--------|-------------|
+| **Código** | CU-013 |
+| **Nombre** | Gestionar reglas de alerta |
+| **Objetivo** | Definir cuándo una lectura genera una alerta. |
+| **Actor principal** | Administrador |
+| **Actores secundarios** | — |
+| **Prioridad** | Alta |
+| **Frecuencia de uso** | Baja |
+| **Disparador** | El administrador abre Reglas de alerta. |
+
+---
+
+## Precondiciones
+
+- El usuario tiene rol Administrador.
+
+---
+
+## Postcondiciones
+
+### En caso de éxito
+
+- La regla queda registrada y se aplica a las lecturas siguientes.
+- La acción queda en la bitácora.
+
+### En caso de fallo
+
+- La regla no cambia y se informa el error.
+
+---
+
+## Flujo Principal
+
+1. El administrador pulsa Nueva regla o Editar.
+2. Indica tipo de sensor, mínimo, máximo, nivel, fenómeno y mensaje.
+3. El sistema valida que el mínimo no supere el máximo.
+4. El sistema guarda la regla.
+
+---
+
+## Flujos Alternos
+
+### FA-01 – Regla heredada
+
+1. La regla usa la semántica anterior.
+2. El administrador marca Convertir a la semántica nueva e indica el intervalo de peligro.
+3. El sistema guarda la conversión y la registra en la bitácora.
+
+### FA-02 – Intervalo inválido
+
+1. El mínimo es mayor que el máximo.
+2. El sistema impide guardar.
+
+---
+
+## Reglas de Negocio Relacionadas
+
+- RN-016
+- RN-017
+- RN-022
+
+## Requerimientos Funcionales Relacionados
+
+- REG-RF-001
+
+## Historia de Usuario Relacionada
+
+- HU-018
+
+---
+

@@ -5,8 +5,16 @@
 |-----------|-----------|
 | Documento | Modelo de Base de Datos |
 | Código | DOC-10 |
-| Versión | 2.0 |
-| Estado | Finalizado |
+| Versión | 3.0 |
+| Estado | Vigente (ClimGuard 4.1) |
+
+### Historial de versiones
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 – 2.0 | Agosto – octubre 2026 | Modelo relacional único en SQL Server 2022 (Fase 2). |
+| 3.0 | Noviembre 2026 | Modelo vigente: una base de datos por servicio en PostgreSQL 16, SQL Server 2022 y MongoDB 7 (sección 10). |
+
+> Las secciones originales describen el modelo de la Fase 2 (una sola base SQL Server) y se conservan como registro. El modelo vigente está en la sección final.
 
 ---
 
@@ -152,3 +160,50 @@ Las alertas se generan automáticamente mediante un **Background Service**, el c
 - Las reglas de alerta son parametrizables y pueden modificarse sin afectar las alertas históricas gracias al uso de snapshots.
 - El modelo incorpora auditoría para las entidades principales mediante usuario y fecha de creación/modificación.
 - Todas las relaciones implementan integridad referencial mediante claves foráneas en SQL Server 2022.
+
+---
+
+# 10. Modelo vigente (ClimGuard 4.1): una base de datos por servicio
+Desde la Fase 3 cada microservicio es dueño de su base de datos. Los identificadores que apuntan a datos de otro servicio (por ejemplo `comunidadId` en un sensor) son **referencias lógicas**: no hay claves foráneas entre bases distintas y la consistencia la mantienen las APIs (por ejemplo, no se puede eliminar una comunidad con sensores). Las tablas listan los atributos de cada entidad.
+
+## 10.1 PostgreSQL — `climguard_auth` (auth-service)
+| Entidad | Atributos | Notas |
+|---|---|---|
+| roles | id, name, permissions (arreglo) | Administrador, Operador, Consulta |
+| users | id, username, fullName, passwordHash, active, roleId, lastAccess, createdBy, updatedBy, updatedAt | `passwordHash` con scrypt y sal |
+| external_identities | id, provider, subject, userId, email, emailVerified, displayName, avatarUrl, createdAt, lastLoginAt | Único por (provider, subject) |
+| oauth_flows | stateHash, provider, nonce, codeVerifier, bindingHash, linkUserId, expiresAt, consumedAt | Flujos OAuth en curso; vida corta |
+| oauth_login_codes | codeHash, userId, bindingHash, expiresAt, consumedAt | Códigos de canje de un solo uso |
+
+## 10.2 PostgreSQL — `climguard_community` (community-service)
+| Entidad | Atributos |
+|---|---|
+| communities | comunidadId, nombreComunidad, descripcion, pais, departamento, municipio, latitud, longitud, activo, usuarioIng, fechaIng, usuarioAct, fechaAct |
+
+## 10.3 PostgreSQL — `climguard_alert` (alert-service)
+| Entidad | Atributos | Notas |
+|---|---|---|
+| nivel_alerta | nivelAlertaId, nombre, colorHex, activo | Normal, Precaución, Alerta, Emergencia |
+| estado_alerta | estadoAlertaId, nombre, activo | Activa, Atendida, Cerrada |
+| tipo_fenomeno | tipoFenomenoId, nombre, activo | Administrable desde la interfaz |
+| regla_alerta | reglaAlertaId, nombre, tipoSensorId, valorMin, valorMax, nivelAlertaId, tipoFenomenoId, mensaje, activo, requiereRevision, usuarioIng, usuarioAct, fechaAct | `requiereRevision` = regla con la semántica anterior |
+| alerta | alertaId, valorDetectado, mensajeSnap, nivelAlertaIdSnap, tipoFenomenoIdSnap, fechaHora, activo, sensorId, comunidadId, reglaAlertaId, umbralMin, umbralMax, estadoAlertaId, semanticaRegla, usuarioResponsableId | Copia («snap») del nivel, fenómeno y mensaje al momento de la alerta |
+| evento_alerta | eventoId, tipoEventoNombre, descripcion, fechaHora, alertaId, sensorId, comunidadId, tipoFenomenoId, nivelAlertaId, usuarioId | Historial de eventos |
+
+## 10.4 SQL Server — `ClimGuardSensor` (sensor-service)
+| Entidad | Atributos | Notas |
+|---|---|---|
+| TipoSensor | tipoSensorId, nombre, unidadMedida, activo | Temperatura, Humedad, Velocidad del viento, Lluvia, Nivel de río, Nivel de reservorio, Humo / Incendio, Otro |
+| EstadoSensor | estadoSensorId, nombre | Activo, Inactivo, Mantenimiento, Fuera de línea |
+| Sensor | sensorId, nombre, codigo, ubicacion, descripcion, fechaInstalacion, fechaUltimaConexion, valorActual, comunidadId, tipoSensorId, estadoSensorId, origen, usuarioIng, fechaIng, usuarioAct, fechaAct | `origen` ∈ {FISICO, SIMULADO} |
+| LecturaSensor | lecturaId, sensorId, valor, fechaHora, usuarioIng | Historial de lecturas |
+
+## 10.5 MongoDB — `climguard_reports` (report-service) y `climguard_audit` (audit-service)
+| Colección | Contenido |
+|---|---|
+| reports | Metadatos de cada reporte: `reportId` (único, `REP-AAAA-NNNNNN`), tipo, filtros, estado (`PENDING`, `PROCESSING`, `COMPLETED`, `FAILED`), autor (`generatedBy`), fechas, filas, páginas y contador de descargas |
+| pdfs.files / pdfs.chunks | Archivos PDF en GridFS |
+| counters | Secuencia anual de identificadores de reporte |
+| events (`climguard_audit`) | Eventos de auditoría: action, resource, detail, userId, user, source, ip, timestamp |
+
+Esquema y cambios: [MIGRACIONES.md](MIGRACIONES.md).

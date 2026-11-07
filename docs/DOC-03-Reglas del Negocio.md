@@ -5,9 +5,16 @@
 |-----------|-----------|
 | Documento | Reglas de Negocio |
 | Código | DOC-03 |
-| Versión | 1.0 |
-| Estado | Finalizado |
-| Fecha | Agosto 2026 |
+| Versión | 3.0 |
+| Estado | Vigente (ClimGuard 4.1) |
+| Fecha | Noviembre 2026 |
+
+### Historial de versiones
+| Versión | Fecha | Cambios |
+|---|---|---|
+| 1.0 | Agosto 2026 | Reglas RN-001 a RN-021 de las Fases 1 y 2. |
+| 2.0 | Noviembre 2026 (Fase 3) | Semántica de intervalo de las reglas de alerta y origen del sensor. |
+| 3.0 | Noviembre 2026 | Códigos definitivos RN-022 y RN-023 para las reglas de la Fase 3; reglas RN-024 a RN-029 de la Fase 4; notas de vigencia en RN-012, RN-014, RN-016 y RN-017. |
 
 ---
 
@@ -106,6 +113,8 @@ Toda alerta deberá originarse a partir de una lectura registrada.
 
 Una alerta únicamente podrá generarse cuando una lectura alcance o supere alguno de los umbrales configurados para el tipo de sensor correspondiente.
 
+> **Estado en ClimGuard 4.1:** los umbrales se implementan como reglas de alerta; una alerta se genera cuando la lectura cae dentro del intervalo de peligro de una regla activa (RN-022).
+
 ---
 
 ## RN-013 – Clasificación de alertas
@@ -115,6 +124,8 @@ Cada alerta deberá clasificarse en uno de los niveles de alerta definidos por e
 ---
 ## RN-014 - Niveles de alerta
 Los niveles de alerta y los tipos de fenómeno corresponden a catálogos del sistema y únicamente podrán modificarse mediante cambios en la base de datos.
+
+> **Estado en ClimGuard 4.1:** los niveles de alerta siguen siendo un catálogo fijo; los **tipos de fenómeno** se administran desde la interfaz (Administrador y Operador).
 ---
 
 ## RN-015 – Registro histórico
@@ -129,11 +140,15 @@ Toda alerta generada deberá almacenarse automáticamente en la base de datos pa
 
 Cada variable climática monitoreada deberá tener al menos un umbral de evaluación configurado.
 
+> **Estado en ClimGuard 4.1:** se cumple con al menos una regla de alerta activa por tipo de sensor (RN-022).
+
 ---
 
 ## RN-017 – Modificación de umbrales
 
 Únicamente los usuarios con rol Administrador podrán modificar los umbrales utilizados para la generación automática de alertas.
+
+> **Estado en ClimGuard 4.1:** se aplica a las reglas de alerta: solo el Administrador las crea, edita o convierte.
 
 ---
 
@@ -172,6 +187,20 @@ Las reglas aquí descritas complementan los requerimientos funcionales y estable
 
 ## Actualización Fase 3 (noviembre 2026) – semántica de reglas y origen del sensor
 
-**RN-0xx – Semántica de las reglas de alerta.** `valorMin` y `valorMax` delimitan el intervalo que **activa** la regla (zona de peligro), con extremos incluidos: la condición se cumple cuando `valor >= valorMin && valor <= valorMax`. Ya no representan el rango normal. Con varias reglas coincidentes se aplica la de **mayor nivel**; a igual nivel, la de menor id. Un valor fuera de todos los intervalos, o un sensor sin reglas para su tipo, no tiene condición de peligro. El enfriamiento (por sensor y regla) solo evita crear una alerta repetida; no elimina la condición de peligro. Las reglas anteriores al cambio se marcan como LEGADAS (`requiereRevision`) y siguen evaluándose con su semántica original (alerta fuera de `[min,max]`) para no dejar el sistema sin alertas; solo pasan a la semántica nueva por una conversión explícita de un administrador (ver `MIGRACIONES.md`).
+**RN-022 – Semántica de las reglas de alerta.** `valorMin` y `valorMax` delimitan el intervalo que **activa** la regla (zona de peligro), con extremos incluidos: la condición se cumple cuando `valor >= valorMin && valor <= valorMax`. Ya no representan el rango normal. Con varias reglas coincidentes se aplica la de **mayor nivel**; a igual nivel, la de menor id. Un valor fuera de todos los intervalos, o un sensor sin reglas para su tipo, no tiene condición de peligro. El enfriamiento (por sensor y regla) solo evita crear una alerta repetida; no elimina la condición de peligro. Las reglas anteriores al cambio se marcan como LEGADAS (`requiereRevision`) y siguen evaluándose con su semántica original (alerta fuera de `[min,max]`) para no dejar el sistema sin alertas; solo pasan a la semántica nueva por una conversión explícita de un administrador (ver `MIGRACIONES.md`).
 
-**RN-0xx – Origen del sensor.** Todo sensor es `FISICO` (envía lecturas por HTTP POST `/api/readings`) o `SIMULADO` (el simulador le genera lecturas mientras esté activo y la simulación encendida). El origen es independiente del estado activo/inactivo.
+**RN-023 – Origen del sensor.** Todo sensor es `FISICO` (envía lecturas por HTTP POST `/api/readings`) o `SIMULADO` (el simulador le genera lecturas mientras esté activo y la simulación encendida). El origen es independiente del estado activo/inactivo.
+
+## Reglas incorporadas en la Fase 4 (noviembre 2026)
+
+**RN-024 – Cuentas externas.** Una cuenta de Google o GitHub se identifica por el proveedor y su identificador de usuario en ese proveedor, nunca por el correo. Solo se registra automáticamente si el auto-registro está habilitado, el proveedor confirma un correo verificado y, si se configuró, el dominio del correo está autorizado.
+
+**RN-025 – Rol inicial de las cuentas externas.** Toda cuenta creada por el inicio de sesión externo recibe el rol **Consulta**. Ninguna ruta de inicio de sesión externo asigna los roles Administrador u Operador; el cambio de rol lo hace un Administrador.
+
+**RN-026 – Vinculación de cuentas.** Vincular una cuenta externa a un usuario existente exige una sesión iniciada de ese usuario. Una cuenta externa solo puede estar vinculada a un usuario.
+
+**RN-027 – Lecturas de dispositivos.** Solo un usuario con rol Operador o Administrador puede registrar lecturas por la API. Los dispositivos físicos usan una cuenta de servicio con rol Operador.
+
+**RN-028 – Eliminación de comunidades.** No se puede eliminar una comunidad que tenga sensores asociados.
+
+**RN-029 – Reportes.** Generar, consultar el historial y descargar reportes es exclusivo del Administrador. Un reporte que supere el máximo de filas configurado no se genera: se informa el límite y el total para que se acoten los filtros.

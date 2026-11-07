@@ -1,11 +1,11 @@
 # ClimGuard Fase 4 — operación en K3s
 
-Producción: `https://climguard.acifuina.online` · VPS `adminacifuina@67.205.162.186` · namespace `climguard`.
-Historia del despliegue y decisiones: [K3S_PROGRESS.md](../K3S_PROGRESS.md).
+Producción: `https://climguard.acifuina.online` · VPS `<usuario>@<vps>` (acceso por llave SSH; datos de conexión fuera del repositorio) · namespace `climguard`.
+Historia del despliegue y decisiones: [K3S_PROGRESS.md](../docs/fases/fase-4/K3S_PROGRESS.md).
 
 Todos los comandos se ejecutan **en la VPS** y piden la contraseña de `sudo` (el kubeconfig de K3s es solo de root):
 ```bash
-ssh -t adminacifuina@67.205.162.186
+ssh -t <usuario>@<vps>
 alias k='sudo kubectl -n climguard'
 ```
 
@@ -18,7 +18,7 @@ alias k='sudo kubectl -n climguard'
 | `scripts/k8s-secrets.sh` | Crea/actualiza el Secret `climguard-secrets` desde un `.env` sin imprimir valores | No |
 | `scripts/k8s-restore.sh` | Restaura en K3s un respaldo de Fase 3 (PostgreSQL, MongoDB, SQL Server) | No |
 | `scripts/rollback-fase3.sh` | Devuelve el tráfico a Fase 3 (Docker Compose) | No |
-| `/root/climguard-k8s.env` (solo VPS, 600) | Valores del Secret | **Sí — nunca al repo** |
+| `/root/<archivo-de-secretos>.env` (solo VPS, root, permisos 600) | Valores del Secret | **Sí — nunca al repo** |
 
 ## 1. Verificar el clúster
 ```bash
@@ -52,13 +52,13 @@ Los Deployments usan `maxSurge: 0`: durante un reinicio el servicio queda unos s
 - **No secretos** (`climguard-config`): editar `CONFIG_DATA` en `scripts/gen-k8s.py`, regenerar, copiar y aplicar:
   ```bash
   python scripts/gen-k8s.py                                     # en tu PC
-  scp k8s/climguard.yaml adminacifuina@67.205.162.186:/opt/climguard-fase4/k8s/
+  scp k8s/climguard.yaml <usuario>@<vps>:/opt/climguard-fase4/k8s/
   sudo kubectl apply -f /opt/climguard-fase4/k8s/climguard.yaml && k rollout restart deploy
   ```
 - **Secretos**: editar en la VPS (no pegar valores en chats ni en commits):
   ```bash
-  sudo nano /root/climguard-k8s.env
-  sudo bash /opt/climguard-fase4/scripts/k8s-secrets.sh /root/climguard-k8s.env
+  sudo nano /root/<archivo-de-secretos>.env
+  sudo bash /opt/climguard-fase4/scripts/k8s-secrets.sh /root/<archivo-de-secretos>.env
   k rollout restart deploy/auth-service                         # o el servicio que use la clave
   ```
   ⚠️ Cambiar `*_DB_PASSWORD`, `MSSQL_SA_PASSWORD` o `MONGO_ROOT_PASSWORD` en el Secret **no** cambia la clave dentro de una base ya creada: primero `ALTER ROLE` / `ALTER LOGIN` / `db.changeUserPassword` y después el Secret.
